@@ -111,6 +111,10 @@ README.md       Ce document
 LICENSE         Licence MIT
 ```
 
+## 👤 Auteur
+
+**safisaf5** — <abdurahmansafwan@gmail.com>
+
 ## 📄 Licence
 
-Distribué sous licence **MIT** — voir [LICENSE](LICENSE).
+Distribué sous licence **MIT** — © 2026 safisaf5. Voir [LICENSE](LICENSE).
