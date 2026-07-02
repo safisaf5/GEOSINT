@@ -32,9 +32,14 @@ Un onglet **Lot** permet de traiter une **liste de lieux** d'un coup :
   une **localisation** (adresse, lieu, ou coordonnées « lat, lon ») ;
 - import rapide par **collage** d'une liste (`Nom | localisation`, une par ligne) ;
 - bouton **Vérifier** qui géocode et confirme chaque localisation (Nominatim) ;
-- la génération télécharge **pour chaque lieu un dossier à son nom**, contenant
-  **`satellite.webp`**, **`opentopomap.webp`**, **`donnees.json`** et une
-  **`fiche.pdf`** (vue satellite + coordonnées + liens).
+- un bouton **⚙ Paramètres** qui expose **toutes les sorties de la page principale**
+  à inclure par lieu :
+  - **images** (une par zoom coché, tailles multiples) : Satellite (Esri),
+    OpenTopoMap, OSM standard, Yandex satellite, imagerie datée (Wayback) ;
+  - **données & fiche** : `donnees.json`, GeoJSON, CSV, fiche HTML, fiche PDF (texte) ;
+- un choix des **zooms (tailles)** à générer (une image par zoom) ;
+- la génération télécharge **pour chaque lieu un dossier à son nom** contenant les
+  fichiers cochés.
 
 Livraison au choix : un **ZIP** unique contenant un sous-dossier par lieu, ou
 écriture directe dans un **dossier du disque** (API File System Access, navigateurs

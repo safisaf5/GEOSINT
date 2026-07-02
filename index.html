@@ -129,6 +129,15 @@
     border-radius:8px;padding:4px 9px;cursor:pointer;font-weight:700}
   #batchTable td .rm:hover{color:var(--err);border-color:var(--err)}
   .st-ok{color:#86efac}.st-err{color:#fca5a5}.st-wait{color:var(--muted)}.st-done{color:#86efac;font-weight:600}
+  .zoomsel{display:flex;flex-wrap:wrap;gap:6px}
+  .zoomsel label{display:inline-flex;align-items:center;gap:6px;background:var(--input);
+    border:1px solid var(--line);border-radius:20px;padding:5px 11px;cursor:pointer;font-size:12px}
+  .zoomsel label:hover{border-color:var(--accent)}
+  .zoomsel input{accent-color:var(--accent)}
+  .optcol{display:flex;flex-direction:column;gap:6px}
+  .optcol .opthd{font-weight:700;color:var(--muted);font-size:12px;margin-bottom:2px}
+  .optcol label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px}
+  .optcol input{accent-color:var(--accent)}
   /* Annotation d'images téléchargées */
   .dropzone{border:2px dashed var(--line);border-radius:12px;padding:34px 20px;text-align:center;
     color:var(--muted);cursor:pointer;background:var(--input)}
@@ -420,17 +429,15 @@
             Renseignez une <b>liste de lieux</b> : chaque ligne a un <b>nom libre</b> (celui du
             dossier généré) et une <b>localisation</b> (adresse, lieu, ou coordonnées «&nbsp;lat, lon&nbsp;»).
             Le bouton <b>Vérifier</b> géocode et confirme chaque localisation. La génération
-            télécharge, <b>pour chaque lieu, un dossier à son nom</b> contenant :
-            <b>satellite.webp</b>, <b>opentopomap.webp</b>, <b>donnees.json</b> et <b>fiche.pdf</b>.
+            télécharge, <b>pour chaque lieu, un dossier à son nom</b> contenant : les <b>vues
+            satellite et OpenTopoMap aux zooms cochés</b> (une image par zoom), <b>donnees.json</b>
+            et une <b>fiche.pdf</b> (texte : coordonnées &amp; liens, sans image).
           </p>
           <div class="searchbar" style="align-items:center">
             <button class="ghost" id="batchAdd">＋ Ajouter une ligne</button>
             <button class="ghost" id="batchPasteBtn">📋 Coller une liste</button>
-            <span class="muted">Zoom sat.</span>
-            <input id="batchZoomSat" type="number" min="10" max="19" value="17" style="max-width:70px"/>
-            <span class="muted">Zoom topo</span>
-            <input id="batchZoomTopo" type="number" min="10" max="17" value="15" style="max-width:70px"/>
-            <label class="muted">Taille</label>
+            <button class="ghost" id="batchSettingsBtn">⚙ Paramètres</button>
+            <label class="muted">Résolution</label>
             <select id="batchGrid">
               <option value="5">1024 px</option>
               <option value="7">1536 px</option>
@@ -440,6 +447,34 @@
             <button class="ghost" id="batchVerify">✓ Vérifier les localisations</button>
             <button class="go" id="batchRun">⬇ Générer & télécharger</button>
             <button class="ghost" id="batchDir" style="display:none">📁 Enregistrer dans un dossier…</button>
+          </div>
+          <div id="batchSettings" style="display:none;margin-top:10px;background:var(--input);
+            border:1px solid var(--line);border-radius:10px;padding:12px">
+            <div class="muted" style="margin-bottom:8px;font-weight:700">
+              Que télécharger pour chaque lieu — mêmes sources que la page principale :</div>
+            <div style="display:flex;flex-wrap:wrap;gap:26px">
+              <div class="optcol">
+                <div class="opthd">Images (une par zoom coché)</div>
+                <label><input type="checkbox" id="optEsri" checked/> Satellite (Esri)</label>
+                <label><input type="checkbox" id="optTopo" checked/> OpenTopoMap</label>
+                <label><input type="checkbox" id="optOsm"/> OSM standard</label>
+                <label><input type="checkbox" id="optYandex"/> Yandex satellite</label>
+                <label><input type="checkbox" id="optWayback"/> Imagerie datée (Wayback, récent)</label>
+              </div>
+              <div class="optcol">
+                <div class="opthd">Données &amp; fiche</div>
+                <label><input type="checkbox" id="optJson" checked/> donnees.json</label>
+                <label><input type="checkbox" id="optGeojson"/> GeoJSON</label>
+                <label><input type="checkbox" id="optCsv"/> CSV</label>
+                <label><input type="checkbox" id="optHtml"/> Fiche HTML</label>
+                <label><input type="checkbox" id="optPdf" checked/> Fiche PDF (texte)</label>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:10px">
+            <div class="muted" style="margin-bottom:4px">Zooms (tailles) à inclure — une image
+              par zoom coché (OpenTopoMap : zooms ≤ 17) :</div>
+            <div id="batchZooms" class="zoomsel"></div>
           </div>
           <div id="batchPaste" style="display:none;margin-top:10px">
             <textarea id="batchPasteText" rows="6" placeholder="Un lieu par ligne. Séparez le nom et la localisation par « | » (ou « ; » / tabulation).&#10;Ex :&#10;Tour Eiffel | 48.8584, 2.2945&#10;Colisée | Piazza del Colosseo, Rome&#10;Maison | 12 rue de la Paix, Paris"
@@ -1894,32 +1929,37 @@ function refreshYandex(){
 }
 // Téléchargement Yandex : les tuiles passent par un proxy CORS pour autoriser
 // l'export du canvas (sinon « tainted »). Nord + échelle incrustés + métadonnées.
+// Compose une mosaïque Yandex (via proxy CORS) centrée sur lat/lon → canvas.
+async function composeYandexCanvas(lat,lon,z,grid){
+  z=Math.max(1,Math.min(z,19)); grid=grid||qgrid();
+  const out=(grid-1)*TS, half=(grid-1)/2;
+  const {x:xf,y:yf}=yandexTileXY(lat,lon,z), x0=Math.floor(xf), y0=Math.floor(yf);
+  const cv=document.createElement("canvas");cv.width=grid*TS;cv.height=grid*TS;
+  const ctx=cv.getContext("2d");ctx.fillStyle="#0B1730";ctx.fillRect(0,0,cv.width,cv.height);
+  const jobs=[];let ok=0;
+  for(let dy=-half;dy<=half;dy++)for(let dx=-half;dx<=half;dx++){
+    const tx=x0+dx,ty=y0+dy,ox=(dx+half)*TS,oy=(dy+half)*TS;
+    const direct=`https://core-sat.maps.yandex.net/tiles?l=sat&x=${tx}&y=${ty}&z=${z}&scale=1&lang=ru_RU`;
+    const url="https://api.allorigins.win/raw?url="+encodeURIComponent(direct);
+    jobs.push(loadTile(url).then(img=>{if(img){ctx.drawImage(img,ox,oy);ok++;}}));
+  }
+  await Promise.all(jobs);
+  if(!ok)throw new Error("aucune tuile Yandex reçue (proxy indisponible)");
+  const px=(xf-x0+half)*TS,py=(yf-y0+half)*TS;
+  const left=Math.max(0,Math.min(Math.round(px-out/2),grid*TS-out));
+  const top =Math.max(0,Math.min(Math.round(py-out/2),grid*TS-out));
+  const c2=document.createElement("canvas");c2.width=out;c2.height=out;
+  const x2=c2.getContext("2d");x2.imageSmoothingEnabled=false;
+  x2.drawImage(cv,left,top,out,out,0,0,out,out);
+  x2.strokeStyle="#ef4444";x2.lineWidth=3;x2.beginPath();x2.arc(out/2,out/2,10,0,Math.PI*2);x2.stroke();
+  drawNorthScale(x2,out,out,mppAt(lat,z),{north:"tr"});
+  return {canvas:c2,ok};
+}
 async function composeYandexDownload(z,btn){
-  z=Math.max(1,Math.min(z,19));
-  const grid=qgrid(), out=(grid-1)*TS, half=(grid-1)/2;
   const prev=btn?btn.textContent:null; if(btn){btn.textContent="…";btn.disabled=true;}
   try{
-    const {x:xf,y:yf}=yandexTileXY(LAT,LON,z), x0=Math.floor(xf), y0=Math.floor(yf);
-    const cv=document.createElement("canvas");cv.width=grid*TS;cv.height=grid*TS;
-    const ctx=cv.getContext("2d");ctx.fillStyle="#0B1730";ctx.fillRect(0,0,cv.width,cv.height);
-    const jobs=[];let ok=0;
-    for(let dy=-half;dy<=half;dy++)for(let dx=-half;dx<=half;dx++){
-      const tx=x0+dx,ty=y0+dy,ox=(dx+half)*TS,oy=(dy+half)*TS;
-      const direct=`https://core-sat.maps.yandex.net/tiles?l=sat&x=${tx}&y=${ty}&z=${z}&scale=1&lang=ru_RU`;
-      const url="https://api.allorigins.win/raw?url="+encodeURIComponent(direct);
-      jobs.push(loadTile(url).then(img=>{if(img){ctx.drawImage(img,ox,oy);ok++;}}));
-    }
-    await Promise.all(jobs);
-    if(!ok)throw new Error("aucune tuile reçue (proxy indisponible)");
-    const px=(xf-x0+half)*TS,py=(yf-y0+half)*TS;
-    let left=Math.max(0,Math.min(Math.round(px-out/2),grid*TS-out));
-    let top =Math.max(0,Math.min(Math.round(py-out/2),grid*TS-out));
-    const c2=document.createElement("canvas");c2.width=out;c2.height=out;
-    const x2=c2.getContext("2d");x2.imageSmoothingEnabled=false;
-    x2.drawImage(cv,left,top,out,out,0,0,out,out);
-    x2.strokeStyle="#ef4444";x2.lineWidth=3;x2.beginPath();x2.arc(out/2,out/2,10,0,Math.PI*2);x2.stroke();
-    drawNorthScale(x2,out,out,mppAt(LAT,z),{north:"tr"});
-    saveBlob(await canvasBlob(c2),`yandex_z${z}_${LAT.toFixed(5)}_${LON.toFixed(5)}.${IMG_EXT}`);
+    const {canvas}=await composeYandexCanvas(LAT,LON,z,qgrid());
+    saveBlob(await canvasBlob(canvas),`yandex_z${z}_${LAT.toFixed(5)}_${LON.toFixed(5)}.${IMG_EXT}`);
   }catch(e){
     alert("Téléchargement Yandex impossible : "+(e.message||e)+
       "\n(Les tuiles Yandex transitent par un proxy CORS, parfois momentanément indisponible.)");
@@ -2134,7 +2174,7 @@ async function geocodeRow(r){
   try{const rv=await reverse(r.lat,r.lon);r.address=(rv.data&&rv.data["Adresse"])||r.foundLabel||"";}catch(e){}
   r.status="vérifié";r.statusKind="ok";return true;
 }
-function batchLines(r){
+function batchLines(r,zooms){
   return [
     "Nom : "+(r.name||"—"),
     "Localisation saisie : "+r.query,
@@ -2147,6 +2187,7 @@ function batchLines(r){
     "Google Maps : https://www.google.com/maps/search/?api=1&query="+r.lat.toFixed(6)+","+r.lon.toFixed(6),
     "OpenStreetMap : https://www.openstreetmap.org/?mlat="+r.lat.toFixed(6)+"&mlon="+r.lon.toFixed(6),
     "Géoportail : https://www.geoportail.gouv.fr/carte?c="+r.lon.toFixed(6)+","+r.lat.toFixed(6)+"&z=17",
+    (zooms&&zooms.length)?("Images incluses : "+zooms.map(z=>`z${z.z} (${z.lbl})`).join(", ")):null,
     "",
     "Généré le "+new Date().toLocaleString("fr-FR")+" · GEOSINT · données publiques.",
   ].filter(v=>v!=null);
@@ -2160,6 +2201,35 @@ function batchJSON(r){
     genere_le:new Date().toISOString(), source:"GEOSINT"
   },null,2);
 }
+function placeGeoJSON(r){
+  return JSON.stringify({type:"FeatureCollection",features:[{type:"Feature",
+    geometry:{type:"Point",coordinates:[r.lon,r.lat]},
+    properties:{nom:r.name||null,adresse:r.address||null,localisation_saisie:r.query,
+      dms:toDMS(r.lat,r.lon),plus_code:olcEncode(r.lat,r.lon,11),mgrs:toMGRS(r.lat,r.lon)||null}}]},null,2);
+}
+function placeCSV(r){
+  const rows=[["nom","localisation_saisie","adresse","latitude","longitude","dms","plus_code","mgrs"],
+    [r.name||"",r.query,r.address||"",r.lat.toFixed(6),r.lon.toFixed(6),
+     toDMS(r.lat,r.lon),olcEncode(r.lat,r.lon,11),toMGRS(r.lat,r.lon)||""]];
+  return rows.map(row=>row.map(c=>{const v=String(c==null?"":c);
+    return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\r\n");
+}
+function placeHTML(r){
+  return `<!doctype html><meta charset=utf-8><title>${esc(r.name||"Lieu")}</title>`+
+    `<body style="font-family:sans-serif;max-width:760px;margin:30px auto;color:#0f172a">`+
+    `<h1>${esc(r.name||"Lieu")}</h1>`+
+    `<p><b>Localisation saisie :</b> ${esc(r.query)}<br>`+
+    (r.address?`<b>Adresse :</b> ${esc(r.address)}<br>`:"")+
+    `<b>Coordonnées :</b> ${r.lat.toFixed(6)}, ${r.lon.toFixed(6)} · ${esc(toDMS(r.lat,r.lon))}<br>`+
+    `<b>Plus Code :</b> ${esc(olcEncode(r.lat,r.lon,11))} · <b>MGRS :</b> ${esc(toMGRS(r.lat,r.lon)||"—")}</p>`+
+    `<p><a href="https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}">Google Maps</a> · `+
+    `<a href="https://www.openstreetmap.org/?mlat=${r.lat}&mlon=${r.lon}">OpenStreetMap</a> · `+
+    `<a href="https://www.geoportail.gouv.fr/carte?c=${r.lon},${r.lat}&z=17">Géoportail</a></p>`+
+    `<p style="color:#777;font-size:12px">Généré le ${new Date().toLocaleString("fr-FR")} · GEOSINT.</p></body>`;
+}
+function batchOptions(){const g=id=>{const e=$(id);return !!(e&&e.checked);};
+  return {esri:g("optEsri"),topo:g("optTopo"),osm:g("optOsm"),yandex:g("optYandex"),wayback:g("optWayback"),
+    json:g("optJson"),geojson:g("optGeojson"),csv:g("optCsv"),html:g("optHtml"),pdf:g("optPdf")};}
 function setBatchProg(p,msg){const pr=$("batchProg");pr.classList.toggle("on",p>0&&p<1);
   pr.firstElementChild.style.width=(p*100)+"%";$("batchStatus").textContent=msg||"";}
 function batchBusy(on){["batchRun","batchVerify","batchAdd","batchDir"].forEach(id=>{const b=$(id);if(b)b.disabled=on;});}
@@ -2178,31 +2248,51 @@ async function batchProcess(useDir){
   if(!rows.length){alert("Ajoutez au moins un lieu.");return;}
   batchBusy(true);
   const grid=parseInt($("batchGrid").value)||5;
-  const zSat=Math.max(1,Math.min(parseInt($("batchZoomSat").value)||17,19));
-  const zTopo=Math.max(1,Math.min(parseInt($("batchZoomTopo").value)||15,17));
+  const opt=batchOptions();
+  const anyImg=opt.esri||opt.topo||opt.osm||opt.yandex||opt.wayback;
+  const anyData=opt.json||opt.geojson||opt.csv||opt.html||opt.pdf;
+  if(!anyImg&&!anyData){alert("Sélectionnez au moins une option dans ⚙ Paramètres.");batchBusy(false);return;}
+  const zooms=selectedZooms();
+  if(anyImg&&!zooms.length){alert("Sélectionnez au moins un zoom (taille).");batchBusy(false);return;}
+  const enc=s=>new TextEncoder().encode(s);
+  const canvasBytes=async cv=>new Uint8Array(await (await canvasBlob(cv)).arrayBuffer());
+  // Imagerie datée : cliché le plus récent (chargé une seule fois).
+  let wbRel=null;
+  if(opt.wayback){try{const rel=await loadWaybackConfig();wbRel=rel&&rel.length?rel[rel.length-1]:null;}catch(e){}}
   const perPlace=[], used={}; let i=0, okCount=0;
   for(const r of rows){
-    setBatchProg((i+.1)/rows.length,`Traitement : ${r.name||r.query}`);
+    setBatchProg((i+.05)/rows.length,`Traitement : ${r.name||r.query}`);
     try{
       if(r.lat==null){await geocodeRow(r);renderBatch();}
       if(r.lat==null){r.status="introuvable";r.statusKind="err";renderBatch();i++;continue;}
       let folder=sanitizeName(r.name||(r.address||r.query).split(",")[0]||`lieu_${i+1}`);
       if(used[folder]){folder=`${folder}_${used[folder]++}`;}else used[folder]=1;
-      const sat=await composeCanvas(ESRI,19,r.lat,r.lon,zSat,grid);
-      setBatchProg((i+.5)/rows.length,`Topo : ${r.name||r.query}`);
-      const topo=await composeCanvas(TOPO,17,r.lat,r.lon,zTopo,grid);
-      const satBlob=await canvasBlob(sat.canvas), topoBlob=await canvasBlob(topo.canvas);
-      const jpeg=dataURLtoBytes(sat.canvas.toDataURL("image/jpeg",0.85));
-      const pdf=buildPDF({title:`GEOSINT - ${r.name||folder}`,lines:batchLines(r),
-        jpeg,imgW:sat.canvas.width,imgH:sat.canvas.height});
-      const files=[
-        {name:"satellite.webp",data:new Uint8Array(await satBlob.arrayBuffer())},
-        {name:"opentopomap.webp",data:new Uint8Array(await topoBlob.arrayBuffer())},
-        {name:"donnees.json",data:new TextEncoder().encode(batchJSON(r))},
-        {name:"fiche.pdf",data:pdf},
-      ];
+      const files=[];
+      if(anyImg){let zi=0;
+        for(const zp of zooms){
+          const tag=`z${zp.z}_${slug(zp.lbl)}`;
+          setBatchProg((i+(zi+.5)/zooms.length)/rows.length,`${r.name||r.query} · z${zp.z}`);
+          if(opt.esri){const c=await composeCanvas(ESRI,19,r.lat,r.lon,zp.z,grid);
+            files.push({name:`satellite_${tag}.webp`,data:await canvasBytes(c.canvas)});}
+          if(opt.topo&&zp.z<=17){const c=await composeCanvas(TOPO,17,r.lat,r.lon,zp.z,grid);
+            files.push({name:`opentopomap_${tag}.webp`,data:await canvasBytes(c.canvas)});}
+          if(opt.osm){const c=await composeCanvas(OSM,19,r.lat,r.lon,zp.z,grid);
+            files.push({name:`osm_${tag}.webp`,data:await canvasBytes(c.canvas)});}
+          if(opt.yandex){try{const c=await composeYandexCanvas(r.lat,r.lon,zp.z,grid);
+            files.push({name:`yandex_${tag}.webp`,data:await canvasBytes(c.canvas)});}catch(e){}}
+          if(opt.wayback&&wbRel){try{const c=await composeCanvas(wbRel.tpl,18,r.lat,r.lon,Math.min(zp.z,18),grid);
+            files.push({name:`wayback_${wbRel.date}_${tag}.webp`,data:await canvasBytes(c.canvas)});}catch(e){}}
+          zi++;
+        }
+      }
+      if(opt.json)    files.push({name:"donnees.json",data:enc(batchJSON(r))});
+      if(opt.geojson) files.push({name:"donnees.geojson",data:enc(placeGeoJSON(r))});
+      if(opt.csv)     files.push({name:"donnees.csv",data:enc("﻿"+placeCSV(r))});
+      if(opt.html)    files.push({name:"fiche.html",data:enc(placeHTML(r))});
+      if(opt.pdf)     files.push({name:"fiche.pdf",data:buildPDF({title:`GEOSINT - ${r.name||folder}`,lines:batchLines(r,anyImg?zooms:null)})});
+      if(!files.length){r.status="rien à générer";r.statusKind="err";renderBatch();i++;continue;}
       perPlace.push({folder,files});
-      r.status="généré ✓";r.statusKind="done";okCount++;
+      r.status=`généré ✓ (${files.length} fichiers)`;r.statusKind="done";okCount++;
     }catch(e){r.status="erreur : "+(e.message||e);r.statusKind="err";}
     renderBatch();i++;
   }
@@ -2223,13 +2313,31 @@ async function batchProcess(useDir){
   }catch(e){setBatchProg(0,"Enregistrement annulé/impossible : "+(e.message||e));}
   batchBusy(false);
 }
+/* Zooms proposés pour le lot (une image satellite par zoom coché ; topo ≤ 17). */
+const BATCH_ZOOMS=[
+  {z:13,lbl:"≈3 km"},{z:14,lbl:"≈2 km"},{z:15,lbl:"≈1 km"},{z:16,lbl:"≈500 m"},
+  {z:17,lbl:"≈300 m"},{z:18,lbl:"≈200 m"},{z:19,lbl:"≈70 m"},
+];
+const BATCH_ZOOM_DEFAULT=new Set([15,17,19]);
+function selectedZooms(){
+  const set=new Set([...document.querySelectorAll('#batchZooms input:checked')].map(c=>+c.value));
+  return BATCH_ZOOMS.filter(z=>set.has(z.z));
+}
+function buildZoomChecks(){
+  const host=$("batchZooms"); if(!host)return;
+  host.innerHTML=BATCH_ZOOMS.map(z=>
+    `<label><input type="checkbox" value="${z.z}"${BATCH_ZOOM_DEFAULT.has(z.z)?" checked":""}/> z${z.z} · ${z.lbl}</label>`
+  ).join("");
+}
 (function bindBatch(){
   if(!$("batchAdd"))return;
+  buildZoomChecks();
   $("batchAdd").onclick=()=>batchAddRow("","");
   $("batchVerify").onclick=batchVerifyAll;
   $("batchRun").onclick=()=>batchProcess(false);
   if(window.showDirectoryPicker){const d=$("batchDir");d.style.display="";d.onclick=()=>batchProcess(true);}
   $("batchPasteBtn").onclick=()=>{const p=$("batchPaste");p.style.display=p.style.display==="none"?"":"none";};
+  $("batchSettingsBtn").onclick=()=>{const s=$("batchSettings");s.style.display=s.style.display==="none"?"":"none";};
   $("batchPasteCancel").onclick=()=>{$("batchPaste").style.display="none";};
   $("batchPasteApply").onclick=()=>{
     const lines=($("batchPasteText").value||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
