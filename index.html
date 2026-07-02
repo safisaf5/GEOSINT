@@ -312,7 +312,7 @@
         <div class="wb-row" style="justify-content:space-between">
           <span>Cliché : <span class="wb-date" id="wbDate">—</span></span>
           <span class="muted" id="wbCount"></span>
-          <button class="ghost" id="wbDl" style="padding:5px 9px;font-size:12px">⬇ PNG (Nord + échelle)</button>
+          <button class="ghost" id="wbDl" style="padding:5px 9px;font-size:12px">⬇ WebP (Nord + échelle)</button>
         </div>
         <div id="wbView"></div>
         <div class="src">Source : Esri World Imagery Wayback — archives datées de l'imagerie
@@ -329,13 +329,13 @@
           <label class="muted">Zoom</label>
           <input type="range" id="yxZoom" min="12" max="19" value="17" style="flex:1;min-width:140px"/>
           <span class="muted" id="yxZoomLbl">z17</span>
-          <button class="ghost" id="yxDl" style="padding:5px 9px;font-size:12px">⬇ PNG (Nord + échelle)</button>
+          <button class="ghost" id="yxDl" style="padding:5px 9px;font-size:12px">⬇ WebP (Nord + échelle)</button>
           <a id="yxOpen" href="#" target="_blank" rel="noopener"
              style="font-size:12px;font-weight:600">Ouvrir Yandex Maps ↗</a>
         </div>
         <div class="yx-grid" id="yxGrid"></div>
         <div class="src">Source : Yandex Satellite (projection ellipsoïdale corrigée).
-          Le téléchargement PNG (avec Nord + échelle) passe par un proxy CORS&nbsp;; la taille
+          Le téléchargement WebP (avec Nord + échelle) passe par un proxy CORS&nbsp;; la taille
           suit le sélecteur « Taille / qualité » ci-dessus.</div>
       </div>
     </div>
@@ -380,10 +380,11 @@
         <div class="hd">Annoter des images téléchargées — Nord & échelle</div>
         <div class="bd">
           <p class="muted" style="margin-top:0">
-            Déposez des images (captures satellite, plans…). L'échelle est lue d'abord dans les
-            <b>métadonnées PNG</b> (les images exportées par cet outil l'embarquent), puis à défaut
-            dans le <b>nom du fichier</b> (ex. «&nbsp;…_200m.png&nbsp;», «&nbsp;…_1.5km.png&nbsp;»).
-            Les fichiers <b>.crdownload</b> (téléchargements interrompus mais complets) sont acceptés.
+            Déposez des images (captures satellite, plans…). L'échelle est lue dans le
+            <b>nom du fichier</b> (ex. «&nbsp;…_200m.webp&nbsp;», «&nbsp;…_1.5km.png&nbsp;»), ou à défaut
+            dans les <b>métadonnées PNG</b> (pour d'anciennes captures PNG). Les exports de l'outil
+            sont au format <b>WebP</b>. Les fichiers <b>.crdownload</b> (téléchargements interrompus
+            mais complets) sont acceptés.
             Une <b>flèche Nord</b> et une <b>barre d'échelle</b> sont ajoutées ; la valeur reste
             modifiable image par image.
           </p>
@@ -1080,7 +1081,7 @@ function gallery(elId,tileUrl,maxZoom,zooms,prefix){
     const mini=document.createElement("div");mini.className="mini";
     const cap=document.createElement("div");cap.className="cap";
     const span=document.createElement("span");span.textContent=`zoom ${z.z} · ${z.lbl}`;
-    const btn=document.createElement("button");btn.className="ghost";btn.textContent="⬇ PNG";
+    const btn=document.createElement("button");btn.className="ghost";btn.textContent="⬇ WebP";
     btn.style.cssText="padding:1px 7px;font-size:11px;margin-left:6px";
     btn.onclick=()=>composeDownload(tileUrl,maxZoom,LAT,LON,z.z,`${prefix}_z${z.z}_${slug(z.lbl)}.png`,btn,qgrid());
     cap.appendChild(span);cap.appendChild(btn);
@@ -1222,9 +1223,20 @@ async function fetchMosaic(template,lat,lon,z,grid){
   return {cv,xf,yf,x0,y0,half,z,ok,total:grid*grid};
 }
 
+/* ---- Export image : toujours en WebP (qualité 0.85) ----
+   Toutes les images produites par l'outil sont téléchargées au format WebP,
+   nettement plus léger que le PNG à qualité visuelle équivalente. */
+const IMG_MIME="image/webp", IMG_Q=0.85, IMG_EXT="webp";
+function toImgExt(name){return String(name).replace(/\.(png|jpe?g|webp)$/i,"")+"."+IMG_EXT;}
+function canvasBlob(canvas){return new Promise((res,rej)=>{
+  try{canvas.toBlob(b=>b?res(b):rej(new Error("canvas vide")),IMG_MIME,IMG_Q);}catch(e){rej(e);}});}
+function saveBlob(blob,filename){const u=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);}
+
 // grid = nombre de tuiles par côté (5 par défaut). Sortie native = (grid-1)*256.
 async function composeDownload(template,maxZoom,lat,lon,z,filename,btn,grid){
   grid=grid||5; z=Math.min(z,maxZoom);
+  filename=toImgExt(filename);                    // force l'extension .webp
   const out=(grid-1)*TS;
   const prev=btn?btn.textContent:null;if(btn){btn.textContent="…";btn.disabled=true;}
   try{
@@ -1243,17 +1255,10 @@ async function composeDownload(template,maxZoom,lat,lon,z,filename,btn,grid){
     x2.strokeStyle="#ef4444";x2.lineWidth=3;x2.beginPath();x2.arc(out/2,out/2,10,0,Math.PI*2);x2.stroke();
     // flèche Nord + barre d'échelle (zoom réellement utilisé après repli éventuel)
     drawNorthScale(x2,out,out,mppAt(lat,m.z),{north:"tr"});
-    await new Promise((resolve,reject)=>{
-      try{c2.toBlob(async b=>{if(!b)return reject(new Error("canvas vide"));
-        b=await pngWithText(b,{Scale_m:Math.round(out*mppAt(lat,m.z)),
-          Software:"analyse-geo",Zoom:m.z,Lat:lat.toFixed(6),Lon:lon.toFixed(6)});
-        const u=URL.createObjectURL(b);const a=document.createElement("a");
-        a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();
-        URL.revokeObjectURL(u);resolve();},"image/png");}catch(e){reject(e);}
-    });
+    saveBlob(await canvasBlob(c2),filename);       // export WebP q0.85
   }catch(e){
     alert("Téléchargement impossible ("+(e.message||e)+"). Astuce : ouvrez la page "+
-          "via lancer_interface.command (http://localhost) pour autoriser l'export des tuiles.");
+          "via un serveur local (http://localhost) pour autoriser l'export des tuiles.");
   }finally{if(btn){btn.textContent=prev;btn.disabled=false;}}
 }
 
@@ -1705,14 +1710,7 @@ async function composeYandexDownload(z,btn){
     x2.drawImage(cv,left,top,out,out,0,0,out,out);
     x2.strokeStyle="#ef4444";x2.lineWidth=3;x2.beginPath();x2.arc(out/2,out/2,10,0,Math.PI*2);x2.stroke();
     drawNorthScale(x2,out,out,mppAt(LAT,z),{north:"tr"});
-    await new Promise((resolve,reject)=>{
-      try{c2.toBlob(async b=>{if(!b)return reject(new Error("canvas vide"));
-        b=await pngWithText(b,{Scale_m:Math.round(out*mppAt(LAT,z)),Software:"analyse-geo",
-          Source:"Yandex Satellite",Zoom:z,Lat:LAT.toFixed(6),Lon:LON.toFixed(6)});
-        const u=URL.createObjectURL(b),a=document.createElement("a");
-        a.href=u;a.download=`yandex_z${z}_${LAT.toFixed(5)}_${LON.toFixed(5)}.png`;
-        document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);resolve();
-      },"image/png");}catch(e){reject(e);}});
+    saveBlob(await canvasBlob(c2),`yandex_z${z}_${LAT.toFixed(5)}_${LON.toFixed(5)}.${IMG_EXT}`);
   }catch(e){
     alert("Téléchargement Yandex impossible : "+(e.message||e)+
       "\n(Les tuiles Yandex transitent par un proxy CORS, parfois momentanément indisponible.)");
@@ -1774,10 +1772,9 @@ function drawAnnot(item){
   drawNorthScale(ctx,w,h,mpp,{north,rotation:item.rotation||0});
 }
 function downloadAnnot(item){
-  try{item.canvas.toBlob(b=>{const u=URL.createObjectURL(b),a=document.createElement("a");
-    a.href=u;a.download=item.name.replace(/(\.[a-z0-9]+)?$/i,"_annote.png");
-    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);},"image/png");
-  }catch(e){alert("Export impossible : "+(e.message||e));}
+  const base=item.name.replace(/(\.[a-z0-9]+)?$/i,"_annote");
+  canvasBlob(item.canvas).then(b=>saveBlob(b,toImgExt(base)))
+    .catch(e=>alert("Export impossible : "+(e.message||e)));
 }
 function renderAnnotItem(item){
   const card=document.createElement("div"); card.className="annotcard";
@@ -1793,7 +1790,7 @@ function renderAnnotItem(item){
   const rot=document.createElement("input"); rot.className="num"; rot.type="number"; rot.value=0;
   rot.oninput=()=>{item.rotation=parseFloat(rot.value)||0; drawAnnot(item);};
   const dl=document.createElement("button"); dl.className="ghost";
-  dl.style.cssText="padding:4px 9px;font-size:11px"; dl.textContent="⬇ PNG";
+  dl.style.cssText="padding:4px 9px;font-size:11px"; dl.textContent="⬇ WebP";
   dl.onclick=()=>downloadAnnot(item);
   row.append(l1,inp,l2,rot,dl);
   card.append(cv,nm,row);

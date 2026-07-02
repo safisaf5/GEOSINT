@@ -44,6 +44,8 @@ choisi.
   Géoportail Suisse (map.geo.admin.ch), FlightRadar24, MarineTraffic,
   NASA Worldview, Sentinel Hub, Wikipédia/Wikimedia Commons…
 - **Exports** : fiche OSINT mise en forme, **GeoJSON** et données brutes.
+- **Images téléchargées au format WebP** (qualité 0,85) — plans satellite,
+  captures Wayback/Yandex et images annotées, nettement plus légers que le PNG.
 - **Interface 100 % en français**.
 
 ## 🚀 Utilisation
