@@ -40,6 +40,24 @@ Livraison au choix : un **ZIP** unique contenant un sous-dossier par lieu, ou
 écriture directe dans un **dossier du disque** (API File System Access, navigateurs
 compatibles). Le ZIP et le PDF sont générés **en pur JavaScript**, sans dépendance.
 
+## 📐 Extraction d'objets OSM (surface, périmètre, coordonnées)
+
+Un outil dédié interroge **Overpass** sur l'emprise visible de la carte à partir
+d'un simple **type** (clé/valeur OSM, ex. `landuse=residential`, `building`,
+`natural=water`). Requête générée :
+
+```overpassql
+[out:json][timeout:25];
+// géométrie complète (geom)
+nwr["landuse"="residential"]({{bbox}});
+out geom;
+```
+
+Pour chaque objet trouvé, l'outil calcule et affiche : **surface**, **périmètre**,
+**dimensions** (largeur × hauteur), nombre de sommets, et donne les **coordonnées
+du périmètre** (copie par objet ou globale). Exports **GeoJSON** et **CSV** ;
+les objets sont aussi tracés sur la carte.
+
 ## ✨ Fonctionnalités
 
 - **Recherche multi-modes** : adresse / lieu / code postal (géocodage
