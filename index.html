@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Analyse géographique — interface</title>
+<title>GEOSINT — Analyse géographique OSINT</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
   :root{
@@ -154,8 +154,9 @@
 </head>
 <body>
 <header>
-  <h1>🗺️ Analyse géographique</h1>
-  <span class="tag">interface autonome · données publiques live</span>
+  <h1>🛰️ GEOSINT</h1>
+  <span class="tag">analyse géographique OSINT · autonome · données publiques live</span>
+  <span class="tag" id="modeTag">mode : complet</span>
   <span class="tag" id="status">prêt</span>
 </header>
 
@@ -185,6 +186,15 @@
             <button class="go" id="genBtn">🛰️ Générer</button>
           </div>
           <div class="list" id="sugList" style="display:none"></div>
+        </div>
+        <div class="searchbar" style="margin-top:8px;align-items:center">
+          <label class="muted" for="mode" style="font-weight:600">Portée de la collecte</label>
+          <select id="mode" title="Choisir les sources interrogées lors de la génération">
+            <option value="sat">🛰️ Satellite seul</option>
+            <option value="satosm">🛰️+🗺️ Satellite + OSM</option>
+            <option value="full">🌐 Complet (tout)</option>
+          </select>
+          <span class="muted" id="modeHint" style="font-size:12px"></span>
         </div>
         <div class="progress" id="prog"><i></i></div>
         <div class="coordbox" style="margin-top:10px">
@@ -407,6 +417,35 @@ const OSM  = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 let LAT = 46.2074, LON = 6.1559, LABEL = "";   // Jet d'eau de Genève (point par défaut)
 let REPORT = null;
 const $ = (id)=>document.getElementById(id);
+
+/* ---------------- Modes de collecte ----------------
+   Trois portées, du plus léger (imagerie satellite seule) au plus complet.
+   Chaque drapeau active/désactive une famille de sources ; l'imagerie satellite
+   (Esri, Wayback, Yandex) est le socle commun présent dans tous les modes. */
+const MODES = {
+  sat:    {label:"Satellite seul",     hint:"Imagerie satellite uniquement — Esri, Wayback (datée), Yandex. Le plus rapide.",
+           osm:false, topo:false, relief:false, cities:false, wikipedia:false, commons:false},
+  satosm: {label:"Satellite + OSM",    hint:"Imagerie + données OpenStreetMap : réseau, transports, POI, environnement, accès, relief, villes.",
+           osm:true,  topo:true,  relief:true,  cities:true,  wikipedia:false, commons:false},
+  full:   {label:"Complet",            hint:"Tout : imagerie + OSM + relief + Wikipédia à proximité + photos géolocalisées (Wikimedia Commons).",
+           osm:true,  topo:true,  relief:true,  cities:true,  wikipedia:true,  commons:true},
+};
+let currentMode = "full";
+function modeCfg(){ return MODES[currentMode] || MODES.full; }
+// Affiche/masque les cartes de la colonne gauche selon le mode choisi.
+function applyMode(m){
+  currentMode = MODES[m] ? m : "full";
+  const c = modeCfg();
+  const show = (id,on)=>{ const el=$(id); if(el) el.style.display = on ? "" : "none"; };
+  show("cTopo",    c.topo);       // cartographie topographique (OSM)
+  show("cAcces",   c.osm);        // accès dérivé des axes/transports OSM
+  show("cCommons", c.commons);    // photos géolocalisées Wikimedia Commons
+  // cSat / cWayback / cYandex / cLinks / cDownload : imagerie & outils, toujours visibles.
+  const hint=$("modeHint"); if(hint) hint.textContent = c.hint;
+  const tag=$("modeTag");   if(tag)  tag.textContent  = "mode : "+c.label.toLowerCase();
+  const sel=$("mode");      if(sel && sel.value!==currentMode) sel.value=currentMode;
+  try{ localStorage.setItem("geosint_mode", currentMode); }catch(e){}
+}
 
 /* ---------------- Conversions de coordonnées (côté client) ----------- */
 function toDMS(lat,lon){
@@ -1224,35 +1263,42 @@ function setProg(p,msg){const pr=$("prog");pr.classList.add("on");pr.firstElemen
 function endProg(){setTimeout(()=>$("prog").classList.remove("on"),500);}
 
 async function generate(){
+  const c=modeCfg();
   $("genBtn").disabled=true;$("status").textContent="collecte…";
   const sections={};
-  REPORT={location:{lat:LAT,lon:LON,label:LABEL},generated_at:new Date().toISOString(),sections};
-  // Coordonnées (instantané)
+  REPORT={location:{lat:LAT,lon:LON,label:LABEL},mode:currentMode,generated_at:new Date().toISOString(),sections};
+  // Coordonnées (instantané) — présent dans tous les modes
   sections["coordonnees"]={name:"coordonnees",title:"Coordonnées",data:coordSet(LAT,LON),
     src:{s:"Calcul local (JS)",u:"",l:"—"}};
   setProg(.08,"coordonnées");
 
-  // Galeries (instantané, via tuiles)
+  // Imagerie satellite (socle commun à tous les modes) + cartographie topo (OSM)
   gallery("sat",ESRI,19,[{z:10,lbl:"≈20 km"},{z:13,lbl:"≈3 km"},{z:14,lbl:"≈2 km"},{z:15,lbl:"≈1 km"},{z:16,lbl:"≈500 m"},{z:17,lbl:"≈300 m"},{z:18,lbl:"≈200 m"},{z:19,lbl:"≈70 m"}],"satellite_esri");
-  gallery("topo",TOPO,17,[{z:12,lbl:"≈5 km"},{z:13,lbl:"≈3 km"},{z:14,lbl:"≈2 km"},{z:15,lbl:"≈1 km"},{z:16,lbl:"≈500 m"},{z:17,lbl:"≈300 m"}],"opentopomap");
-  badge("bSat","ok");badge("bTopo","ok");
+  badge("bSat","ok");
+  if(c.topo){
+    gallery("topo",TOPO,17,[{z:12,lbl:"≈5 km"},{z:13,lbl:"≈3 km"},{z:14,lbl:"≈2 km"},{z:15,lbl:"≈1 km"},{z:16,lbl:"≈500 m"},{z:17,lbl:"≈300 m"}],"opentopomap");
+    badge("bTopo","ok");
+  }
 
-  // Distances vers grandes villes + liens externes (local, instantané)
-  sections["villes"]=cityDistances(LAT,LON);
+  // Liens externes (local, instantané) — toujours utiles
   renderLinks();
+  // Distances vers grandes villes : repli local, seulement si le mode couvre l'OSM.
+  if(c.cities) sections["villes"]=cityDistances(LAT,LON);
 
-  // Photos géolocalisées Wikimedia Commons (galerie, en parallèle)
-  $("commons").innerHTML='<span class="muted">recherche…</span>';
-  const commonsP=commonsPhotos(LAT,LON).then(renderCommons)
-    .catch(()=>{$("commons").innerHTML='<span class="muted">Aucune photo géolocalisée trouvée (ou source indisponible).</span>';badge("bCommons","empty");});
+  // Photos géolocalisées Wikimedia Commons (mode complet uniquement)
+  let commonsP=Promise.resolve();
+  if(c.commons){
+    $("commons").innerHTML='<span class="muted">recherche…</span>';
+    commonsP=commonsPhotos(LAT,LON).then(renderCommons)
+      .catch(()=>{$("commons").innerHTML='<span class="muted">Aucune photo géolocalisée trouvée (ou source indisponible).</span>';badge("bCommons","empty");});
+  }
 
-  const tasks=[
-    ["identite",reverse(LAT,LON)],
-    ["wikipedia",wikipediaNearby(LAT,LON)],
-    ["relief",elevation(LAT,LON)],
-    ["osm",osmBundle(LAT,LON)],
-  ];
-  let done=0;const total=tasks.length;
+  // Tâches réseau, activées selon le mode.
+  const tasks=[];
+  if(c.osm)      tasks.push(["identite",reverse(LAT,LON)],["osm",osmBundle(LAT,LON)]);
+  if(c.relief)   tasks.push(["relief",elevation(LAT,LON)]);
+  if(c.wikipedia)tasks.push(["wikipedia",wikipediaNearby(LAT,LON)]);
+  let done=0;const total=Math.max(1,tasks.length);
   await Promise.all(tasks.map(async ([k,p])=>{
     try{
       const res=await p;
@@ -1265,14 +1311,19 @@ async function generate(){
   }));
   await commonsP;
 
-  // Imagerie datée (Wayback), Yandex et zones cliquables (surfaces) — non bloquant
+  // Imagerie datée (Wayback) & Yandex — socle imagerie, non bloquant, tous modes.
   initWayback();
   refreshYandex();
-  loadAreaPolygons(LAT,LON);
-
-  // Accès dérivé
-  const acc=buildAccess(REPORT);REPORT.access=acc;
-  renderAccess(acc);
+  // Zones OSM cliquables (surfaces) : seulement si le mode couvre l'OSM.
+  if(c.osm){
+    loadAreaPolygons(LAT,LON);
+    // Accès dérivé des axes/transports OSM
+    const acc=buildAccess(REPORT);REPORT.access=acc;
+    renderAccess(acc);
+  }else{
+    if(areaLayer){map.removeLayer(areaLayer);areaLayer=null;}
+    REPORT.access={};
+  }
 
   renderAll();
   computeCompleteness();
@@ -1398,6 +1449,7 @@ $("searchBtn").onclick=async()=>{const v=$("q").value.trim();if(!v)return;
   else $("status").textContent="aucun résultat";};
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("searchBtn").click();}});
 $("genBtn").onclick=generate;
+$("mode").onchange=e=>applyMode(e.target.value);
 $("manualBtn").onclick=()=>{const m=$("manual");m.style.display=m.style.display==="none"?"flex":"none";};
 $("applyManual").onclick=()=>{const la=parseFloat($("mlat").value),lo=parseFloat($("mlon").value);
   if(isFinite(la)&&isFinite(lo)){setPoint(la,lo,`${la.toFixed(5)}, ${lo.toFixed(5)}`);map.setView([la,lo],15);}};
@@ -1740,6 +1792,9 @@ function renderAnnotItem(item){
 
 /* init */
 if(location.protocol==="file:"){$("fileWarn").style.display="block";$("status").textContent="ouvrez via lancer_interface.command";}
+// Mode de collecte : préférence mémorisée (défaut : complet).
+try{ const saved=localStorage.getItem("geosint_mode"); if(saved&&MODES[saved]) currentMode=saved; }catch(e){}
+applyMode(currentMode);
 initMap();
 // Point initial : lien partagé (#zoom/lat/lon) sinon Tour Eiffel par défaut.
 let started=false;

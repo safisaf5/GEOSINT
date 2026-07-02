@@ -11,6 +11,20 @@ produit une **fiche OSINT** sourcée, cartographiée et exportable.
 
 ---
 
+## 🎚️ Modes de collecte
+
+Un sélecteur **Portée de la collecte** permet de choisir les sources interrogées
+lors de la génération (le choix est mémorisé dans le navigateur) :
+
+| Mode | Ce qui est collecté |
+|---|---|
+| 🛰️ **Satellite seul** | Imagerie satellite uniquement : Esri, **Esri Wayback** (imagerie datée), **Yandex**, + liens imagerie. Le plus rapide, aucun appel OSM. |
+| 🛰️+🗺️ **Satellite + OSM** | Imagerie **+** données OpenStreetMap/Overpass : réseau routier & ferré, transports (gares, aéroports), POI, environnement naturel, **accès** dérivé, relief, villes proches. |
+| 🌐 **Complet** | Tout ce qui précède **+** Wikipédia à proximité et **photos géolocalisées** (Wikimedia Commons). |
+
+L'interface masque automatiquement les cartes non pertinentes selon le mode
+choisi.
+
 ## ✨ Fonctionnalités
 
 - **Recherche multi-modes** : adresse / lieu / code postal (géocodage
