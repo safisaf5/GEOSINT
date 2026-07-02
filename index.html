@@ -190,9 +190,8 @@
         <div class="searchbar" style="margin-top:8px;align-items:center">
           <label class="muted" for="mode" style="font-weight:600">Portée de la collecte</label>
           <select id="mode" title="Choisir les sources interrogées lors de la génération">
-            <option value="sat">🛰️ Satellite seul</option>
-            <option value="satosm">🛰️+🗺️ Satellite + OSM</option>
-            <option value="full">🌐 Complet (tout)</option>
+            <option value="satcarte">🛰️ Satellite + carte</option>
+            <option value="full">🌐 Tout</option>
           </select>
           <span class="muted" id="modeHint" style="font-size:12px"></span>
         </div>
@@ -423,12 +422,10 @@ const $ = (id)=>document.getElementById(id);
    Chaque drapeau active/désactive une famille de sources ; l'imagerie satellite
    (Esri, Wayback, Yandex) est le socle commun présent dans tous les modes. */
 const MODES = {
-  sat:    {label:"Satellite seul",     hint:"Imagerie satellite uniquement — Esri, Wayback (datée), Yandex. Le plus rapide.",
-           osm:false, topo:false, relief:false, cities:false, wikipedia:false, commons:false},
-  satosm: {label:"Satellite + OSM",    hint:"Imagerie + données OpenStreetMap : réseau, transports, POI, environnement, accès, relief, villes.",
-           osm:true,  topo:true,  relief:true,  cities:true,  wikipedia:false, commons:false},
-  full:   {label:"Complet",            hint:"Tout : imagerie + OSM + relief + Wikipédia à proximité + photos géolocalisées (Wikimedia Commons).",
-           osm:true,  topo:true,  relief:true,  cities:true,  wikipedia:true,  commons:true},
+  satcarte: {label:"Satellite + carte", hint:"Imagerie satellite (Esri, Wayback datée, Yandex) + cartes (OpenTopoMap). Sans collecte OSM.",
+             osm:false, topo:true, relief:false, cities:false, wikipedia:false, commons:false},
+  full:     {label:"Tout",              hint:"Complet : imagerie + cartes + données OSM (réseau, transports, POI, environnement, accès, relief, villes) + Wikipédia + photos géolocalisées.",
+             osm:true,  topo:true, relief:true,  cities:true,  wikipedia:true,  commons:true},
 };
 let currentMode = "full";
 function modeCfg(){ return MODES[currentMode] || MODES.full; }

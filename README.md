@@ -18,9 +18,8 @@ lors de la génération (le choix est mémorisé dans le navigateur) :
 
 | Mode | Ce qui est collecté |
 |---|---|
-| 🛰️ **Satellite seul** | Imagerie satellite uniquement : Esri, **Esri Wayback** (imagerie datée), **Yandex**, + liens imagerie. Le plus rapide, aucun appel OSM. |
-| 🛰️+🗺️ **Satellite + OSM** | Imagerie **+** données OpenStreetMap/Overpass : réseau routier & ferré, transports (gares, aéroports), POI, environnement naturel, **accès** dérivé, relief, villes proches. |
-| 🌐 **Complet** | Tout ce qui précède **+** Wikipédia à proximité et **photos géolocalisées** (Wikimedia Commons). |
+| 🛰️ **Satellite + carte** | Imagerie satellite (Esri, **Esri Wayback** datée, **Yandex**) **+** cartes (OpenTopoMap) et liens externes. Sans collecte OSM — rapide. |
+| 🌐 **Tout** | Complet : imagerie + cartes **+** données OpenStreetMap/Overpass (réseau routier & ferré, transports, POI, environnement, **accès** dérivé, relief, villes) **+** Wikipédia à proximité et **photos géolocalisées** (Wikimedia Commons). |
 
 L'interface masque automatiquement les cartes non pertinentes selon le mode
 choisi.
