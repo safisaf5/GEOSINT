@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Analyse géographique — interface</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#111c34; --card:#16233f; --line:#27395d;
+    --fg:#e8eefb; --muted:#93a3c4; --accent:#3b82f6; --accent2:#22c55e;
+    --warn:#f59e0b; --err:#ef4444; --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--fg);font-size:14px;line-height:1.5}
+  a{color:var(--accent)}
+  header{padding:14px 20px;border-bottom:1px solid var(--line);
+         display:flex;align-items:center;gap:14px;background:var(--panel);
+         position:sticky;top:0;z-index:1000}
+  header h1{font-size:17px;margin:0;font-weight:650}
+  header .tag{font-size:11px;color:var(--muted);border:1px solid var(--line);
+              padding:2px 8px;border-radius:20px}
+  .wrap{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
+        gap:16px;padding:16px;max-width:1500px;margin:0 auto}
+  @media(max-width:1000px){.wrap{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .card{background:var(--card);border:1px solid var(--line);
+        border-radius:var(--radius);overflow:hidden}
+  .card>.hd{padding:10px 14px;border-bottom:1px solid var(--line);
+            font-weight:600;display:flex;justify-content:space-between;align-items:center;
+            cursor:pointer;user-select:none}
+  .card>.bd{padding:12px 14px}
+  .searchbar{display:flex;gap:8px;flex-wrap:wrap}
+  .searchbar input{flex:1;min-width:160px;background:#0b1730;border:1px solid var(--line);
+      color:var(--fg);padding:10px 12px;border-radius:10px;outline:none}
+  .searchbar input:focus{border-color:var(--accent)}
+  select{background:#0b1730;border:1px solid var(--line);color:var(--fg);
+         padding:9px 10px;border-radius:10px;outline:none}
+  button{background:var(--accent);color:#fff;border:none;padding:10px 14px;
+         border-radius:10px;font-weight:600;cursor:pointer}
+  button.ghost{background:#0b1730;border:1px solid var(--line);color:var(--fg)}
+  button.go{background:var(--accent2)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  #map{height:440px;width:100%}
+  .coordbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:13px}
+  .coordbox b{color:var(--fg)}
+  .suggest{position:relative}
+  .suggest .list{position:absolute;z-index:1200;left:0;right:0;top:calc(100% + 4px);
+      background:#0b1730;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+      max-height:240px;overflow-y:auto}
+  .suggest .list div{padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--line)}
+  .suggest .list div:hover{background:#13233f}
+  .badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+  .b-ok{background:rgba(34,197,94,.15);color:#86efac}
+  .b-empty{background:rgba(148,163,184,.15);color:#cbd5e1}
+  .b-err{background:rgba(239,68,68,.15);color:#fca5a5}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600}
+  .kv th{width:42%}
+  .src{color:var(--muted);font-size:11px;margin-top:8px}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .gallery .tile{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#0b1730}
+  .gallery .tile .mini{height:130px;width:100%}
+  .gallery .tile .cap{font-size:11px;color:var(--muted);padding:4px 6px}
+  .access{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .access .item{background:#0b1730;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .access .item .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  .access .item .val{font-weight:600;margin-top:2px}
+  .progress{height:6px;background:#0b1730;border-radius:6px;overflow:hidden;margin-top:8px;display:none}
+  .progress.on{display:block}
+  .progress > i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+  .muted{color:var(--muted)}
+  .pill{display:inline-block;font-size:11px;background:#0b1730;border:1px solid var(--line);
+        border-radius:20px;padding:1px 8px;margin:2px 4px 2px 0}
+  .north{background:#fff;color:#0f172a;border-radius:6px;padding:3px 7px;text-align:center;
+         font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.4);font-size:12px;line-height:1.05}
+  .north small{font-weight:400}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .completeness{font-weight:700}
+  .leaflet-container{background:#0b1730}
+  /* Liens vers outils externes */
+  .links{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+  .links a{display:flex;align-items:center;gap:7px;background:#0b1730;border:1px solid var(--line);
+    border-radius:10px;padding:8px 10px;color:var(--fg);text-decoration:none;font-size:12px;font-weight:600}
+  .links a:hover{border-color:var(--accent);background:#13233f}
+  .links a .ic{font-size:14px;flex:none}
+  .links .grp{grid-column:1/-1;font-size:11px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.04em;margin:6px 0 -2px;font-weight:700}
+  /* Photos géolocalisées (Wikimedia Commons) */
+  .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+  .imgs a{display:block;border:1px solid var(--line);border-radius:8px;overflow:hidden;
+    background:#0b1730;text-decoration:none}
+  .imgs a:hover{border-color:var(--accent)}
+  .imgs a img{width:100%;height:108px;object-fit:cover;display:block;background:#0b1730}
+  .imgs a .cap{font-size:10px;color:var(--muted);padding:4px 6px;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  td a{color:var(--accent);text-decoration:none}
+  td a:hover{text-decoration:underline}
+  .copybtn{background:#0b1730;border:1px solid var(--line);color:var(--muted);border-radius:6px;
+    padding:2px 8px;font-size:11px;cursor:pointer;margin-left:6px;font-weight:600}
+  .copybtn:hover{color:var(--fg);border-color:var(--accent)}
+  .sunbar{height:8px;border-radius:6px;margin:4px 0 2px;
+    background:linear-gradient(90deg,#1e293b,#f59e0b 50%,#1e293b)}
+  /* Onglets */
+  .tabs{display:flex;gap:8px;padding:12px 16px 0;max-width:1500px;margin:0 auto;flex-wrap:wrap}
+  .tab{background:#0b1730;border:1px solid var(--line);color:var(--muted);
+    border-radius:10px 10px 0 0;padding:9px 14px;font-weight:600;cursor:pointer}
+  .tab.active{background:var(--card);color:var(--fg);border-bottom-color:var(--card)}
+  /* Annotation d'images téléchargées */
+  .dropzone{border:2px dashed var(--line);border-radius:12px;padding:34px 20px;text-align:center;
+    color:var(--muted);cursor:pointer;background:#0b1730}
+  .dropzone.drag{border-color:var(--accent);color:var(--fg);background:#13233f}
+  .annotgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:14px}
+  .annotcard{border:1px solid var(--line);border-radius:10px;background:#0b1730;padding:8px}
+  .annotcard canvas{width:100%;height:auto;border-radius:6px;display:block;background:#000}
+  .annotcard .nm{font-size:11px;color:var(--muted);margin:6px 0 2px;word-break:break-all}
+  .annotcard .row{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
+  .annotcard input.num{width:84px;background:#0b1730;border:1px solid var(--line);color:var(--fg);
+    padding:5px 7px;border-radius:6px}
+  /* Outil de mesure de surface sur la carte */
+  .measurebox{position:absolute;z-index:1200;right:10px;bottom:10px;background:rgba(15,23,42,.94);
+    border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;display:none;max-width:240px}
+  .measurebox.on{display:block}
+  .measurebox b{color:var(--fg)}
+  /* Imagerie datée (Wayback) & Yandex */
+  .wb-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  .wb-row input[type=range]{flex:1;min-width:160px}
+  .wb-date{font-weight:700;font-size:15px}
+  #wbView{height:300px;border-radius:8px;background:#0b1730}
+  .yx-grid{display:grid;gap:1px;background:var(--line);border-radius:8px;overflow:hidden;
+    width:100%;aspect-ratio:1/1}
+  .yx-grid img{width:100%;height:100%;object-fit:cover;display:block;background:#0b1730}
+  /* Impression / PDF */
+  @media print{
+    header,#fileWarn,.searchbar,.suggest,.progress,#map,.toolbar button,.toolbar select,
+    .gallery,#cSat,#cTopo,#cLinks,#cCommons,#cDownload,#cWayback,#cYandex,#tab-annotate,
+    .tabs,.measurebox,.yx-grid,#wbView,button,select,.copybtn,
+    .card .hd .badge{display:none!important}
+    body{background:#fff;color:#111;font-size:12px}
+    a{color:#0645ad}
+    .wrap{display:block;max-width:none;margin:0;padding:0;gap:0}
+    .card{border:1px solid #ccc;border-radius:0;break-inside:avoid;margin:0 0 8px;background:#fff;color:#111}
+    .card>.hd{border-bottom:1px solid #ccc;color:#111}
+    .card>.bd{display:block!important}
+    th{color:#444}
+    th,td{border-bottom:1px solid #ddd}
+    .access .item{border:1px solid #ddd;background:#fff}
+    .access .item .lbl{color:#555}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🗺️ Analyse géographique</h1>
+  <span class="tag">interface autonome · données publiques live</span>
+  <span class="tag" id="status">prêt</span>
+</header>
+
+<div id="fileWarn" style="display:none;background:#7c2d12;color:#fff;padding:10px 20px;
+     border-bottom:1px solid #9a3412;font-size:13px">
+  ⚠️ Page ouverte en <b>file://</b> : les serveurs OSM/Overpass bloquent les requêtes
+  (origine « null »). Lancez plutôt <b>lancer_interface.command</b> (double-clic) pour
+  ouvrir la page via <b>http://localhost</b> — tout fonctionnera alors.
+</div>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="analyse">🗺️ Analyse géographique</button>
+  <button class="tab" data-tab="annotate">🖼️ Annoter une image (Nord + échelle)</button>
+</nav>
+
+<div id="tab-analyse" class="tabpanel">
+<div class="wrap">
+  <!-- Colonne gauche : carte & contrôles -->
+  <div class="col">
+    <div class="card">
+      <div class="bd">
+        <div class="suggest">
+          <div class="searchbar">
+            <input id="q" placeholder="Adresse, lieu, coordonnées ou MGRS (ex. 31U DQ 48251 11932)"
+                   autocomplete="off"/>
+            <button id="searchBtn">Rechercher</button>
+            <button class="go" id="genBtn">🛰️ Générer</button>
+          </div>
+          <div class="list" id="sugList" style="display:none"></div>
+        </div>
+        <div class="progress" id="prog"><i></i></div>
+        <div class="coordbox" style="margin-top:10px">
+          <span>Point : <b id="ll">—</b></span>
+          <button class="copybtn" id="copyLL" title="Copier les coordonnées">⧉ copier</button>
+          <button class="copybtn" id="copyLink" title="Copier un lien vers ce point">🔗 lien</button>
+          <span class="muted" id="placelabel"></span>
+          <button class="ghost" id="manualBtn" style="margin-left:auto;padding:6px 10px">Saisie manuelle</button>
+        </div>
+        <div id="manual" style="display:none;margin-top:8px" class="searchbar">
+          <input id="mlat" placeholder="latitude" inputmode="decimal"/>
+          <input id="mlon" placeholder="longitude" inputmode="decimal"/>
+          <button class="ghost" id="applyManual">Appliquer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="position:relative">
+      <div class="hd">Carte
+        <span style="display:flex;gap:6px;align-items:center;font-weight:400">
+          <button class="ghost" id="measureBtn" style="padding:5px 9px;font-size:12px">📐 Mesurer une surface</button>
+        </span>
+      </div>
+      <div id="map"></div>
+      <div class="measurebox" id="measureBox">
+        <div id="measureInfo" class="muted">Cliquez sur la carte pour poser les sommets d'une zone.
+          Double-clic pour fermer.</div>
+        <div class="row" style="display:flex;gap:6px;margin-top:6px">
+          <button class="ghost" id="measureClear" style="padding:3px 8px;font-size:11px">Effacer</button>
+          <button class="ghost" id="measureDone" style="padding:3px 8px;font-size:11px">Terminer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="cLinks">
+      <div class="hd" data-toggle>Ouvrir dans des outils externes
+        <span class="muted" style="font-weight:400">cartes · imagerie · photos terrain</span></div>
+      <div class="bd"><div class="links" id="links"></div></div>
+    </div>
+
+    <div class="card" id="cDownload">
+      <div class="hd">Téléchargement des plans <span class="muted" style="font-weight:400">qualité native</span></div>
+      <div class="bd">
+        <div class="searchbar" style="align-items:center">
+          <label class="muted">Taille / qualité</label>
+          <select id="qgrid">
+            <option value="5">Standard · 1024 px</option>
+            <option value="7">Grand · 1536 px</option>
+            <option value="9">Très grand · 2048 px</option>
+            <option value="11">Maximum · 2560 px</option>
+            <option value="15">Ultra · 3584 px</option>
+          </select>
+          <button class="ghost" id="dlMain">⬇ Vue principale (HQ)</button>
+        </div>
+        <div class="searchbar" style="margin-top:8px;align-items:center">
+          <label class="muted">Plan personnalisé</label>
+          <select id="cSource">
+            <option value="esri">Satellite Esri</option>
+            <option value="topo">OpenTopoMap</option>
+            <option value="osm">OSM standard</option>
+          </select>
+          <span class="muted">zoom</span>
+          <input id="cZoom" type="number" min="1" max="20" value="18" style="max-width:80px"/>
+          <button class="ghost" id="dlCustom">⬇ Télécharger ce plan</button>
+        </div>
+        <div class="muted" style="font-size:11px;margin-top:6px">
+          La taille choisie s'applique à tous les boutons ⬇ (galeries comprises).
+          Plus c'est grand, plus il y a de tuiles à charger.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="cAcces">
+      <div class="hd" data-toggle>Accès — comment s'y rendre <span class="badge b-empty" id="bAcces">—</span></div>
+      <div class="bd"><div class="access" id="acces"><span class="muted">Lancez une analyse.</span></div></div>
+    </div>
+
+    <div class="card" id="cCommons">
+      <div class="hd" data-toggle>Photos géolocalisées (Wikimedia Commons) <span class="badge b-empty" id="bCommons">—</span></div>
+      <div class="bd">
+        <div class="imgs" id="commons"><span class="muted">Lancez une analyse.</span></div>
+        <div class="src">Source : Wikimedia Commons (geosearch) — photos géolocalisées dans un rayon de 10 km.</div>
+      </div>
+    </div>
+
+    <div class="card" id="cSat">
+      <div class="hd" data-toggle>Imagerie satellite (Esri) <span class="badge b-empty" id="bSat">—</span></div>
+      <div class="bd">
+        <div class="gallery" id="sat"></div>
+        <div class="src">Source : Esri World Imagery — © Esri, Maxar, Earthstar Geographics.</div>
+      </div>
+    </div>
+
+    <div class="card" id="cWayback">
+      <div class="hd" data-toggle>Imagerie datée — Esri Wayback
+        <span class="badge b-empty" id="bWayback">—</span></div>
+      <div class="bd">
+        <div class="wb-row">
+          <button class="ghost" id="wbPrev" style="padding:6px 10px">◀</button>
+          <input type="range" id="wbSlider" min="0" max="0" value="0"/>
+          <button class="ghost" id="wbNext" style="padding:6px 10px">▶</button>
+        </div>
+        <div class="wb-row" style="justify-content:space-between">
+          <span>Cliché : <span class="wb-date" id="wbDate">—</span></span>
+          <span class="muted" id="wbCount"></span>
+          <button class="ghost" id="wbDl" style="padding:5px 9px;font-size:12px">⬇ PNG (Nord + échelle)</button>
+        </div>
+        <div id="wbView"></div>
+        <div class="src">Source : Esri World Imagery Wayback — archives datées de l'imagerie
+          satellite. Faites glisser le curseur pour comparer les dates (et repérer un cliché flouté).
+          © Esri, Maxar, Earthstar Geographics.</div>
+      </div>
+    </div>
+
+    <div class="card" id="cYandex">
+      <div class="hd" data-toggle>Imagerie satellite Yandex
+        <span class="badge b-empty" id="bYandex">—</span></div>
+      <div class="bd">
+        <div class="wb-row">
+          <label class="muted">Zoom</label>
+          <input type="range" id="yxZoom" min="12" max="19" value="17" style="flex:1;min-width:140px"/>
+          <span class="muted" id="yxZoomLbl">z17</span>
+          <button class="ghost" id="yxDl" style="padding:5px 9px;font-size:12px">⬇ PNG (Nord + échelle)</button>
+          <a id="yxOpen" href="#" target="_blank" rel="noopener"
+             style="font-size:12px;font-weight:600">Ouvrir Yandex Maps ↗</a>
+        </div>
+        <div class="yx-grid" id="yxGrid"></div>
+        <div class="src">Source : Yandex Satellite (projection ellipsoïdale corrigée).
+          Le téléchargement PNG (avec Nord + échelle) passe par un proxy CORS&nbsp;; la taille
+          suit le sélecteur « Taille / qualité » ci-dessus.</div>
+      </div>
+    </div>
+
+    <div class="card" id="cTopo">
+      <div class="hd" data-toggle>Cartes OpenTopoMap <span class="badge b-empty" id="bTopo">—</span></div>
+      <div class="bd">
+        <div class="gallery" id="topo"></div>
+        <div class="src">Source : OpenTopoMap (CC-BY-SA) · données © OpenStreetMap (ODbL).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Colonne droite : rapport -->
+  <div class="col">
+    <div class="card">
+      <div class="hd">Dossier
+        <span>Complétude : <span class="completeness" id="compl">—</span></span>
+      </div>
+      <div class="bd">
+        <div class="toolbar">
+          <button class="ghost" id="dlJson" disabled>⬇ JSON</button>
+          <button class="ghost" id="dlGeo" disabled>⬇ GeoJSON</button>
+          <button class="ghost" id="dlCsv" disabled>⬇ CSV</button>
+          <button class="ghost" id="dlHtml" disabled>⬇ Fiche HTML</button>
+          <button class="ghost" id="dlPdf" disabled>🖨 PDF / Imprimer</button>
+          <button class="ghost" id="copyReport" disabled>⧉ Copier le rapport</button>
+          <span class="muted" id="genAt"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="sections"></div>
+  </div>
+</div>
+</div><!-- /tab-analyse -->
+
+<div id="tab-annotate" class="tabpanel" style="display:none">
+  <div class="wrap" style="grid-template-columns:1fr">
+    <div class="col">
+      <div class="card">
+        <div class="hd">Annoter des images téléchargées — Nord & échelle</div>
+        <div class="bd">
+          <p class="muted" style="margin-top:0">
+            Déposez des images (captures satellite, plans…). L'échelle est lue d'abord dans les
+            <b>métadonnées PNG</b> (les images exportées par cet outil l'embarquent), puis à défaut
+            dans le <b>nom du fichier</b> (ex. «&nbsp;…_200m.png&nbsp;», «&nbsp;…_1.5km.png&nbsp;»).
+            Les fichiers <b>.crdownload</b> (téléchargements interrompus mais complets) sont acceptés.
+            Une <b>flèche Nord</b> et une <b>barre d'échelle</b> sont ajoutées ; la valeur reste
+            modifiable image par image.
+          </p>
+          <div id="dropzone" class="dropzone">
+            Glissez des images ici, ou cliquez pour choisir des fichiers
+            <input type="file" id="fileInput" accept="image/*,.crdownload" multiple style="display:none"/>
+          </div>
+          <div class="searchbar" style="margin-top:10px;align-items:center">
+            <label class="muted">Le nombre du nom de fichier =</label>
+            <select id="scaleMeaning">
+              <option value="width">largeur totale de l'image</option>
+              <option value="bar">longueur de la barre d'échelle</option>
+            </select>
+            <label class="muted">Flèche Nord</label>
+            <select id="northPos">
+              <option value="tr">en haut à droite</option>
+              <option value="tl">en haut à gauche</option>
+              <option value="br">en bas à droite</option>
+            </select>
+            <button class="ghost" id="dlAllAnnot" disabled>⬇ Tout retélécharger</button>
+            <button class="ghost" id="clearAnnot" disabled>Vider</button>
+          </div>
+          <div id="annotList" class="annotgrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /tab-annotate -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+"use strict";
+/* ============================================================
+   Outil interne d'analyse géographique — interface autonome.
+   Tout s'exécute dans le navigateur, à partir d'APIs publiques.
+   Aucune donnée n'est inventée : ce qui manque est marqué « non disponible ».
+   ============================================================ */
+
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const TOPO = "https://a.tile.opentopomap.org/{z}/{x}/{y}.png";
+const OSM  = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+let LAT = 46.2074, LON = 6.1559, LABEL = "";   // Jet d'eau de Genève (point par défaut)
+let REPORT = null;
+const $ = (id)=>document.getElementById(id);
+
+/* ---------------- Conversions de coordonnées (côté client) ----------- */
+function toDMS(lat,lon){
+  const f=(v,p,n)=>{const h=v>=0?p:n;v=Math.abs(v);const d=Math.floor(v);
+    const mf=(v-d)*60;const m=Math.floor(mf);const s=((mf-m)*60).toFixed(1);
+    return `${d}°${String(m).padStart(2,"0")}'${s}"${h}`;};
+  return `${f(lat,"N","S")} ${f(lon,"E","O")}`;
+}
+function toWebMercator(lat,lon){
+  const x=lon*20037508.34/180;
+  let y=Math.log(Math.tan((90+lat)*Math.PI/360))/(Math.PI/180);
+  y=y*20037508.34/180;return [x.toFixed(2),y.toFixed(2)];
+}
+function toGeohash(lat,lon,prec=11){
+  const b32="0123456789bcdefghjkmnpqrstuvwxyz";let idx=0,bit=0,even=true,gh="";
+  let latI=[-90,90],lonI=[-180,180];
+  while(gh.length<prec){
+    if(even){const mid=(lonI[0]+lonI[1])/2;
+      if(lon>mid){idx=idx*2+1;lonI[0]=mid;}else{idx*=2;lonI[1]=mid;}}
+    else{const mid=(latI[0]+latI[1])/2;
+      if(lat>mid){idx=idx*2+1;latI[0]=mid;}else{idx*=2;latI[1]=mid;}}
+    even=!even;if(++bit==5){gh+=b32[idx];bit=0;idx=0;}
+  }return gh;
+}
+function toUTM(lat,lon){
+  if(lat<-80||lat>84)return null;
+  const a=6378137,f=1/298.257223563,k0=0.9996,e2=f*(2-f),ep2=e2/(1-e2);
+  const zone=Math.floor((lon+180)/6)+1;
+  const lon0=((zone-1)*6-180+3)*Math.PI/180, lr=lat*Math.PI/180, ln=lon*Math.PI/180;
+  const N=a/Math.sqrt(1-e2*Math.sin(lr)**2), T=Math.tan(lr)**2, C=ep2*Math.cos(lr)**2;
+  const A=Math.cos(lr)*(ln-lon0);
+  const M=a*((1-e2/4-3*e2**2/64-5*e2**3/256)*lr
+    -(3*e2/8+3*e2**2/32+45*e2**3/1024)*Math.sin(2*lr)
+    +(15*e2**2/256+45*e2**3/1024)*Math.sin(4*lr)
+    -(35*e2**3/3072)*Math.sin(6*lr));
+  let easting=k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T**2+72*C-58*ep2)*A**5/120)+500000;
+  let northing=k0*(M+N*Math.tan(lr)*(A**2/2+(5-T+9*C+4*C**2)*A**4/24
+    +(61-58*T+T**2+600*C-330*ep2)*A**6/720));
+  let hemi="N";if(lat<0){northing+=1e7;hemi="S";}
+  return `${zone}${hemi} ${Math.round(easting)}m E ${Math.round(northing)}m N`;
+}
+function inSwitzerland(lat,lon){return lat>=45.8&&lat<=47.85&&lon>=5.85&&lon<=10.55;}
+function haversine(a,b,c,d){const R=6371008.8,t=x=>x*Math.PI/180;
+  const dp=t(c-a),dl=t(d-b);const x=Math.sin(dp/2)**2+Math.cos(t(a))*Math.cos(t(c))*Math.sin(dl/2)**2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(x)));}
+function bearing(a,b,c,d){const t=x=>x*Math.PI/180;const y=Math.sin(t(d-b))*Math.cos(t(c));
+  const x=Math.cos(t(a))*Math.sin(t(c))-Math.sin(t(a))*Math.cos(t(c))*Math.cos(t(d-b));
+  return (Math.atan2(y,x)*180/Math.PI+360)%360;}
+function cardinal(b){return ["N","NE","E","SE","S","SO","O","NO"][Math.round(b/45)%8];}
+function fmtDist(m){return m>=1000?`${(m/1000).toFixed(1)} km`:`${Math.round(m)} m`;}
+
+function coordSet(lat,lon){
+  const wm=toWebMercator(lat,lon);
+  const o={
+    "Décimal":`${lat.toFixed(6)}, ${lon.toFixed(6)}`,
+    "DMS":toDMS(lat,lon),
+    "UTM":toUTM(lat,lon),
+    "MGRS":toMGRS(lat,lon),
+    "GeoHash":toGeohash(lat,lon),
+    "Plus Code (OLC)":olcEncode(lat,lon,11),
+    "EPSG:3857":`${wm[0]}, ${wm[1]}`,
+  };
+  if(inSwitzerland(lat,lon)) o["Suisse (approx.)"]="point en Suisse — LV95 calculé dans l'app Python";
+  return o;
+}
+
+/* ---------------- Plus Code (Open Location Code) ----------------
+   Implémentation conforme à la spécification Google OLC (algorithme ouvert,
+   calculé localement — aucune requête réseau). */
+const OLC_ALPHA="23456789CFGHJMPQRVWX";
+const OLC_SEP="+", OLC_SEPPOS=8, OLC_PAD="0";
+const OLC_PAIR_RES=[20.0,1.0,0.05,0.0025,0.000125];
+const OLC_GRID_COLS=4, OLC_GRID_ROWS=5, OLC_GRID_DEG=0.000125;
+function olcEncode(lat,lon,len){
+  len=Math.min(len||10,15);
+  lat=Math.min(90,Math.max(-90,lat));
+  lon=((lon%360)+540)%360-180;
+  if(lat===90)lat-=0.9*OLC_GRID_DEG;
+  let code="",aLat=lat+90,aLon=lon+180,n=0;
+  while(n<Math.min(len,10)){
+    const pv=OLC_PAIR_RES[Math.floor(n/2)];
+    let dv=Math.floor(aLat/pv);aLat-=dv*pv;code+=OLC_ALPHA[dv];n++;
+    dv=Math.floor(aLon/pv);aLon-=dv*pv;code+=OLC_ALPHA[dv];n++;
+    if(n===OLC_SEPPOS&&n<len)code+=OLC_SEP;
+  }
+  if(len>10){
+    let lp=OLC_GRID_DEG,gp=OLC_GRID_DEG;
+    let gLat=(lat+90)%lp,gLon=(lon+180)%gp;
+    for(let i=10;i<len;i++){
+      const r=Math.floor(gLat/(lp/OLC_GRID_ROWS)), c=Math.floor(gLon/(gp/OLC_GRID_COLS));
+      gLat-=r*(lp/OLC_GRID_ROWS);gLon-=c*(gp/OLC_GRID_COLS);
+      lp/=OLC_GRID_ROWS;gp/=OLC_GRID_COLS;
+      code+=OLC_ALPHA[r*OLC_GRID_COLS+c];
+    }
+  }
+  if(code.length<OLC_SEPPOS)code+=OLC_PAD.repeat(OLC_SEPPOS-code.length);
+  if(code.length===OLC_SEPPOS)code+=OLC_SEP;
+  return code;
+}
+
+/* ---------------- MGRS (à partir d'UTM/WGS84) ---------------- */
+function utmNum(lat,lon){
+  const a=6378137,f=1/298.257223563,k0=0.9996,e2=f*(2-f),ep2=e2/(1-e2);
+  const zone=Math.floor((lon+180)/6)+1;
+  const lon0=((zone-1)*6-180+3)*Math.PI/180, lr=lat*Math.PI/180, ln=lon*Math.PI/180;
+  const N=a/Math.sqrt(1-e2*Math.sin(lr)**2), T=Math.tan(lr)**2, C=ep2*Math.cos(lr)**2;
+  const A=Math.cos(lr)*(ln-lon0);
+  const M=a*((1-e2/4-3*e2**2/64-5*e2**3/256)*lr
+    -(3*e2/8+3*e2**2/32+45*e2**3/1024)*Math.sin(2*lr)
+    +(15*e2**2/256+45*e2**3/1024)*Math.sin(4*lr)
+    -(35*e2**3/3072)*Math.sin(6*lr));
+  let easting=k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T**2+72*C-58*ep2)*A**5/120)+500000;
+  let northing=k0*(M+N*Math.tan(lr)*(A**2/2+(5-T+9*C+4*C**2)*A**4/24
+    +(61-58*T+T**2+600*C-330*ep2)*A**6/720));
+  if(lat<0)northing+=1e7;
+  return {zone,easting,northing};
+}
+function toMGRS(lat,lon){
+  if(lat<-80||lat>84)return null;
+  const {zone,easting,northing}=utmNum(lat,lon);
+  const bands="CDEFGHJKLMNPQRSTUVWX";
+  const band=bands[Math.min(19,Math.max(0,Math.floor((lat+80)/8)))];
+  const colSets=["ABCDEFGH","JKLMNPQR","STUVWXYZ"];
+  const colSet=colSets[(zone-1)%3];
+  const col=colSet[Math.max(0,Math.min(7,Math.floor(easting/100000)-1))];
+  const rowAlpha="ABCDEFGHJKLMNPQRSTUV";
+  let rowIdx=Math.floor(northing/100000)%20;
+  if(zone%2===0)rowIdx=(rowIdx+5)%20;
+  const row=rowAlpha[rowIdx];
+  const e5=String(Math.floor(easting%100000)).padStart(5,"0");
+  const n5=String(Math.floor(northing%100000)).padStart(5,"0");
+  return `${zone}${band} ${col}${row} ${e5} ${n5}`;
+}
+
+/* ---------------- Décodage MGRS -> lat,lon (recherche par MGRS) ---------------- */
+const MGRS_COL_LETTERS="AJSAJS", MGRS_ROW_LETTERS="AFAFAF";
+function mgrsMinNorthing(b){const v={C:1.1,D:2.0,E:2.8,F:3.7,G:4.6,H:5.5,J:6.4,K:7.3,L:8.2,
+  M:9.1,N:0,P:0.8,Q:1.9,R:2.7,S:3.6,T:4.5,U:5.5,V:6.4,W:7.3,X:8.2}[b];return v==null?0:v*1e6;}
+function mgrsToLatLon(str){
+  if(!str)return null;
+  const s=String(str).toUpperCase().replace(/\s+/g,"");
+  const m=s.match(/^(\d{1,2})([C-HJ-NP-X])([A-HJ-NP-Z])([A-HJ-NP-V])(\d*)$/);
+  if(!m)return null;
+  const zone=+m[1], band=m[2], colL=m[3], rowL=m[4], digits=m[5];
+  if(zone<1||zone>60||digits.length%2!==0)return null;
+  const setIdx=(zone-1)%6, A=65,I=73,O=79,Z=90,V=86;
+  let e100k=1e5, cur=MGRS_COL_LETTERS.charCodeAt(setIdx);
+  while(cur!==colL.charCodeAt(0)){cur++;if(cur===I)cur++;if(cur===O)cur++;if(cur>Z)cur=A;e100k+=1e5;}
+  let n100k=0; cur=MGRS_ROW_LETTERS.charCodeAt(setIdx);
+  while(cur!==rowL.charCodeAt(0)){cur++;if(cur===I)cur++;if(cur===O)cur++;if(cur>V)cur=A;n100k+=1e5;}
+  while(n100k<mgrsMinNorthing(band)) n100k+=2e6;
+  let easting=e100k, northing=n100k;
+  if(digits.length){const half=digits.length/2, f=1e5/Math.pow(10,half);
+    easting+=parseInt(digits.slice(0,half),10)*f + f/2;
+    northing+=parseInt(digits.slice(half),10)*f + f/2;}
+  return utmToLatLon(zone, band>="N", easting, northing);
+}
+function utmToLatLon(zone,north,easting,northing){
+  const a=6378137, e2=0.00669438, e1=(1-Math.sqrt(1-e2))/(1+Math.sqrt(1-e2));
+  const x=easting-500000; let y=northing; if(!north)y-=1e7;
+  const M=y/0.9996, mu=M/(a*(1-e2/4-3*e2*e2/64-5*Math.pow(e2,3)/256)), ep2=e2/(1-e2);
+  const phi=mu+(3*e1/2-27*Math.pow(e1,3)/32)*Math.sin(2*mu)
+    +(21*e1*e1/16-55*Math.pow(e1,4)/32)*Math.sin(4*mu)
+    +(151*Math.pow(e1,3)/96)*Math.sin(6*mu);
+  const sp=Math.sin(phi), N1=a/Math.sqrt(1-e2*sp*sp), T1=Math.tan(phi)**2,
+    C1=ep2*Math.cos(phi)**2, R1=a*(1-e2)/Math.pow(1-e2*sp*sp,1.5), D=x/(N1*0.9996);
+  const lat=(phi-(N1*Math.tan(phi)/R1)*(D*D/2-(5+3*T1+10*C1-4*C1*C1-9*ep2)*Math.pow(D,4)/24
+    +(61+90*T1+298*C1+45*T1*T1-252*ep2-3*C1*C1)*Math.pow(D,6)/720))*180/Math.PI;
+  const lon0=(zone-1)*6-180+3;
+  const lon=lon0+(D-(1+2*T1+C1)*Math.pow(D,3)/6
+    +(5-2*C1+28*T1-3*C1*C1+8*ep2+24*T1*T1)*Math.pow(D,5)/120)/Math.cos(phi)*180/Math.PI;
+  if(!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>90)return null;
+  return {lat,lon};
+}
+// Interprète la saisie comme coordonnées : décimal « 48.85, 2.29 » ou MGRS « 31U DQ 48251 11932 ».
+function parseCoordInput(q){
+  const s=(q||"").trim();
+  const dm=s.match(/^(-?\d{1,3}(?:[.,]\d+)?)[,;\s]+(-?\d{1,3}(?:[.,]\d+)?)$/);
+  if(dm){const la=parseFloat(dm[1].replace(",",".")), lo=parseFloat(dm[2].replace(",","."));
+    if(isFinite(la)&&isFinite(lo)&&Math.abs(la)<=90&&Math.abs(lo)<=180)return {lat:la,lon:lo,kind:"décimal"};}
+  const mg=mgrsToLatLon(s);
+  if(mg)return {lat:mg.lat,lon:mg.lon,kind:"MGRS"};
+  return null;
+}
+
+
+/* ---------------- Wikipédia à proximité ---------------- */
+async function wikipediaNearby(lat,lon){
+  const url=`https://fr.wikipedia.org/w/api.php?action=query&format=json&origin=*`+
+    `&list=geosearch&gscoord=${lat}%7C${lon}&gsradius=10000&gslimit=30`;
+  const d=await jget(url);
+  const arr=(d.query&&d.query.geosearch)||[];
+  if(!arr.length)return {name:"wikipedia",title:"Wikipédia à proximité",empty:true,
+    src:{s:"Wikipédia (geosearch)",u:"https://fr.wikipedia.org",l:"CC BY-SA 4.0"}};
+  const items=arr.map(g=>({name:g.title,lat:g.lat,lon:g.lon,dist:g.dist,
+    dir:cardinal(bearing(lat,lon,g.lat,g.lon)),kind:"article",
+    url:`https://fr.wikipedia.org/?curid=${g.pageid}`})).sort((a,b)=>a.dist-b.dist);
+  return {name:"wikipedia",title:"Wikipédia à proximité",items,
+    src:{s:"Wikipédia (geosearch)",u:"https://fr.wikipedia.org",l:"CC BY-SA 4.0"}};
+}
+
+/* ---------------- Photos géolocalisées (Wikimedia Commons) ---------------- */
+async function commonsPhotos(lat,lon){
+  const url=`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*`+
+    `&generator=geosearch&ggscoord=${lat}%7C${lon}&ggsradius=10000&ggslimit=24&ggsnamespace=6`+
+    `&prop=imageinfo|coordinates&iiprop=url|extmetadata&iiurlwidth=240`;
+  const d=await jget(url);
+  const pages=(d.query&&d.query.pages)||{};
+  const arr=Object.values(pages).map(p=>{
+    const ii=(p.imageinfo||[])[0]||{}, co=(p.coordinates||[])[0]||{};
+    return {title:(p.title||"").replace(/^File:/,"").replace(/\.[a-z0-9]+$/i,""),
+      thumb:ii.thumburl,desc:ii.descriptionurl,
+      lat:co.lat,lon:co.lon,
+      dist:(co.lat!=null)?haversine(lat,lon,co.lat,co.lon):1e12};
+  }).filter(x=>x.thumb).sort((a,b)=>a.dist-b.dist);
+  return arr;
+}
+
+/* ---------------- Distances vers grandes villes ---------------- */
+const BIG_CITIES=[
+  ["Paris",48.8566,2.3522],["Londres",51.5074,-0.1278],["Berlin",52.52,13.405],
+  ["Madrid",40.4168,-3.7038],["Rome",41.9028,12.4964],["Lisbonne",38.7223,-9.1393],
+  ["Amsterdam",52.3676,4.9041],["Bruxelles",50.8503,4.3517],["Vienne",48.2082,16.3738],
+  ["Zurich",47.3769,8.5417],["Genève",46.2044,6.1432],["Berne",46.948,7.4474],
+  ["Milan",45.4642,9.19],["Munich",48.1351,11.582],["Barcelone",41.3851,2.1734],
+  ["Lyon",45.764,4.8357],["Marseille",43.2965,5.3698],["Francfort",50.1109,8.6821],
+  ["Copenhague",55.6761,12.5683],["Stockholm",59.3293,18.0686],["Oslo",59.9139,10.7522],
+  ["Varsovie",52.2297,21.0122],["Prague",50.0755,14.4378],["Athènes",37.9838,23.7275],
+  ["Istanbul",41.0082,28.9784],["Moscou",55.7558,37.6173],["Dublin",53.3498,-6.2603],
+  ["New York",40.7128,-74.006],["Los Angeles",34.0522,-118.2437],["Chicago",41.8781,-87.6298],
+  ["Toronto",43.6532,-79.3832],["Mexico",19.4326,-99.1332],["São Paulo",-23.5505,-46.6333],
+  ["Buenos Aires",-34.6037,-58.3816],["Le Caire",30.0444,31.2357],["Lagos",6.5244,3.3792],
+  ["Johannesburg",-26.2041,28.0473],["Nairobi",-1.2921,36.8219],["Dubaï",25.2048,55.2708],
+  ["Mumbai",19.076,72.8777],["Delhi",28.7041,77.1025],["Pékin",39.9042,116.4074],
+  ["Shanghai",31.2304,121.4737],["Tokyo",35.6762,139.6503],["Séoul",37.5665,126.978],
+  ["Singapour",1.3521,103.8198],["Bangkok",13.7563,100.5018],["Sydney",-33.8688,151.2093],
+];
+function cityDistances(lat,lon){
+  const all=BIG_CITIES.map(([n,la,lo])=>({name:n,lat:la,lon:lo,
+    dist:haversine(lat,lon,la,lo),dir:cardinal(bearing(lat,lon,la,lo)),kind:"ville"}))
+    .sort((a,b)=>a.dist-b.dist);
+  const items=all.slice(0,8);
+  return {name:"villes",title:"Grandes villes les plus proches",items,
+    src:{s:"Calcul local (orthodromie)",u:"",l:"—"}};
+}
+
+/* ---------------- Liens vers outils externes ---------------- */
+function buildLinks(lat,lon){
+  const la=lat.toFixed(6), lo=lon.toFixed(6), z=16;
+  const olc=encodeURIComponent(olcEncode(lat,lon,11));
+  return [
+    {grp:"Cartes"},
+    {ic:"🗺️",t:"Google Maps",u:`https://www.google.com/maps/search/?api=1&query=${la},${lo}`},
+    {ic:"🌍",t:"Google Earth",u:`https://earth.google.com/web/@${la},${lo},0a,1000d,35y,0h,0t,0r`},
+    {ic:"📷",t:"Street View",u:`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${la},${lo}`},
+    {ic:"🅱️",t:"Bing Maps",u:`https://www.bing.com/maps?cp=${la}~${lo}&lvl=${z}&style=h`},
+    {ic:"🍎",t:"Apple Plans",u:`https://maps.apple.com/?ll=${la},${lo}&q=Point`},
+    {ic:"Я",t:"Yandex Maps",u:`https://yandex.com/maps/?pt=${lo},${la}&z=${z}&l=sat`},
+    {ic:"🧭",t:"OpenStreetMap",u:`https://www.openstreetmap.org/?mlat=${la}&mlon=${lo}#map=${z}/${la}/${lo}`},
+    {ic:"📐",t:"OSM (GeoHack)",u:`https://geohack.toolforge.org/geohack.php?params=${la};${lo}`},
+    {grp:"Imagerie & terrain"},
+    {ic:"🛰️",t:"Sentinel (EO)",u:`https://apps.sentinel-hub.com/eo-browser/?lat=${la}&lng=${lo}&zoom=13`},
+    {ic:"🌎",t:"NASA Worldview",u:`https://worldview.earthdata.nasa.gov/?v=${(lon-1).toFixed(3)},${(lat-0.6).toFixed(3)},${(lon+1).toFixed(3)},${(lat+0.6).toFixed(3)}`},
+    {ic:"📸",t:"Mapillary",u:`https://www.mapillary.com/app/?lat=${la}&lng=${lo}&z=${z}`},
+    {ic:"🛣️",t:"KartaView",u:`https://kartaview.org/map/@${la},${lo},${z}z`},
+    {ic:"🗾",t:"Wikimapia",u:`https://wikimapia.org/#lang=fr&lat=${la}&lon=${lo}&z=${z}`},
+    {grp:"Coordonnées & autres"},
+    {ic:"🔤",t:"Plus Code",u:`https://plus.codes/${olc}`},
+    {ic:"🟥",t:"what3words",u:`https://what3words.com/?maptype=satellite&map=${la},${lo},${z}`},
+    {ic:"🇫🇷",t:"Géoportail",u:`https://www.geoportail.gouv.fr/carte?c=${lo},${la}&z=${z}&l0=ORTHOIMAGERY.ORTHOPHOTOS`},
+    {ic:"🇨🇭",t:"Swisstopo",u:`https://map.geo.admin.ch/?swisssearch=${la},${lo}&zoom=8`},
+    {ic:"🌬️",t:"Windy",u:`https://www.windy.com/?${la},${lo},${z>11?11:z}`},
+    {ic:"☀️",t:"SunCalc",u:`https://www.suncalc.org/#/${la},${lo},${z}/`},
+    {ic:"✈️",t:"Flightradar24",u:`https://www.flightradar24.com/${la},${lo}/${z>11?11:z}`},
+    {ic:"🚢",t:"MarineTraffic",u:`https://www.marinetraffic.com/en/ais/home/centerx:${lo}/centery:${la}/zoom:10`},
+    {ic:"🔎",t:"Overpass Turbo",u:`https://overpass-turbo.eu/?lat=${la}&lon=${lo}&zoom=${z}`},
+  ];
+}
+function renderLinks(){
+  const host=$("links");if(!host)return;
+  const links=buildLinks(LAT,LON);
+  host.innerHTML=links.map(l=>l.grp
+    ?`<div class="grp">${esc(l.grp)}</div>`
+    :`<a href="${l.u}" target="_blank" rel="noopener noreferrer"><span class="ic">${l.ic}</span>${esc(l.t)}</a>`
+  ).join("");
+}
+
+/* ---------------- Carte Leaflet ---------------- */
+let map, marker, layerCtl;
+function initMap(){
+  map=L.map("map",{zoomControl:true}).setView([LAT,LON],14);
+  const topo=L.tileLayer(TOPO,{maxZoom:17,attribution:"© OpenTopoMap (CC-BY-SA) · © OSM"}).addTo(map);
+  const osm=L.tileLayer(OSM,{maxZoom:19,attribution:"© OpenStreetMap"});
+  const sat=L.tileLayer(ESRI,{maxZoom:20,maxNativeZoom:19,attribution:"© Esri, Maxar, Earthstar Geographics"});
+  layerCtl=L.control.layers({"OpenTopoMap":topo,"OSM standard":osm,"Esri satellite":sat},null,{collapsed:false}).addTo(map);
+  L.control.scale({imperial:false,metric:true}).addTo(map);     // barre d'échelle
+  // Flèche Nord (contrôle personnalisé)
+  const North=L.Control.extend({options:{position:"topright"},
+    onAdd:function(){const d=L.DomUtil.create("div","north");d.innerHTML="↑<br><small>Nord</small>";return d;}});
+  map.addControl(new North());
+  marker=L.marker([LAT,LON],{draggable:true}).addTo(map);
+  marker.on("dragend",e=>{const p=e.target.getLatLng();setPoint(p.lat,p.lng,"");});
+  map.on("click",e=>{if(MEASURING){addMeasureVertex(e.latlng);return;}setPoint(e.latlng.lat,e.latlng.lng,"");});
+  map.on("dblclick",()=>{if(MEASURING)setMeasuring(false);});
+  // Mémorise le fond de carte actif (pour « Vue principale »).
+  map.on("baselayerchange",e=>{
+    CURRENT_BASE = e.name.indexOf("Esri")>=0?BASES.esri
+                 : e.name.indexOf("OSM")>=0?BASES.osm : BASES.topo;});
+}
+function setPoint(lat,lon,label){
+  LAT=lat;LON=lon;LABEL=label;
+  marker.setLatLng([lat,lon]);
+  $("ll").textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+  $("placelabel").textContent=label?` · ${label}`:"";
+  renderLinks();
+  syncImagery();
+  updateHash();
+}
+function updateHash(){
+  try{const z=map?Math.round(map.getZoom()):15;
+    history.replaceState(null,"",`#${z}/${LAT.toFixed(5)}/${LON.toFixed(5)}`);}catch(e){}
+}
+function shareURL(){
+  const z=map?Math.round(map.getZoom()):15;
+  return `${location.origin}${location.pathname}#${z}/${LAT.toFixed(5)}/${LON.toFixed(5)}`;
+}
+async function copyText(txt,btn){
+  const ok=()=>{if(btn){const o=btn.textContent;btn.textContent="✓ copié";setTimeout(()=>btn.textContent=o,1200);}};
+  try{await navigator.clipboard.writeText(txt);ok();}
+  catch(e){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);
+    ta.select();try{document.execCommand("copy");ok();}catch(_){}ta.remove();}
+}
+
+/* ---------------- Appels APIs ---------------- */
+const UA = "?email=contact@exemple.org";  // courtoisie Nominatim
+async function jget(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(r.status);return r.json();}
+
+async function searchPlaces(q){
+  const url=`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=fr&q=${encodeURIComponent(q)}`;
+  try{return await jget(url);}catch(e){return [];}
+}
+async function reverse(lat,lon){
+  const url=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=fr&addressdetails=1&lat=${lat}&lon=${lon}`;
+  const d=await jget(url);const a=d.address||{};
+  const data={
+    "Adresse":d.display_name,"Type":d.type,"Catégorie":d.category,
+    "Pays":a.country,"Région":a.state||a.region,"Département":a.county,
+    "Commune":a.city||a.town||a.village||a.municipality,
+    "Quartier":a.suburb||a.neighbourhood||a.quarter,"Code postal":a.postcode,
+  };
+  return {name:"identite",title:"Identité du lieu",data:clean(data),
+    src:{s:"Nominatim (OSM)",u:url,l:"ODbL 1.0"}};
+}
+async function elevation(lat,lon){
+  const o=0.0025;
+  const pts=[[lat,lon],[lat+o,lon],[lat-o,lon],[lat,lon+o],[lat,lon-o]];
+  const url=`https://api.open-meteo.com/v1/elevation?latitude=${pts.map(p=>p[0]).join(",")}&longitude=${pts.map(p=>p[1]).join(",")}`;
+  const d=await jget(url);const e=d.elevation;
+  if(!e||!e.length)throw new Error("vide");
+  const data={"Altitude (m)":Math.round(e[0]),
+    "Altitude min (m)":Math.round(Math.min(...e)),
+    "Altitude max (m)":Math.round(Math.max(...e))};
+  if(e.length===5){const dz=Math.hypot(e[1]-e[2],e[3]-e[4]);const dist=haversine(lat,lon,lat+o,lon);
+    const slope=dist?dz/(2*dist):0;data["Pente (%)"]=(slope*100).toFixed(1);
+    const aspect=(Math.atan2(-(e[3]-e[4]),-(e[1]-e[2]))*180/Math.PI+360)%360;
+    data["Orientation"]=cardinal(aspect);}
+  return {name:"relief",title:"Géographie & relief",data:clean(data),
+    src:{s:"Open-Meteo Elevation (Copernicus DEM)",u:url,l:"CC BY 4.0"}};
+}
+
+/* Overpass — features OSM (plusieurs miroirs, GET, repli automatique) */
+const OVERPASS_ENDPOINTS=[
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass.openstreetmap.ru/api/interpreter",
+];
+async function overpass(query){
+  const body="data="+encodeURIComponent(query);
+  let lastErr;
+  // 1) POST direct (méthode canonique d'Overpass ; sur réponse 200 il renvoie
+  //    Access-Control-Allow-Origin:* — fonctionne même en file://).
+  for(const ep of OVERPASS_ENDPOINTS){
+    try{
+      const r=await fetch(ep,{method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
+      if(r.ok) return await r.json();
+      lastErr=new Error("HTTP "+r.status+" ("+host(ep)+")");
+    }catch(e){lastErr=new Error("réseau/CORS ("+host(ep)+")");}
+  }
+  // 2) Repli via proxy CORS (secours si origine « null » et erreurs serveur).
+  for(const ep of OVERPASS_ENDPOINTS){
+    try{
+      const target=ep+"?data="+encodeURIComponent(query);
+      const r=await fetch("https://api.allorigins.win/raw?url="+encodeURIComponent(target));
+      if(r.ok) return await r.json();
+    }catch(e){lastErr=new Error("proxy ("+host(ep)+")");}
+  }
+  throw lastErr||new Error("Overpass indisponible");
+}
+function host(u){try{return new URL(u).host;}catch(e){return u;}}
+// Normalise un nom pour le dédoublonnage : minuscules, sans accents, sans
+// ponctuation (« Le Nôtre » == « Le Notre », « Rapp - X » == « Rapp – X »).
+function normName(s){return (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  .toLowerCase().replace(/[^a-z0-9]+/g," ").trim();}
+
+function parseEls(json,lat,lon,requireName=true,limit=40){
+  const raw=[];
+  for(const el of (json.elements||[])){
+    const t=el.tags||{};const name=t.name;
+    if(requireName&&!name)continue;
+    let elat=el.lat,elon=el.lon;
+    if(elat==null&&el.center){elat=el.center.lat;elon=el.center.lon;}
+    if(elat==null)continue;
+    const kind=kindOf(t);
+    raw.push({name:name||"",lat:elat,lon:elon,    // jamais le « type » comme titre
+      dist:haversine(lat,lon,elat,elon),
+      dir:cardinal(bearing(lat,lon,elat,elon)),kind,tags:t,
+      _key:normName(name)|| ("__"+kind)});  // unnamed -> regroupé par type
+  }
+  // Tri par distance PUIS dédup par nom (on garde l'occurrence la plus proche).
+  raw.sort((a,b)=>a.dist-b.dist);
+  const seen=new Set();const out=[];
+  for(const it of raw){if(seen.has(it._key))continue;seen.add(it._key);
+    delete it._key;out.push(it);}
+  return out.slice(0,limit);
+}
+function kindOf(t){for(const k of["amenity","shop","tourism","leisure","railway","highway","public_transport","aeroway","natural","landuse","waterway","boundary"])if(t[k])return `${k}=${t[k]}`;return"feature";}
+
+// UNE seule requête Overpass (évite la limite de connexions simultanées des
+// serveurs publics, cause des « Failed to fetch »), puis on répartit par
+// catégorie selon les tags.
+async function osmBundle(lat,lon){
+  const r=1800, rEnv=5000, rT=8000, rA=20000;
+  const q=`[out:json][timeout:25];(`+
+    `way["highway"~"motorway|trunk|primary|secondary|tertiary"](around:1300,${lat},${lon});`+
+    `way["railway"~"rail|tram|subway|light_rail"](around:1300,${lat},${lon});`+
+    // Transports : uniquement les gares / haltes ferroviaires (pas de bus).
+    `node["railway"~"station|halt"]["name"](around:${rT},${lat},${lon});`+
+    `way["railway"~"station|halt"]["name"](around:${rT},${lat},${lon});`+
+    `node["aeroway"="aerodrome"](around:${rA},${lat},${lon});`+
+    `way["aeroway"="aerodrome"](around:${rA},${lat},${lon});`+
+    `node["amenity"~"restaurant|cafe|fast_food|bar|hospital|clinic|pharmacy|school|college|university|bank|police|post_office|library|place_of_worship|townhall|marketplace"](around:${r},${lat},${lon});`+
+    `node["shop"](around:${r},${lat},${lon});`+
+    `node["tourism"~"museum|hotel|attraction|viewpoint"](around:${r},${lat},${lon});`+
+    `way["natural"~"wood|water|peak|wetland|beach|cliff|glacier"](around:${rEnv},${lat},${lon});`+
+    `way["landuse"~"forest|meadow|farmland|vineyard"](around:${rEnv},${lat},${lon});`+
+    // Voies d'eau « empruntables » seulement : rivières et canaux (pas les ruisseaux/fossés).
+    `way["waterway"~"river|canal"](around:${rEnv},${lat},${lon});`+
+    `way["leisure"="park"](around:${rEnv},${lat},${lon});`+
+    `node["natural"="peak"](around:${rEnv},${lat},${lon});`+
+    `);out center tags;`;   // pas de plafond : sinon les nœuds (POI) évincent les voies (routes)
+
+  let json;
+  try{ json=await overpass(q); }
+  catch(e){ const err=String(e.message||e);
+    return {poi:errSec("poi","Points d'intérêt",err),
+            transports:errSec("transports","Transports",err),
+            reseau:errSec("reseau","Réseau routier & ferré",err),
+            environnement:errSec("environnement","Environnement naturel",err)};
+  }
+
+  const RAIL_NET=new Set(["rail","tram","subway","light_rail"]);
+  const RAIL_STOP=new Set(["station","halt"]);     // gares & haltes ferroviaires (pas de bus/tram)
+  const cat={reseau:[],transports:[],poi:[],environnement:[],places:[]};
+  for(const el of (json.elements||[])){
+    const t=el.tags||{};
+    if(t.place&&/^(city|town|village)$/.test(t.place)) cat.places.push(el);
+    else if((t.highway&&/^(motorway|trunk|primary|secondary|tertiary)$/.test(t.highway))
+       ||(t.railway&&RAIL_NET.has(t.railway))) cat.reseau.push(el);
+    else if((t.railway&&RAIL_STOP.has(t.railway))||t.aeroway==="aerodrome") cat.transports.push(el);
+    else if(t.amenity||t.shop||t.tourism) cat.poi.push(el);
+    else if(t.natural||t.landuse||t.waterway||t.leisure==="park") cat.environnement.push(el);
+  }
+  // 2e requête (séquentielle) : axes majeurs les plus proches, à large rayon
+  // (l'autoroute peut être bien au-delà du rayon local de 1300 m).
+  let axes=[];
+  try{
+    const qa=`[out:json][timeout:25];(`+
+      `way["highway"~"motorway|motorway_link"](around:35000,${lat},${lon});`+
+      `way["highway"~"trunk|trunk_link"](around:18000,${lat},${lon});`+
+      `way["highway"="secondary"](around:4000,${lat},${lon});`+
+      `);out center tags;`;
+    const ja=await overpass(qa);
+    axes=parseEls(ja,lat,lon,false,60);
+  }catch(e){/* l'accès dégrade proprement si cette requête échoue */}
+
+  // On veut TOUJOURS afficher l'autoroute la plus proche : si aucune n'a été
+  // trouvée dans le rayon initial, on élargit progressivement jusqu'à en trouver une.
+  if(!axes.some(i=>/^motorway/.test((i.tags||{}).highway||""))){
+    for(const R of [80000,160000,320000]){
+      try{
+        const jm=await overpass(`[out:json][timeout:30];`+
+          `way["highway"="motorway"](around:${R},${lat},${lon});out center tags;`);
+        const mo=parseEls(jm,lat,lon,false,500).filter(i=>(i.tags||{}).highway==="motorway");
+        if(mo.length){axes=axes.concat(mo);break;}
+      }catch(e){/* on tente le rayon suivant */}
+    }
+  }
+
+  // 3e requête (séparée) : villes/métropole. Isolée car le large rayon (place=city)
+  // peut être lourd ; un échec ici ne doit PAS vider le reste du rapport.
+  try{
+    const qp=`[out:json][timeout:30];(`+
+      `node["place"="city"]["name"](around:150000,${lat},${lon});`+
+      `node["place"="town"]["name"](around:45000,${lat},${lon});`+
+      `node["place"="village"]["name"](around:10000,${lat},${lon});`+
+      `);out tags;`;
+    const jp=await overpass(qp);
+    cat.places=(jp.elements||[]).filter(el=>(el.tags||{}).place);
+  }catch(e){/* repli : grandes villes (cityDistances) */}
+
+  const villes=placesSection(cat.places,lat,lon);
+  const out={
+    poi:        secItems("poi","Points d'intérêt",            parseEls({elements:cat.poi},lat,lon,true)),
+    transports: secItems("transports","Gares & aéroports",   parseEls({elements:cat.transports},lat,lon,true)),
+    reseau:     secItems("reseau","Réseau routier & ferré",  parseEls({elements:cat.reseau},lat,lon,false)),
+    environnement: secItems("environnement","Environnement naturel", parseEls({elements:cat.environnement},lat,lon,false)),
+    axes,
+  };
+  if(villes) out.villes=villes;     // sinon on garde le repli « grandes villes » (cityDistances)
+  return out;
+}
+
+/* Villes / métropole les plus proches — données réelles OSM (place=city|town|village).
+   On met en avant la métropole (place=city) la plus proche, même éloignée. */
+function placesSection(els,lat,lon){
+  if(!els||!els.length)return null;
+  const arr=els.map(el=>{const t=el.tags||{};
+    return {name:t.name,lat:el.lat,lon:el.lon,
+      dist:haversine(lat,lon,el.lat,el.lon),
+      dir:cardinal(bearing(lat,lon,el.lat,el.lon)),
+      place:t.place,pop:+(t.population||0),
+      kind:t.place==="city"?"ville":t.place==="town"?"commune":"village"};
+  }).filter(x=>x.lat!=null&&x.name).sort((a,b)=>a.dist-b.dist);
+  const seen=new Set(),list=[];
+  for(const it of arr){const k=normName(it.name);if(seen.has(k))continue;seen.add(k);list.push(it);}
+  const metro=list.filter(x=>x.place==="city").sort((a,b)=>a.dist-b.dist)[0]
+            || list.slice().sort((a,b)=>(b.pop||0)-(a.pop||0))[0];
+  if(metro)metro.kind="métropole la plus proche";
+  return {name:"villes",title:"Villes proches & métropole",items:list.slice(0,12),
+    metroLabel:metro?`${metro.name} — ${fmtDist(metro.dist)} ${metro.dir}`:null,
+    src:{s:"Overpass (OSM) · place=city/town/village",u:"https://overpass-api.de/",l:"ODbL 1.0"}};
+}
+const OSM_SRC={s:"Overpass (OSM)",u:"https://overpass-api.de/",l:"ODbL 1.0"};
+function secItems(name,title,items){
+  if(!items||!items.length)return {name,title,empty:true,src:OSM_SRC};
+  return {name,title,items,src:OSM_SRC};
+}
+function errSec(name,title,err){return {name,title,error:err,src:OSM_SRC};}
+
+/* Mesures d'accès dérivées */
+function axisLabel(it){const ref=(it.tags||{}).ref;const nm=it.name&&!/^highway=/.test(it.name)?it.name:null;
+  const lbl=[ref,nm].filter(Boolean).join(" · ")||"route";
+  return `${lbl} — ${fmtDist(it.dist)} ${it.dir}`;}
+function buildAccess(report){
+  const m={};const get=(k)=>report.sections[k];
+  const near=(arr,pred)=>arr&&arr.find(pred);
+  // Axes majeurs les plus proches (requête large) : autoroute / voie rapide / secondaire.
+  const axes=report._axes||[];
+  const mo=near(axes,i=>["motorway","motorway_link"].includes(i.tags.highway));
+  if(mo)m["Autoroute la plus proche"]=axisLabel(mo);
+  const vr=near(axes,i=>["trunk","trunk_link"].includes(i.tags.highway));
+  if(vr)m["Voie rapide la plus proche"]=axisLabel(vr);
+  const sec=near(axes,i=>i.tags.highway==="secondary");
+  if(sec)m["Route secondaire (≈80 km/h)"]=axisLabel(sec);
+  // Compléments locaux : route principale (primaire) à proximité immédiate.
+  const rd=get("reseau"); if(rd&&rd.items){
+    if(!sec){const s2=near(rd.items,i=>i.tags.highway==="secondary");
+      if(s2)m["Route secondaire (≈80 km/h)"]=axisLabel(s2);}
+    const p=near(rd.items,i=>i.tags.highway==="primary");
+    if(p)m["Route principale"]=axisLabel(p);
+  }
+  const tr=get("transports"); if(tr&&tr.items){
+    const g=near(tr.items,i=>["station","halt"].includes((i.tags||{}).railway)&&i.name);
+    if(g)m["Gare la plus proche"]=`${g.name} — ${fmtDist(g.dist)} ${g.dir}`;
+    const ae=near(tr.items,i=>(i.tags||{}).aeroway==="aerodrome"&&i.name);
+    if(ae)m["Aéroport"]=`${ae.name} — ${fmtDist(ae.dist)} ${ae.dir}`;
+  }
+  // Voie d'eau empruntable la plus proche (rivière / canal) = voie d'accès potentielle.
+  const env=get("environnement"); if(env&&env.items){
+    const w=near(env.items,i=>/^waterway=(river|canal)/.test(i.kind||""));
+    if(w)m["Voie d'eau (accès potentiel)"]=`${w.name||"cours d'eau"} — ${fmtDist(w.dist)} ${w.dir}`;
+  }
+  // Métropole la plus proche (issue des données OSM).
+  const vl=get("villes"); if(vl&&vl.metroLabel)m["Métropole la plus proche"]=vl.metroLabel;
+  return m;
+}
+
+/* ---------------- Galeries satellite / topo (mini-cartes) ----------- */
+// Affiche un aperçu Leaflet + un bouton qui assemble les tuiles en PNG
+// téléchargeable (les serveurs Esri / OSM / OpenTopoMap autorisent le CORS,
+// ce qui permet d'exporter le canvas sans le « salir »).
+function gallery(elId,tileUrl,maxZoom,zooms,prefix){
+  const host=$(elId);host.innerHTML="";
+  // bouton « tout télécharger »
+  const bar=document.createElement("div");bar.style.cssText="grid-column:1/-1;margin-bottom:4px";
+  const all=document.createElement("button");all.className="ghost";all.textContent="⬇ Télécharger toutes les images";
+  all.style.cssText="padding:6px 10px;font-size:12px";
+  all.onclick=async()=>{all.disabled=true;const t=all.textContent;
+    for(const z of zooms){await composeDownload(tileUrl,maxZoom,LAT,LON,z.z,`${prefix}_z${z.z}_${slug(z.lbl)}.png`,null,qgrid());}
+    all.disabled=false;all.textContent=t;};
+  bar.appendChild(all);host.appendChild(bar);
+
+  zooms.forEach(z=>{
+    const tile=document.createElement("div");tile.className="tile";
+    const mini=document.createElement("div");mini.className="mini";
+    const cap=document.createElement("div");cap.className="cap";
+    const span=document.createElement("span");span.textContent=`zoom ${z.z} · ${z.lbl}`;
+    const btn=document.createElement("button");btn.className="ghost";btn.textContent="⬇ PNG";
+    btn.style.cssText="padding:1px 7px;font-size:11px;margin-left:6px";
+    btn.onclick=()=>composeDownload(tileUrl,maxZoom,LAT,LON,z.z,`${prefix}_z${z.z}_${slug(z.lbl)}.png`,btn,qgrid());
+    cap.appendChild(span);cap.appendChild(btn);
+    tile.appendChild(mini);tile.appendChild(cap);host.appendChild(tile);
+    const mm=L.map(mini,{zoomControl:false,attributionControl:false,
+      dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,tap:false})
+      .setView([LAT,LON],z.z);
+    L.tileLayer(tileUrl,{maxZoom}).addTo(mm);
+    L.circleMarker([LAT,LON],{radius:5,color:"#ef4444",weight:2,fillColor:"#ef4444",fillOpacity:.8}).addTo(mm);
+    setTimeout(()=>mm.invalidateSize(),60);
+  });
+}
+function slug(s){return String(s).replace(/[^0-9a-zA-Z]+/g,"").toLowerCase();}
+
+/* ---- Métadonnées PNG (tEXt) : on inscrit l'échelle dans le PNG exporté,
+   et on sait la relire (utile quand le nom de fichier est perdu, ex. .crdownload). */
+const CRC_TABLE=(function(){const t=[];for(let n=0;n<256;n++){let c=n;
+  for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(bytes){let c=0xFFFFFFFF;for(let i=0;i<bytes.length;i++)
+  c=CRC_TABLE[(c^bytes[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function pngTextChunk(keyword,text){
+  const kw=new TextEncoder().encode(keyword), tx=new TextEncoder().encode(String(text));
+  const data=new Uint8Array(kw.length+1+tx.length);
+  data.set(kw,0);data[kw.length]=0;data.set(tx,kw.length+1);
+  const td=new Uint8Array(4+data.length);
+  td.set([0x74,0x45,0x58,0x74],0);td.set(data,4);            // "tEXt"
+  const o=new Uint8Array(4+td.length+4), dv=new DataView(o.buffer);
+  dv.setUint32(0,data.length);o.set(td,4);dv.setUint32(4+td.length,crc32(td));
+  return o;
+}
+async function pngWithText(blob,kv){
+  try{
+    const buf=new Uint8Array(await blob.arrayBuffer());
+    const ihdrEnd=8+4+4+13+4;                  // signature + chunk IHDR complet
+    if(buf.length<ihdrEnd||buf[0]!==0x89)return blob;
+    const chunks=Object.keys(kv).map(k=>pngTextChunk(k,kv[k]));
+    const extra=chunks.reduce((s,c)=>s+c.length,0);
+    const o=new Uint8Array(buf.length+extra);
+    o.set(buf.subarray(0,ihdrEnd),0);
+    let off=ihdrEnd;for(const c of chunks){o.set(c,off);off+=c.length;}
+    o.set(buf.subarray(ihdrEnd),off);
+    return new Blob([o],{type:"image/png"});
+  }catch(e){return blob;}
+}
+function pngReadText(arrayBuffer){
+  const res={};
+  try{
+    const buf=new Uint8Array(arrayBuffer), dv=new DataView(arrayBuffer);
+    if(buf.length<8||buf[0]!==0x89||buf[1]!==0x50)return res;
+    let off=8;
+    while(off+8<=buf.length){
+      const len=dv.getUint32(off);
+      const type=String.fromCharCode(buf[off+4],buf[off+5],buf[off+6],buf[off+7]);
+      if(type==="tEXt"){const data=buf.subarray(off+8,off+8+len);
+        let z=data.indexOf(0);if(z<0)z=data.length;
+        res[new TextDecoder().decode(data.subarray(0,z))]=new TextDecoder().decode(data.subarray(z+1));}
+      if(type==="IEND")break;
+      off+=8+len+4;
+    }
+  }catch(e){}
+  return res;
+}
+
+/* ---- Flèche Nord + barre d'échelle (dessinées sur un canvas) ---- */
+function mppAt(lat,z){return 156543.03392*Math.cos(lat*Math.PI/180)/Math.pow(2,z);}
+function niceScaleMeters(maxMeters){
+  if(!(maxMeters>0))return 0;
+  const pow=Math.pow(10,Math.floor(Math.log10(maxMeters)));
+  for(const c of [5*pow,2*pow,pow,0.5*pow,0.2*pow,0.1*pow]) if(c<=maxMeters) return c;
+  return maxMeters;
+}
+function fmtScale(m){
+  if(m>=1000){const k=m/1000;return `${k%1?k.toFixed(1):k} km`;}
+  return `${m%1?m.toFixed(m<1?2:1):Math.round(m)} m`;
+}
+// Dessine une flèche Nord et une barre d'échelle. mpp = mètres/pixel de l'image.
+// opts.north : "tr"|"tl"|"br" · opts.rotation : degrés (0 = nord en haut).
+function drawNorthScale(ctx,w,h,mpp,opts){
+  opts=opts||{};
+  const s=Math.max(1,Math.min(w,h)/640), pad=Math.round(Math.min(w,h)*0.03)+6;
+  if(mpp>0&&isFinite(mpp)){
+    const meters=niceScaleMeters(w*0.28*mpp), barPx=meters/mpp;
+    const x0=pad, y0=h-pad, label=fmtScale(meters);
+    ctx.save();
+    ctx.font=`${Math.round(13*s)}px -apple-system,Segoe UI,Roboto,sans-serif`;
+    const tw=ctx.measureText(label).width;
+    ctx.fillStyle="rgba(0,0,0,.55)";
+    ctx.fillRect(x0-6,y0-18*s-10,Math.max(barPx,tw)+12,18*s+16);
+    ctx.strokeStyle="#fff";ctx.fillStyle="#fff";ctx.lineWidth=3*s;
+    ctx.beginPath();ctx.moveTo(x0,y0-11*s);ctx.lineTo(x0,y0);
+    ctx.lineTo(x0+barPx,y0);ctx.lineTo(x0+barPx,y0-11*s);ctx.stroke();
+    ctx.fillText(label,x0,y0-14*s);
+    ctx.restore();
+  }
+  const pos=opts.north||"tr", r=18*s;
+  const cx=pos.indexOf("l")>=0?pad+r:w-pad-r;
+  const cy=pos.indexOf("b")>=0?h-pad-r-26*s:pad+r+12*s;
+  ctx.save();
+  ctx.translate(cx,cy);ctx.rotate((opts.rotation||0)*Math.PI/180);
+  ctx.fillStyle="rgba(0,0,0,.55)";
+  ctx.beginPath();ctx.arc(0,2*s,r+7*s,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#fff";
+  ctx.beginPath();ctx.moveTo(0,-r);ctx.lineTo(r*0.55,r*0.72);ctx.lineTo(0,r*0.32);
+  ctx.lineTo(-r*0.55,r*0.72);ctx.closePath();ctx.fill();
+  ctx.font=`bold ${Math.round(14*s)}px -apple-system,Segoe UI,Roboto,sans-serif`;
+  ctx.textAlign="center";ctx.fillText("N",0,-r-3*s);
+  ctx.restore();
+}
+
+/* ---- Assemblage de tuiles -> PNG haute qualité téléchargeable ----
+   Stratégie « meilleure qualité » : on assemble une grande mosaïque (GRID×GRID)
+   au zoom le plus profond possible et on exporte à la RÉSOLUTION NATIVE des
+   tuiles (aucun redimensionnement). Repli d'un cran de zoom si trop de trous. */
+const TS=256;   // taille native d'une tuile
+function qgrid(){const v=parseInt(($("qgrid")||{}).value);return isFinite(v)?v:5;}  // tuiles/côté
+const BASES={esri:{url:ESRI,max:20,name:"satellite_esri"},
+             topo:{url:TOPO,max:17,name:"opentopomap"},
+             osm:{url:OSM,max:19,name:"osm"}};
+let CURRENT_BASE=BASES.topo;   // fond actif sur la carte principale
+
+function deg2num(lat,lon,z){const lr=lat*Math.PI/180,n=2**z;
+  return [(lon+180)/360*n,(1-Math.asinh(Math.tan(lr))/Math.PI)/2*n];}
+function loadTile(url){return new Promise(res=>{const img=new Image();
+  img.crossOrigin="anonymous";img.onload=()=>res(img);img.onerror=()=>res(null);img.src=url;});}
+
+async function fetchMosaic(template,lat,lon,z,grid){
+  const [xf,yf]=deg2num(lat,lon,z);const x0=Math.floor(xf),y0=Math.floor(yf);
+  const half=(grid-1)/2;
+  const cv=document.createElement("canvas");cv.width=grid*TS;cv.height=grid*TS;
+  const ctx=cv.getContext("2d");ctx.fillStyle="#e6e6e6";ctx.fillRect(0,0,cv.width,cv.height);
+  let ok=0;const jobs=[];
+  for(let dy=-half;dy<=half;dy++)for(let dx=-half;dx<=half;dx++){
+    const tx=x0+dx,ty=y0+dy;
+    const url=template.replace("{z}",z).replace("{x}",tx).replace("{y}",ty).replace("{s}","a");
+    const ox=(dx+half)*TS,oy=(dy+half)*TS;
+    jobs.push(loadTile(url).then(img=>{if(img){ctx.drawImage(img,ox,oy);ok++;}}));
+  }
+  await Promise.all(jobs);
+  return {cv,xf,yf,x0,y0,half,z,ok,total:grid*grid};
+}
+
+// grid = nombre de tuiles par côté (5 par défaut). Sortie native = (grid-1)*256.
+async function composeDownload(template,maxZoom,lat,lon,z,filename,btn,grid){
+  grid=grid||5; z=Math.min(z,maxZoom);
+  const out=(grid-1)*TS;
+  const prev=btn?btn.textContent:null;if(btn){btn.textContent="…";btn.disabled=true;}
+  try{
+    let m=await fetchMosaic(template,lat,lon,z,grid);
+    // Trop de tuiles absentes à ce zoom ? on recule d'un cran (imagerie indispo).
+    if(m.ok < m.total*0.6 && z>3) m=await fetchMosaic(template,lat,lon,z-1,grid);
+    const {cv,xf,yf,x0,y0,half}=m;
+    const px=(xf-x0+half)*TS,py=(yf-y0+half)*TS;
+    let left=Math.round(px-out/2),top=Math.round(py-out/2);
+    left=Math.max(0,Math.min(left,grid*TS-out));top=Math.max(0,Math.min(top,grid*TS-out));
+    const c2=document.createElement("canvas");c2.width=out;c2.height=out;
+    const x2=c2.getContext("2d");
+    x2.imageSmoothingEnabled=false;                 // pas de flou : pixels natifs
+    x2.drawImage(cv,left,top,out,out,0,0,out,out);
+    // repère central
+    x2.strokeStyle="#ef4444";x2.lineWidth=3;x2.beginPath();x2.arc(out/2,out/2,10,0,Math.PI*2);x2.stroke();
+    // flèche Nord + barre d'échelle (zoom réellement utilisé après repli éventuel)
+    drawNorthScale(x2,out,out,mppAt(lat,m.z),{north:"tr"});
+    await new Promise((resolve,reject)=>{
+      try{c2.toBlob(async b=>{if(!b)return reject(new Error("canvas vide"));
+        b=await pngWithText(b,{Scale_m:Math.round(out*mppAt(lat,m.z)),
+          Software:"analyse-geo",Zoom:m.z,Lat:lat.toFixed(6),Lon:lon.toFixed(6)});
+        const u=URL.createObjectURL(b);const a=document.createElement("a");
+        a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+        URL.revokeObjectURL(u);resolve();},"image/png");}catch(e){reject(e);}
+    });
+  }catch(e){
+    alert("Téléchargement impossible ("+(e.message||e)+"). Astuce : ouvrez la page "+
+          "via lancer_interface.command (http://localhost) pour autoriser l'export des tuiles.");
+  }finally{if(btn){btn.textContent=prev;btn.disabled=false;}}
+}
+
+/* ---------------- Rendu ---------------- */
+function clean(o){const r={};for(const k in o)if(o[k]!=null&&o[k]!=="")r[k]=o[k];return r;}
+function badge(el,kind){const b=$(el);b.className="badge "+(kind==="ok"?"b-ok":kind==="err"?"b-err":"b-empty");
+  b.textContent=kind==="ok"?"ok":kind==="err"?"erreur":"vide";}
+
+function renderSection(sec){
+  let body="";
+  if(sec.error){body=`<div class="muted">Erreur : ${sec.error}</div>`;}
+  else if(sec.empty){body=`<div class="muted">Donnée non disponible.</div>`;}
+  else if(sec.items){
+    body=(sec.metroLabel?`<div style="margin-bottom:8px">🏙️ Métropole la plus proche : <b>${esc(sec.metroLabel)}</b></div>`:"")+
+      `<table><tr><th>Nom</th><th>Type</th><th>Distance</th><th>Dir.</th></tr>`+
+      sec.items.slice(0,25).map(i=>{
+        const label=i.name?esc(i.name):'<span class="muted">— (sans nom)</span>';
+        const nm=i.url&&i.name?`<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.name)}</a>`:label;
+        return `<tr><td>${nm}</td><td class="muted">${esc(i.kind)}</td><td>${fmtDist(i.dist)}</td><td>${i.dir}</td></tr>`;
+      }).join("")+`</table>`;
+  } else if(sec.data){
+    body=`<table class="kv">`+Object.entries(sec.data).map(([k,v])=>`<tr><th>${esc(k)}</th><td>${esc(String(v))}</td></tr>`).join("")+`</table>`;
+  }
+  const src=sec.src?`<div class="src">Source : ${esc(sec.src.s)}${sec.src.u?` · <a href="${sec.src.u}" target="_blank">lien</a>`:""} · licence ${esc(sec.src.l)} · récupéré ${new Date().toLocaleString("fr-FR")}</div>`:"";
+  const st=sec.error?"err":(sec.empty?"empty":"ok");
+  return `<div class="card"><div class="hd" data-toggle>${esc(sec.title)} <span class="badge ${st==='ok'?'b-ok':st==='err'?'b-err':'b-empty'}">${st==='ok'?'ok':st==='err'?'erreur':'vide'}</span></div><div class="bd">${body}${src}</div></div>`;
+}
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+
+/* ---------------- Orchestration ---------------- */
+function setProg(p,msg){const pr=$("prog");pr.classList.add("on");pr.firstElementChild.style.width=(p*100)+"%";$("status").textContent=msg||"";}
+function endProg(){setTimeout(()=>$("prog").classList.remove("on"),500);}
+
+async function generate(){
+  $("genBtn").disabled=true;$("status").textContent="collecte…";
+  const sections={};
+  REPORT={location:{lat:LAT,lon:LON,label:LABEL},generated_at:new Date().toISOString(),sections};
+  // Coordonnées (instantané)
+  sections["coordonnees"]={name:"coordonnees",title:"Coordonnées",data:coordSet(LAT,LON),
+    src:{s:"Calcul local (JS)",u:"",l:"—"}};
+  setProg(.08,"coordonnées");
+
+  // Galeries (instantané, via tuiles)
+  gallery("sat",ESRI,19,[{z:10,lbl:"≈20 km"},{z:13,lbl:"≈3 km"},{z:14,lbl:"≈2 km"},{z:15,lbl:"≈1 km"},{z:16,lbl:"≈500 m"},{z:17,lbl:"≈300 m"},{z:18,lbl:"≈200 m"},{z:19,lbl:"≈70 m"}],"satellite_esri");
+  gallery("topo",TOPO,17,[{z:12,lbl:"≈5 km"},{z:13,lbl:"≈3 km"},{z:14,lbl:"≈2 km"},{z:15,lbl:"≈1 km"},{z:16,lbl:"≈500 m"},{z:17,lbl:"≈300 m"}],"opentopomap");
+  badge("bSat","ok");badge("bTopo","ok");
+
+  // Distances vers grandes villes + liens externes (local, instantané)
+  sections["villes"]=cityDistances(LAT,LON);
+  renderLinks();
+
+  // Photos géolocalisées Wikimedia Commons (galerie, en parallèle)
+  $("commons").innerHTML='<span class="muted">recherche…</span>';
+  const commonsP=commonsPhotos(LAT,LON).then(renderCommons)
+    .catch(()=>{$("commons").innerHTML='<span class="muted">Aucune photo géolocalisée trouvée (ou source indisponible).</span>';badge("bCommons","empty");});
+
+  const tasks=[
+    ["identite",reverse(LAT,LON)],
+    ["wikipedia",wikipediaNearby(LAT,LON)],
+    ["relief",elevation(LAT,LON)],
+    ["osm",osmBundle(LAT,LON)],
+  ];
+  let done=0;const total=tasks.length;
+  await Promise.all(tasks.map(async ([k,p])=>{
+    try{
+      const res=await p;
+      if(k==="osm"){const {axes,...secs}=res;Object.assign(sections,secs);REPORT._axes=axes||[];}
+      else sections[k]=res;
+    }catch(e){
+      sections[k]={name:k,title:k,error:String(e.message||e)};
+    }
+    done++;setProg(.08+.9*done/total,`${k} ✓`);
+  }));
+  await commonsP;
+
+  // Imagerie datée (Wayback), Yandex et zones cliquables (surfaces) — non bloquant
+  initWayback();
+  refreshYandex();
+  loadAreaPolygons(LAT,LON);
+
+  // Accès dérivé
+  const acc=buildAccess(REPORT);REPORT.access=acc;
+  renderAccess(acc);
+
+  renderAll();
+  computeCompleteness();
+  $("genAt").textContent="généré "+new Date().toLocaleString("fr-FR");
+  ["dlJson","dlGeo","dlCsv","dlHtml","dlPdf","copyReport"].forEach(id=>$(id).disabled=false);
+  $("genBtn").disabled=false;$("status").textContent="terminé";endProg();
+}
+
+function renderAccess(acc){
+  const host=$("acces");const keys=Object.keys(acc);
+  if(!keys.length){host.innerHTML='<span class="muted">Aucun axe/transport détecté à proximité.</span>';badge("bAcces","empty");return;}
+  host.innerHTML=keys.map(k=>`<div class="item"><div class="lbl">${esc(k)}</div><div class="val">${esc(acc[k])}</div></div>`).join("");
+  badge("bAcces","ok");
+}
+let COMMONS=[];
+function renderCommons(arr){
+  COMMONS=arr||[];
+  const host=$("commons");
+  if(!COMMONS.length){host.innerHTML='<span class="muted">Aucune photo géolocalisée trouvée à proximité.</span>';badge("bCommons","empty");return;}
+  host.innerHTML=COMMONS.slice(0,24).map(p=>{
+    const d=p.dist<1e11?` · ${fmtDist(p.dist)}`:"";
+    return `<a href="${esc(p.desc||p.thumb)}" target="_blank" rel="noopener" title="${esc(p.title)}">`+
+      `<img loading="lazy" src="${esc(p.thumb)}" alt="${esc(p.title)}"/>`+
+      `<div class="cap">${esc(p.title)}${d}</div></a>`;
+  }).join("");
+  badge("bCommons","ok");
+}
+const ORDER=["identite","villes","wikipedia","reseau","transports","poi","environnement","relief","coordonnees"];
+function renderAll(){
+  const host=$("sections");
+  host.innerHTML=ORDER.filter(k=>REPORT.sections[k]).map(k=>renderSection(REPORT.sections[k])).join("");
+  bindToggles();
+}
+function computeCompleteness(){
+  const secs=Object.values(REPORT.sections);
+  const ok=secs.filter(s=>!s.error&&!s.empty).length;
+  const pct=secs.length?Math.round(100*ok/secs.length):0;
+  REPORT.completeness=pct;$("compl").textContent=pct+" %";
+}
+
+/* ---------------- Exports ---------------- */
+function download(name,content,type){const b=new Blob([content],{type});const u=URL.createObjectURL(b);
+  const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+function toGeoJSON(){
+  const f=[];const L0=REPORT.location;
+  f.push({type:"Feature",geometry:{type:"Point",coordinates:[L0.lon,L0.lat]},properties:{role:"point_analyse",label:L0.label}});
+  for(const s of Object.values(REPORT.sections)){if(s.items)for(const it of s.items)
+    f.push({type:"Feature",geometry:{type:"Point",coordinates:[it.lon,it.lat]},
+      properties:{rubrique:s.name,name:it.name,kind:it.kind,distance_m:Math.round(it.dist),direction:it.dir}});}
+  return JSON.stringify({type:"FeatureCollection",features:f},null,2);
+}
+function toCSV(){
+  const rows=[["rubrique","nom","type","distance_m","direction","latitude","longitude","url"]];
+  for(const s of Object.values(REPORT.sections)){
+    if(!s.items)continue;
+    for(const it of s.items)rows.push([s.name,it.name,it.kind||"",Math.round(it.dist||0),it.dir||"",
+      it.lat!=null?it.lat:"",it.lon!=null?it.lon:"",it.url||""]);
+  }
+  return rows.map(r=>r.map(c=>{const v=String(c==null?"":c);
+    return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\r\n");
+}
+function reportText(){
+  const L0=REPORT.location;const out=[];
+  out.push(`ANALYSE GÉOGRAPHIQUE — ${L0.label||"point"}`);
+  out.push(`Coordonnées : ${L0.lat.toFixed(6)}, ${L0.lon.toFixed(6)} (${toDMS(L0.lat,L0.lon)})`);
+  out.push(`Plus Code : ${olcEncode(L0.lat,L0.lon,11)}  ·  MGRS : ${toMGRS(L0.lat,L0.lon)||"—"}`);
+  out.push(`Lien : ${shareURL()}`);
+  out.push(`Complétude : ${REPORT.completeness||0} %`);
+  if(REPORT.access&&Object.keys(REPORT.access).length){out.push("","ACCÈS");
+    for(const [k,v] of Object.entries(REPORT.access))out.push(`  • ${k} : ${v}`);}
+  for(const k of ORDER){const s=REPORT.sections[k];if(!s||s.error||s.empty)continue;
+    out.push("",s.title.toUpperCase());
+    if(s.items)s.items.slice(0,12).forEach(i=>out.push(`  • ${i.name} — ${fmtDist(i.dist)} ${i.dir}`));
+    else if(s.data)for(const [a,b] of Object.entries(s.data))out.push(`  • ${a} : ${b}`);}
+  out.push("","Généré le "+new Date().toLocaleString("fr-FR")+" · données publiques (OSM/Open-Meteo/Wikipédia…)");
+  return out.join("\n");
+}
+function ficheHTML(){
+  const L0=REPORT.location;
+  let h=`<!doctype html><meta charset=utf-8><title>Fiche ${esc(L0.label||"")}</title>`+
+    `<body style="font-family:sans-serif;max-width:780px;margin:30px auto;color:#0f172a">`+
+    `<h1>Fiche OSINT — ${esc(L0.label||"Localisation")}</h1>`+
+    `<p><b>Coordonnées :</b> ${L0.lat.toFixed(6)}, ${L0.lon.toFixed(6)} · ${toDMS(L0.lat,L0.lon)}<br>`+
+    `<b>Plus Code :</b> ${esc(olcEncode(L0.lat,L0.lon,11))} · <b>MGRS :</b> ${esc(toMGRS(L0.lat,L0.lon)||"—")}</p>`+
+    `<p><b>Liens :</b> <a href="https://www.google.com/maps/search/?api=1&query=${L0.lat},${L0.lon}">Maps</a> · `+
+    `<a href="https://earth.google.com/web/@${L0.lat},${L0.lon},0a,1000d,35y">Earth</a> · `+
+    `<a href="https://www.geoportail.gouv.fr/carte?c=${L0.lon},${L0.lat}&z=16">Géoportail</a> · `+
+    `<a href="https://www.openstreetmap.org/?mlat=${L0.lat}&mlon=${L0.lon}#map=16/${L0.lat}/${L0.lon}">OSM</a> · `+
+    `<a href="https://apps.sentinel-hub.com/eo-browser/?lat=${L0.lat}&lng=${L0.lon}&zoom=13">Sentinel</a></p>`+
+    `<p><b>Complétude :</b> ${REPORT.completeness||0} %</p>`;
+  if(Object.keys(REPORT.access||{}).length){h+="<h2>Accès</h2><ul>"+Object.entries(REPORT.access).map(([k,v])=>`<li><b>${esc(k)} :</b> ${esc(v)}</li>`).join("")+"</ul>";}
+  for(const k of ORDER){const s=REPORT.sections[k];if(!s||s.error||s.empty)continue;h+=`<h2>${esc(s.title)}</h2>`;
+    if(s.items)h+="<ul>"+s.items.slice(0,15).map(i=>{
+      const nm=i.url?`<a href="${esc(i.url)}">${esc(i.name)}</a>`:esc(i.name);
+      return `<li>${nm} — ${fmtDist(i.dist)} ${i.dir}</li>`;}).join("")+"</ul>";
+    else if(s.data)h+="<table border=1 cellpadding=4 style='border-collapse:collapse'>"+Object.entries(s.data).map(([a,b])=>`<tr><td><b>${esc(a)}</b></td><td>${esc(String(b))}</td></tr>`).join("")+"</table>";}
+  if(COMMONS&&COMMONS.length){h+="<h2>Photos géolocalisées (Wikimedia Commons)</h2>"+
+    "<div style='display:flex;flex-wrap:wrap;gap:6px'>"+COMMONS.slice(0,12).map(p=>
+      `<a href="${esc(p.desc||p.thumb)}"><img src="${esc(p.thumb)}" style="width:130px;height:96px;object-fit:cover;border:1px solid #ccc"></a>`).join("")+"</div>";}
+  h+=`<p style="color:#777;font-size:12px;margin-top:24px">Généré le ${new Date().toLocaleString("fr-FR")} · données publiques (OpenStreetMap, Open-Meteo, Wikipédia/Wikimedia). Estimations indicatives.</p>`;
+  h+="</body>";return h;
+}
+
+/* ---------------- UI bindings ---------------- */
+function bindToggles(){document.querySelectorAll("[data-toggle]").forEach(h=>{
+  h.onclick=()=>{const bd=h.nextElementSibling;if(bd)bd.style.display=bd.style.display==="none"?"":"none";};});}
+let sugTimer;
+$("q").addEventListener("input",e=>{clearTimeout(sugTimer);const v=e.target.value.trim();
+  if(v.length<3){$("sugList").style.display="none";return;}
+  sugTimer=setTimeout(async()=>{const res=await searchPlaces(v);
+    const list=$("sugList");if(!res.length){list.style.display="none";return;}
+    list.innerHTML=res.map((r,i)=>`<div data-i="${i}">${esc(r.display_name)}</div>`).join("");
+    list.style.display="";list._data=res;
+    list.querySelectorAll("div").forEach(d=>d.onclick=()=>{const r=res[+d.dataset.i];
+      setPoint(+r.lat,+r.lon,r.display_name.split(",")[0]);map.setView([+r.lat,+r.lon],15);list.style.display="none";$("q").value=r.display_name;});
+  },350);});
+$("searchBtn").onclick=async()=>{const v=$("q").value.trim();if(!v)return;
+  const c=parseCoordInput(v);
+  if(c){setPoint(c.lat,c.lon,`${c.kind} : ${c.lat.toFixed(5)}, ${c.lon.toFixed(5)}`);
+    map.setView([c.lat,c.lon],16);$("sugList").style.display="none";$("status").textContent=c.kind+" reconnu";return;}
+  const res=await searchPlaces(v);
+  if(res.length){const r=res[0];setPoint(+r.lat,+r.lon,r.display_name.split(",")[0]);map.setView([+r.lat,+r.lon],15);$("sugList").style.display="none";}
+  else $("status").textContent="aucun résultat";};
+$("q").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("searchBtn").click();}});
+$("genBtn").onclick=generate;
+$("manualBtn").onclick=()=>{const m=$("manual");m.style.display=m.style.display==="none"?"flex":"none";};
+$("applyManual").onclick=()=>{const la=parseFloat($("mlat").value),lo=parseFloat($("mlon").value);
+  if(isFinite(la)&&isFinite(lo)){setPoint(la,lo,`${la.toFixed(5)}, ${lo.toFixed(5)}`);map.setView([la,lo],15);}};
+$("dlJson").onclick=()=>download("dossier.json",JSON.stringify(REPORT,(k,v)=>k==="tags"?undefined:v,2),"application/json");
+$("dlGeo").onclick=()=>download("dossier.geojson",toGeoJSON(),"application/geo+json");
+$("dlCsv").onclick=()=>download("dossier.csv","﻿"+toCSV(),"text/csv;charset=utf-8");
+$("dlHtml").onclick=()=>download("fiche.html",ficheHTML(),"text/html");
+$("dlPdf").onclick=()=>window.print();
+$("copyReport").onclick=function(){if(REPORT)copyText(reportText(),this);};
+$("copyLL").onclick=function(){copyText(`${LAT.toFixed(6)}, ${LON.toFixed(6)}`,this);};
+$("copyLink").onclick=function(){copyText(shareURL(),this);};
+
+// Télécharge la vue principale (fond actif, centre + zoom courants de la carte).
+$("dlMain").onclick=function(){
+  const c=map.getCenter();const z=Math.min(map.getZoom(),CURRENT_BASE.max);
+  composeDownload(CURRENT_BASE.url,CURRENT_BASE.max,c.lat,c.lng,z,
+    `vue_${CURRENT_BASE.name}_z${z}.png`,this,qgrid());
+};
+// Plan personnalisé : source + zoom libres.
+$("dlCustom").onclick=function(){
+  const b=BASES[$("cSource").value]||BASES.esri;
+  let z=parseInt($("cZoom").value);if(!isFinite(z))z=16;
+  z=Math.max(1,Math.min(z,b.max));
+  composeDownload(b.url,b.max,LAT,LON,z,`${b.name}_perso_z${z}.png`,this,qgrid());
+};
+
+/* ============================================================
+   Onglets · mesure de surface · zones cliquables · Wayback ·
+   Yandex · annotation d'images. (Ajouts.)
+   ============================================================ */
+
+/* ---------------- Onglets ---------------- */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));
+    const id=t.dataset.tab;
+    $("tab-analyse").style.display=id==="analyse"?"":"none";
+    $("tab-annotate").style.display=id==="annotate"?"":"none";
+    if(id==="analyse"){setTimeout(()=>{if(map)map.invalidateSize();if(wbMap)wbMap.invalidateSize();},60);}
+  };
+});
+
+/* ---------------- Surfaces : aire d'un polygone (géodésique) ---------------- */
+function polygonAreaM2(ll){
+  const R=6378137; let area=0; const n=ll.length; if(n<3)return 0;
+  for(let i=0;i<n;i++){const a=ll[i],b=ll[(i+1)%n];
+    area+=(b[1]-a[1])*Math.PI/180*(2+Math.sin(a[0]*Math.PI/180)+Math.sin(b[0]*Math.PI/180));}
+  return Math.abs(area*R*R/2);
+}
+function fmtArea(m2){
+  if(m2>=1e6)return (m2/1e6).toFixed(2)+" km²";
+  if(m2>=1e4)return (m2/1e4).toFixed(2)+" ha";
+  return Math.round(m2)+" m²";
+}
+
+/* ---------------- Outil de mesure (dessin d'une zone sur la carte) ---------------- */
+let MEASURING=false, measurePts=[], measureMarkers=[], measureLayer=null;
+function setMeasuring(on){
+  MEASURING=on;
+  $("measureBox").classList.toggle("on",on);
+  $("measureBtn").style.background=on?"var(--accent)":"";
+  $("measureBtn").style.color=on?"#fff":"";
+  if(map){if(on)map.doubleClickZoom.disable();else map.doubleClickZoom.enable();}
+  if(!on)clearMeasure();
+}
+function addMeasureVertex(ll){
+  measurePts.push(ll);
+  measureMarkers.push(L.circleMarker(ll,{radius:4,color:"#f59e0b",weight:2,
+    fillColor:"#f59e0b",fillOpacity:1}).addTo(map));
+  redrawMeasure();
+}
+function redrawMeasure(){
+  if(measureLayer){map.removeLayer(measureLayer);measureLayer=null;}
+  if(measurePts.length>=3)
+    measureLayer=L.polygon(measurePts,{color:"#f59e0b",weight:2,fillOpacity:.15}).addTo(map);
+  else if(measurePts.length===2)
+    measureLayer=L.polyline(measurePts,{color:"#f59e0b",weight:2}).addTo(map);
+  updateMeasureInfo();
+}
+function measurePerimeter(pts){let s=0;for(let i=1;i<pts.length;i++)
+  s+=haversine(pts[i-1].lat,pts[i-1].lng,pts[i].lat,pts[i].lng);return s;}
+function updateMeasureInfo(){
+  const n=measurePts.length;
+  if(n<2){$("measureInfo").innerHTML="Cliquez sur la carte pour poser les sommets d'une zone. Double-clic pour fermer.";return;}
+  const per=measurePerimeter(measurePts);
+  if(n>=3){const a=polygonAreaM2(measurePts.map(p=>[p.lat,p.lng]));
+    $("measureInfo").innerHTML=`Surface : <b>${fmtArea(a)}</b><br>Périmètre : <b>${fmtDist(per)}</b> · ${n} sommets`;}
+  else $("measureInfo").innerHTML=`Distance : <b>${fmtDist(per)}</b> · ${n} points`;
+}
+function clearMeasure(){
+  measurePts=[]; measureMarkers.forEach(m=>map.removeLayer(m)); measureMarkers=[];
+  if(measureLayer){map.removeLayer(measureLayer);measureLayer=null;}
+  updateMeasureInfo();
+}
+$("measureBtn").onclick=()=>setMeasuring(!MEASURING);
+$("measureClear").onclick=clearMeasure;
+$("measureDone").onclick=()=>setMeasuring(false);
+
+/* ---------------- Zones OSM cliquables (surface affichée au clic) ---------------- */
+let areaLayer=null;
+async function loadAreaPolygons(lat,lon){
+  try{
+    const q=`[out:json][timeout:25];(`+
+      `way["natural"~"water|wood|wetland"](around:3000,${lat},${lon});`+
+      `way["landuse"~"forest|farmland|meadow|vineyard|residential|industrial"](around:3000,${lat},${lon});`+
+      `way["leisure"~"park|nature_reserve"](around:3000,${lat},${lon});`+
+      `);out geom tags;`;
+    const j=await overpass(q);
+    if(areaLayer){map.removeLayer(areaLayer);areaLayer=null;}
+    areaLayer=L.layerGroup().addTo(map);
+    let count=0;
+    for(const el of (j.elements||[])){
+      if(!el.geometry||el.geometry.length<3)continue;
+      const ring=el.geometry.map(g=>[g.lat,g.lon]);
+      const t=el.tags||{}, a=polygonAreaM2(ring);
+      const poly=L.polygon(ring,{color:"#22c55e",weight:1,fillOpacity:.10});
+      poly.bindPopup(`<b>${esc(t.name||"Zone (sans nom)")}</b><br>${esc(kindOf(t))}<br>`+
+        `Surface : <b>${fmtArea(a)}</b>`);
+      poly.on("mouseover",()=>poly.setStyle({fillOpacity:.28,weight:2}));
+      poly.on("mouseout",()=>poly.setStyle({fillOpacity:.10,weight:1}));
+      poly.on("click",e=>L.DomEvent.stopPropagation(e));  // ne déplace pas le point
+      poly.addTo(areaLayer);
+      if(++count>=150)break;
+    }
+  }catch(e){/* couche optionnelle : on ignore les échecs */}
+}
+
+/* ---------------- Imagerie datée — Esri Wayback ---------------- */
+let WB_RELEASES=null, wbMap=null, wbLayer=null, wbMarker=null, wbIdx=0;
+async function loadWaybackConfig(){
+  if(WB_RELEASES)return WB_RELEASES;
+  const cfg=await jget("https://s3-us-west-2.amazonaws.com/config.maptiles.arcgis.com/waybackconfig.json");
+  const rel=[];
+  for(const k in cfg){const c=cfg[k];
+    const m=(c.itemTitle||"").match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(!m||!c.itemURL)continue;
+    rel.push({num:k,date:m[0],
+      tpl:c.itemURL.replace(/\{level\}/i,"{z}").replace(/\{row\}/i,"{y}").replace(/\{col\}/i,"{x}")});
+  }
+  rel.sort((a,b)=>a.date<b.date?-1:1);   // ancien -> récent
+  WB_RELEASES=rel; return rel;
+}
+async function initWayback(){
+  try{
+    const rel=await loadWaybackConfig();
+    if(!rel.length){badge("bWayback","empty");return;}
+    $("wbSlider").max=rel.length-1;
+    if(wbIdx>rel.length-1||wbIdx<0){wbIdx=rel.length-1;}
+    $("wbSlider").value=wbIdx;
+    $("wbCount").textContent=`${rel.length} clichés datés`;
+    if(!wbMap){
+      wbMap=L.map("wbView",{zoomControl:true,attributionControl:false}).setView([LAT,LON],16);
+      L.control.scale({imperial:false,metric:true}).addTo(wbMap);
+      const N=L.Control.extend({options:{position:"topright"},
+        onAdd:function(){const d=L.DomUtil.create("div","north");d.innerHTML="↑<br><small>Nord</small>";return d;}});
+      wbMap.addControl(new N());
+      wbMarker=L.circleMarker([LAT,LON],{radius:5,color:"#ef4444",weight:2,
+        fillColor:"#ef4444",fillOpacity:.8}).addTo(wbMap);
+      setTimeout(()=>wbMap.invalidateSize(),80);
+    }
+    showWayback(wbIdx);
+    badge("bWayback","ok");
+  }catch(e){badge("bWayback","err");$("wbDate").textContent="indisponible";}
+}
+function showWayback(i){
+  if(!WB_RELEASES||!WB_RELEASES[i]||!wbMap)return;
+  wbIdx=i; const r=WB_RELEASES[i];
+  $("wbDate").textContent=r.date; $("wbSlider").value=i;
+  if(wbLayer)wbMap.removeLayer(wbLayer);
+  wbLayer=L.tileLayer(r.tpl,{maxZoom:20,maxNativeZoom:18,
+    attribution:"© Esri Wayback"}).addTo(wbMap);
+}
+$("wbSlider").oninput=e=>showWayback(+e.target.value);
+$("wbPrev").onclick=()=>showWayback(Math.max(0,wbIdx-1));
+$("wbNext").onclick=()=>showWayback(Math.min((WB_RELEASES?WB_RELEASES.length-1:0),wbIdx+1));
+$("wbDl").onclick=function(){
+  if(!WB_RELEASES||!WB_RELEASES[wbIdx])return;
+  const r=WB_RELEASES[wbIdx], z=Math.min(wbMap?Math.round(wbMap.getZoom()):17,18);
+  composeDownload(r.tpl,18,LAT,LON,z,`wayback_${r.date}_z${z}.png`,this,qgrid());
+};
+
+/* ---------------- Imagerie Yandex (visionnage, projection EPSG:3395) ---------------- */
+let YX_READY=false;
+function yandexTileXY(lat,lon,z){
+  const n=Math.pow(2,z), e=0.0818191908426, rad=lat*Math.PI/180, sn=Math.sin(rad);
+  const ys=Math.log(Math.tan(Math.PI/4+rad/2))-(e/2)*Math.log((1+e*sn)/(1-e*sn));
+  return {x:(lon+180)/360*n, y:(1-ys/Math.PI)/2*n};
+}
+function refreshYandex(){
+  const z=parseInt($("yxZoom").value)||17;
+  $("yxZoomLbl").textContent="z"+z;
+  $("yxOpen").href=`https://yandex.com/maps/?ll=${LON.toFixed(6)},${LAT.toFixed(6)}&z=${z}&l=sat`;
+  const {x,y}=yandexTileXY(LAT,LON,z), cx=Math.floor(x), cy=Math.floor(y), R=1;
+  const grid=$("yxGrid"); grid.style.gridTemplateColumns=`repeat(${2*R+1},1fr)`;
+  let html="";
+  for(let dy=-R;dy<=R;dy++)for(let dx=-R;dx<=R;dx++){
+    const url=`https://core-sat.maps.yandex.net/tiles?l=sat&x=${cx+dx}&y=${cy+dy}&z=${z}&scale=1&lang=ru_RU`;
+    html+=`<img loading="lazy" src="${url}" onerror="this.style.opacity=.12"/>`;
+  }
+  grid.innerHTML=html;
+  YX_READY=true; badge("bYandex","ok");
+}
+// Téléchargement Yandex : les tuiles passent par un proxy CORS pour autoriser
+// l'export du canvas (sinon « tainted »). Nord + échelle incrustés + métadonnées.
+async function composeYandexDownload(z,btn){
+  z=Math.max(1,Math.min(z,19));
+  const grid=qgrid(), out=(grid-1)*TS, half=(grid-1)/2;
+  const prev=btn?btn.textContent:null; if(btn){btn.textContent="…";btn.disabled=true;}
+  try{
+    const {x:xf,y:yf}=yandexTileXY(LAT,LON,z), x0=Math.floor(xf), y0=Math.floor(yf);
+    const cv=document.createElement("canvas");cv.width=grid*TS;cv.height=grid*TS;
+    const ctx=cv.getContext("2d");ctx.fillStyle="#0b1730";ctx.fillRect(0,0,cv.width,cv.height);
+    const jobs=[];let ok=0;
+    for(let dy=-half;dy<=half;dy++)for(let dx=-half;dx<=half;dx++){
+      const tx=x0+dx,ty=y0+dy,ox=(dx+half)*TS,oy=(dy+half)*TS;
+      const direct=`https://core-sat.maps.yandex.net/tiles?l=sat&x=${tx}&y=${ty}&z=${z}&scale=1&lang=ru_RU`;
+      const url="https://api.allorigins.win/raw?url="+encodeURIComponent(direct);
+      jobs.push(loadTile(url).then(img=>{if(img){ctx.drawImage(img,ox,oy);ok++;}}));
+    }
+    await Promise.all(jobs);
+    if(!ok)throw new Error("aucune tuile reçue (proxy indisponible)");
+    const px=(xf-x0+half)*TS,py=(yf-y0+half)*TS;
+    let left=Math.max(0,Math.min(Math.round(px-out/2),grid*TS-out));
+    let top =Math.max(0,Math.min(Math.round(py-out/2),grid*TS-out));
+    const c2=document.createElement("canvas");c2.width=out;c2.height=out;
+    const x2=c2.getContext("2d");x2.imageSmoothingEnabled=false;
+    x2.drawImage(cv,left,top,out,out,0,0,out,out);
+    x2.strokeStyle="#ef4444";x2.lineWidth=3;x2.beginPath();x2.arc(out/2,out/2,10,0,Math.PI*2);x2.stroke();
+    drawNorthScale(x2,out,out,mppAt(LAT,z),{north:"tr"});
+    await new Promise((resolve,reject)=>{
+      try{c2.toBlob(async b=>{if(!b)return reject(new Error("canvas vide"));
+        b=await pngWithText(b,{Scale_m:Math.round(out*mppAt(LAT,z)),Software:"analyse-geo",
+          Source:"Yandex Satellite",Zoom:z,Lat:LAT.toFixed(6),Lon:LON.toFixed(6)});
+        const u=URL.createObjectURL(b),a=document.createElement("a");
+        a.href=u;a.download=`yandex_z${z}_${LAT.toFixed(5)}_${LON.toFixed(5)}.png`;
+        document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);resolve();
+      },"image/png");}catch(e){reject(e);}});
+  }catch(e){
+    alert("Téléchargement Yandex impossible : "+(e.message||e)+
+      "\n(Les tuiles Yandex transitent par un proxy CORS, parfois momentanément indisponible.)");
+  }finally{if(btn){btn.textContent=prev;btn.disabled=false;}}
+}
+$("yxZoom").oninput=refreshYandex;
+$("yxDl").onclick=function(){composeYandexDownload(parseInt($("yxZoom").value)||17,this);};
+
+/* Synchronise les vues imagerie quand le point change. */
+function syncImagery(){
+  if(wbMap){wbMap.setView([LAT,LON],wbMap.getZoom());if(wbMarker)wbMarker.setLatLng([LAT,LON]);}
+  if(YX_READY)refreshYandex();
+}
+
+/* ---------------- Onglet « Annoter une image » ---------------- */
+const annotItems=[];
+// Lit une échelle dans le nom de fichier : « 200m », « 1.5km », « 500_m »…
+function parseScaleFromName(name){
+  const s=String(name).replace(/\.[a-z0-9]+$/i,"");
+  const re=/(\d+(?:[.,]\d+)?)\s*[_\-]?\s*(km|m)\b/ig;
+  let best=null,mt;
+  while((mt=re.exec(s))){const v=parseFloat(mt[1].replace(",","."));
+    best={meters:mt[2].toLowerCase()==="km"?v*1000:v};}
+  return best;   // dernier motif trouvé (souvent le suffixe d'échelle)
+}
+function isImageish(f){
+  return (f.type&&f.type.startsWith("image/"))
+    ||/\.(png|jpe?g|webp|gif|bmp|tiff?|crdownload)$/i.test(f.name);
+}
+function addAnnotImage(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    // 1) échelle depuis les métadonnées PNG (tEXt « Scale_m » = largeur au sol, en m)
+    let meters=null, src="";
+    const meta=pngReadText(reader.result);
+    if(meta.Scale_m&&isFinite(parseFloat(meta.Scale_m))){meters=parseFloat(meta.Scale_m);src="métadonnées PNG";}
+    // 2) sinon, depuis le nom de fichier
+    if(meters==null){const p=parseScaleFromName(file.name);if(p){meters=p.meters;src="nom de fichier";}}
+    const blob=new Blob([reader.result]);   // type vide toléré (ex. .crdownload)
+    const url=URL.createObjectURL(blob), img=new Image();
+    img.onload=()=>{URL.revokeObjectURL(url);
+      const item={name:file.name,img,meters,rotation:0,scaleSrc:src};
+      annotItems.push(item); renderAnnotItem(item);
+      $("dlAllAnnot").disabled=false; $("clearAnnot").disabled=false;};
+    img.onerror=()=>{URL.revokeObjectURL(url);
+      $("status")&&($("status").textContent=`Image illisible : ${file.name}`);};
+    img.src=url;
+  };
+  reader.onerror=()=>{};
+  reader.readAsArrayBuffer(file);
+}
+function drawAnnot(item){
+  const cv=item.canvas, w=item.img.naturalWidth, h=item.img.naturalHeight;
+  cv.width=w; cv.height=h;
+  const ctx=cv.getContext("2d"); ctx.drawImage(item.img,0,0);
+  const meaning=$("scaleMeaning").value, north=$("northPos").value;
+  let mpp=null;
+  if(item.meters>0) mpp = meaning==="width" ? item.meters/w : item.meters/(w*0.28);
+  drawNorthScale(ctx,w,h,mpp,{north,rotation:item.rotation||0});
+}
+function downloadAnnot(item){
+  try{item.canvas.toBlob(b=>{const u=URL.createObjectURL(b),a=document.createElement("a");
+    a.href=u;a.download=item.name.replace(/(\.[a-z0-9]+)?$/i,"_annote.png");
+    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);},"image/png");
+  }catch(e){alert("Export impossible : "+(e.message||e));}
+}
+function renderAnnotItem(item){
+  const card=document.createElement("div"); card.className="annotcard";
+  const cv=document.createElement("canvas"); item.canvas=cv;
+  const nm=document.createElement("div"); nm.className="nm";
+  nm.textContent=item.name+(item.scaleSrc?`  · échelle : ${item.scaleSrc}`:"  · échelle : à saisir");
+  const row=document.createElement("div"); row.className="row";
+  const l1=document.createElement("span"); l1.className="muted"; l1.textContent="Échelle (m) :";
+  const inp=document.createElement("input"); inp.className="num"; inp.type="number"; inp.placeholder="?";
+  inp.value=item.meters!=null?Math.round(item.meters):"";
+  inp.oninput=()=>{const v=parseFloat(inp.value); item.meters=isFinite(v)?v:null; drawAnnot(item);};
+  const l2=document.createElement("span"); l2.className="muted"; l2.textContent="Nord (°) :";
+  const rot=document.createElement("input"); rot.className="num"; rot.type="number"; rot.value=0;
+  rot.oninput=()=>{item.rotation=parseFloat(rot.value)||0; drawAnnot(item);};
+  const dl=document.createElement("button"); dl.className="ghost";
+  dl.style.cssText="padding:4px 9px;font-size:11px"; dl.textContent="⬇ PNG";
+  dl.onclick=()=>downloadAnnot(item);
+  row.append(l1,inp,l2,rot,dl);
+  card.append(cv,nm,row);
+  $("annotList").appendChild(card);
+  drawAnnot(item);
+}
+(function bindAnnotate(){
+  const dz=$("dropzone"), fi=$("fileInput");
+  if(!dz)return;
+  dz.onclick=()=>fi.click();
+  dz.ondragover=e=>{e.preventDefault();dz.classList.add("drag");};
+  dz.ondragleave=()=>dz.classList.remove("drag");
+  dz.ondrop=e=>{e.preventDefault();dz.classList.remove("drag");
+    [...(e.dataTransfer.files||[])].forEach(f=>isImageish(f)&&addAnnotImage(f));};
+  fi.onchange=()=>{[...(fi.files||[])].forEach(f=>isImageish(f)&&addAnnotImage(f));fi.value="";};
+  $("scaleMeaning").onchange=()=>annotItems.forEach(drawAnnot);
+  $("northPos").onchange=()=>annotItems.forEach(drawAnnot);
+  $("dlAllAnnot").onclick=()=>annotItems.forEach(downloadAnnot);
+  $("clearAnnot").onclick=()=>{annotItems.length=0;$("annotList").innerHTML="";
+    $("dlAllAnnot").disabled=true;$("clearAnnot").disabled=true;};
+})();
+
+/* init */
+if(location.protocol==="file:"){$("fileWarn").style.display="block";$("status").textContent="ouvrez via lancer_interface.command";}
+initMap();
+// Point initial : lien partagé (#zoom/lat/lon) sinon Tour Eiffel par défaut.
+let started=false;
+const mh=(location.hash||"").match(/#?(\d+)\/(-?\d+\.?\d*)\/(-?\d+\.?\d*)/);
+if(mh){const z=+mh[1],la=+mh[2],lo=+mh[3];
+  if(isFinite(la)&&isFinite(lo)){setPoint(la,lo,`${la.toFixed(5)}, ${lo.toFixed(5)}`);
+    map.setView([la,lo],Math.min(Math.max(z,1),19));started=true;}}
+if(!started){setPoint(LAT,LON,"Jet d'eau, Genève");$("q").value="Jet d'eau, Genève";}
+map.on("zoomend",updateHash);
+renderLinks();
+bindToggles();
+// Imagerie datée (Wayback) + visionnage Yandex disponibles dès le départ.
+initWayback();
+refreshYandex();
+</script>
+</body>
+</html>
