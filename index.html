@@ -138,6 +138,12 @@
   .optcol .opthd{font-weight:700;color:var(--muted);font-size:12px;margin-bottom:2px}
   .optcol label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px}
   .optcol input{accent-color:var(--accent)}
+  #batchSug{position:fixed;z-index:3000;background:var(--input);border:1px solid var(--line);
+    border-radius:10px;max-height:240px;overflow-y:auto;display:none;min-width:220px;
+    box-shadow:0 6px 20px rgba(0,0,0,.35)}
+  #batchSug div{padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13px}
+  #batchSug div:last-child{border-bottom:0}
+  #batchSug div:hover{background:var(--card)}
   /* Annotation d'images téléchargées */
   .dropzone{border:2px dashed var(--line);border-radius:12px;padding:34px 20px;text-align:center;
     color:var(--muted);cursor:pointer;background:var(--input)}
@@ -427,7 +433,8 @@
         <div class="bd">
           <p class="muted" style="margin-top:0">
             Renseignez une <b>liste de lieux</b> : chaque ligne a un <b>nom libre</b> (celui du
-            dossier généré) et une <b>localisation</b> (adresse, lieu, ou coordonnées «&nbsp;lat, lon&nbsp;»).
+            dossier généré) et une <b>localisation</b> (adresse avec autocomplétion, coordonnées
+            «&nbsp;lat, lon&nbsp;», ou <b>MGRS</b>).
             Le bouton <b>Vérifier</b> géocode et confirme chaque localisation. La génération
             télécharge, <b>pour chaque lieu, un dossier à son nom</b> contenant : les <b>vues
             satellite et OpenTopoMap aux zooms cochés</b> (une image par zoom), <b>donnees.json</b>
@@ -469,6 +476,18 @@
                 <label><input type="checkbox" id="optHtml"/> Fiche HTML</label>
                 <label><input type="checkbox" id="optPdf" checked/> Fiche PDF (texte)</label>
               </div>
+              <div class="optcol">
+                <div class="opthd">Extraction OSM (surface/périmètre)</div>
+                <label><input type="checkbox" id="optExtract"/> Inclure l'extraction</label>
+                <div class="searchbar" style="gap:6px">
+                  <input id="optExKey" value="landuse" style="max-width:100px" placeholder="clé"/>
+                  <span class="muted">=</span>
+                  <input id="optExVal" style="max-width:110px" placeholder="valeur (option.)"/>
+                </div>
+                <label style="font-weight:400">Rayon
+                  <input id="optExRadius" type="number" value="500" min="50" max="5000" style="max-width:76px"/> m</label>
+                <span class="muted" style="font-size:11px">→ extraction_&lt;clé&gt;.geojson + .csv</span>
+              </div>
             </div>
           </div>
           <div style="margin-top:10px">
@@ -490,7 +509,7 @@
               <thead><tr>
                 <th style="width:26px">#</th>
                 <th style="width:26%">Nom du dossier</th>
-                <th style="width:34%">Localisation (adresse ou lat, lon)</th>
+                <th style="width:34%">Localisation (adresse, lat/lon ou MGRS)</th>
                 <th>Statut / vérification</th>
                 <th style="width:36px"></th>
               </tr></thead>
@@ -740,7 +759,7 @@ function toMGRS(lat,lon){
 /* ---------------- Décodage MGRS -> lat,lon (recherche par MGRS) ---------------- */
 const MGRS_COL_LETTERS="AJSAJS", MGRS_ROW_LETTERS="AFAFAF";
 function mgrsMinNorthing(b){const v={C:1.1,D:2.0,E:2.8,F:3.7,G:4.6,H:5.5,J:6.4,K:7.3,L:8.2,
-  M:9.1,N:0,P:0.8,Q:1.9,R:2.7,S:3.6,T:4.5,U:5.5,V:6.4,W:7.3,X:8.2}[b];return v==null?0:v*1e6;}
+  M:9.1,N:0,P:0.8,Q:1.9,R:2.6,S:3.5,T:4.4,U:5.3,V:6.2,W:7.0,X:7.9}[b];return v==null?0:v*1e6;}
 function mgrsToLatLon(str){
   if(!str)return null;
   const s=String(str).toUpperCase().replace(/\s+/g,"");
@@ -1721,8 +1740,8 @@ function renderExtract(){
     const r=EX_RESULTS[+b.dataset.ex];
     copyText(r.coords.map(c=>`${c[0].toFixed(6)}, ${c[1].toFixed(6)}`).join("\n"),this);});
 }
-function exGeoJSON(){
-  const feats=EX_RESULTS.map(r=>{
+function exGeoJSON(list){
+  const feats=(list||EX_RESULTS).map(r=>{
     let geom;
     if(r.coords.length>=3&&r.area){const ring=r.coords.map(c=>[c[1],c[0]]);
       const f=ring[0],l=ring[ring.length-1];if(f[0]!==l[0]||f[1]!==l[1])ring.push(f);
@@ -1735,9 +1754,9 @@ function exGeoJSON(){
       sommets:r.nverts}};});
   return JSON.stringify({type:"FeatureCollection",features:feats},null,2);
 }
-function exCSV(){
+function exCSV(list){
   const rows=[["id","nom","type","surface_m2","perimetre_m","largeur_m","hauteur_m","sommets","centre_lat","centre_lon"]];
-  for(const r of EX_RESULTS)rows.push([r.id,r.name,r.kind,Math.round(r.area),Math.round(r.perim),
+  for(const r of (list||EX_RESULTS))rows.push([r.id,r.name,r.kind,Math.round(r.area),Math.round(r.perim),
     r.dims?Math.round(r.dims.w):"",r.dims?Math.round(r.dims.h):"",r.nverts,
     r.center?r.center[0].toFixed(6):"",r.center?r.center[1].toFixed(6):""]);
   return rows.map(row=>row.map(c=>{const v=String(c==null?"":c);
@@ -2153,7 +2172,7 @@ function renderBatch(){
     return `<tr>
       <td class="muted">${i+1}</td>
       <td><input data-i="${i}" data-f="name" value="${esc(r.name)}" placeholder="ex. Maison Paris"/></td>
-      <td><input data-i="${i}" data-f="query" value="${esc(r.query)}" placeholder="adresse ou 48.8584, 2.2945"/></td>
+      <td><input data-i="${i}" data-f="query" value="${esc(r.query)}" autocomplete="off" placeholder="adresse, 48.8584, 2.2945, ou MGRS 31U DQ 48251 11932"/></td>
       <td class="st-${r.statusKind||'wait'}">${stTxt}</td>
       <td><button class="rm" data-rm="${i}" title="Supprimer">✕</button></td>
     </tr>`;
@@ -2161,7 +2180,36 @@ function renderBatch(){
   tb.querySelectorAll("input").forEach(inp=>inp.oninput=()=>{
     const r=BATCH[+inp.dataset.i];if(!r)return;r[inp.dataset.f]=inp.value;
     if(inp.dataset.f==="query"){r.lat=null;r.lon=null;r.status="modifié";r.statusKind="wait";}});
+  tb.querySelectorAll('input[data-f="query"]').forEach(inp=>{
+    const r=BATCH[+inp.dataset.i];if(r)attachAutocomplete(inp,r);});
   tb.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{BATCH.splice(+b.dataset.rm,1);renderBatch();});
+}
+/* Autocomplétion d'adresses (Nominatim) sur le champ « Localisation » du lot.
+   Les saisies reconnues comme coordonnées ou MGRS ne déclenchent pas de suggestion. */
+let batchSugEl=null, batchSugTimer=null;
+function batchSug(){if(!batchSugEl){batchSugEl=document.createElement("div");batchSugEl.id="batchSug";
+  document.body.appendChild(batchSugEl);}return batchSugEl;}
+function hideBatchSug(){if(batchSugEl)batchSugEl.style.display="none";}
+function attachAutocomplete(inp,r){
+  inp.addEventListener("input",()=>{
+    clearTimeout(batchSugTimer);
+    const v=inp.value.trim();
+    if(v.length<3||parseCoordInput(v)){hideBatchSug();return;}   // coord/MGRS : pas de suggestion
+    batchSugTimer=setTimeout(async()=>{
+      const res=await searchPlaces(v);
+      if(document.activeElement!==inp||!res.length){hideBatchSug();return;}
+      const box=batchSug(), rc=inp.getBoundingClientRect();
+      box.style.left=rc.left+"px";box.style.top=(rc.bottom+2)+"px";box.style.width=Math.max(rc.width,240)+"px";
+      box.innerHTML=res.map((x,i)=>`<div data-i="${i}">${esc(x.display_name)}</div>`).join("");
+      box.style.display="";
+      box.querySelectorAll("div").forEach(d=>d.onmousedown=e=>{e.preventDefault();
+        const x=res[+d.dataset.i];
+        r.query=x.display_name;r.lat=+x.lat;r.lon=+x.lon;r.foundLabel=x.display_name;
+        r.address=x.display_name;r.status="vérifié";r.statusKind="ok";
+        hideBatchSug();renderBatch();});
+    },350);
+  });
+  inp.addEventListener("blur",()=>setTimeout(hideBatchSug,200));
 }
 async function geocodeRow(r){
   const c=parseCoordInput(r.query);
@@ -2228,8 +2276,14 @@ function placeHTML(r){
     `<p style="color:#777;font-size:12px">Généré le ${new Date().toLocaleString("fr-FR")} · GEOSINT.</p></body>`;
 }
 function batchOptions(){const g=id=>{const e=$(id);return !!(e&&e.checked);};
+  const v=id=>{const e=$(id);return e?e.value.trim():"";};
   return {esri:g("optEsri"),topo:g("optTopo"),osm:g("optOsm"),yandex:g("optYandex"),wayback:g("optWayback"),
-    json:g("optJson"),geojson:g("optGeojson"),csv:g("optCsv"),html:g("optHtml"),pdf:g("optPdf")};}
+    json:g("optJson"),geojson:g("optGeojson"),csv:g("optCsv"),html:g("optHtml"),pdf:g("optPdf"),
+    extract:g("optExtract"),exKey:v("optExKey"),exVal:v("optExVal"),
+    exRadius:Math.max(50,Math.min(parseInt(v("optExRadius"))||500,5000))};}
+function bboxAround(lat,lon,radiusM){
+  const dLat=radiusM/111320, dLon=radiusM/(111320*Math.cos(lat*Math.PI/180));
+  return `${(lat-dLat).toFixed(6)},${(lon-dLon).toFixed(6)},${(lat+dLat).toFixed(6)},${(lon+dLon).toFixed(6)}`;}
 function setBatchProg(p,msg){const pr=$("batchProg");pr.classList.toggle("on",p>0&&p<1);
   pr.firstElementChild.style.width=(p*100)+"%";$("batchStatus").textContent=msg||"";}
 function batchBusy(on){["batchRun","batchVerify","batchAdd","batchDir"].forEach(id=>{const b=$(id);if(b)b.disabled=on;});}
@@ -2290,6 +2344,20 @@ async function batchProcess(useDir){
       if(opt.csv)     files.push({name:"donnees.csv",data:enc("﻿"+placeCSV(r))});
       if(opt.html)    files.push({name:"fiche.html",data:enc(placeHTML(r))});
       if(opt.pdf)     files.push({name:"fiche.pdf",data:buildPDF({title:`GEOSINT - ${r.name||folder}`,lines:batchLines(r,anyImg?zooms:null)})});
+      // Extraction OSM (comme l'outil) autour du point, dans un rayon donné.
+      if(opt.extract&&opt.exKey){
+        try{
+          setBatchProg((i+.9)/rows.length,`${r.name||r.query} · extraction ${opt.exKey}`);
+          const bbox=bboxAround(r.lat,r.lon,opt.exRadius);
+          const json=await overpass(exBuildQuery(opt.exKey,opt.exVal,bbox));
+          const res=(json.elements||[]).map(exProcess).filter(x=>x.nverts>0).sort((a,b)=>b.area-a.area);
+          if(res.length){
+            const base="extraction_"+sanitizeName(opt.exKey+(opt.exVal?"_"+opt.exVal:"")).replace(/\s+/g,"_");
+            files.push({name:base+".geojson",data:enc(exGeoJSON(res))});
+            files.push({name:base+".csv",data:enc("﻿"+exCSV(res))});
+          }
+        }catch(e){/* extraction optionnelle : on n'échoue pas le lieu */}
+      }
       if(!files.length){r.status="rien à générer";r.statusKind="err";renderBatch();i++;continue;}
       perPlace.push({folder,files});
       r.status=`généré ✓ (${files.length} fichiers)`;r.statusKind="done";okCount++;
