@@ -24,6 +24,22 @@ lors de la génération (le choix est mémorisé dans le navigateur) :
 L'interface masque automatiquement les cartes non pertinentes selon le mode
 choisi.
 
+## 📋 Mode « Lot » (liste de lieux)
+
+Un onglet **Lot** permet de traiter une **liste de lieux** d'un coup :
+
+- un **tableau** où chaque ligne a un **nom libre** (celui du dossier généré) et
+  une **localisation** (adresse, lieu, ou coordonnées « lat, lon ») ;
+- import rapide par **collage** d'une liste (`Nom | localisation`, une par ligne) ;
+- bouton **Vérifier** qui géocode et confirme chaque localisation (Nominatim) ;
+- la génération télécharge **pour chaque lieu un dossier à son nom**, contenant
+  **`satellite.webp`**, **`opentopomap.webp`**, **`donnees.json`** et une
+  **`fiche.pdf`** (vue satellite + coordonnées + liens).
+
+Livraison au choix : un **ZIP** unique contenant un sous-dossier par lieu, ou
+écriture directe dans un **dossier du disque** (API File System Access, navigateurs
+compatibles). Le ZIP et le PDF sont générés **en pur JavaScript**, sans dépendance.
+
 ## ✨ Fonctionnalités
 
 - **Recherche multi-modes** : adresse / lieu / code postal (géocodage

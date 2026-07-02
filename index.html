@@ -120,6 +120,15 @@
   .tab{background:var(--input);border:1px solid var(--line);color:var(--muted);
     border-radius:10px 10px 0 0;padding:9px 14px;font-weight:600;cursor:pointer}
   .tab.active{background:var(--card);color:var(--fg);border-bottom-color:var(--card)}
+  /* Lot (liste de lieux) */
+  #batchTable input{width:100%;background:var(--input);border:1px solid var(--line);
+    color:var(--fg);padding:6px 8px;border-radius:8px;outline:none}
+  #batchTable input:focus{border-color:var(--accent)}
+  #batchTable td,#batchTable th{vertical-align:middle}
+  #batchTable td .rm{background:var(--input);border:1px solid var(--line);color:var(--muted);
+    border-radius:8px;padding:4px 9px;cursor:pointer;font-weight:700}
+  #batchTable td .rm:hover{color:var(--err);border-color:var(--err)}
+  .st-ok{color:#86efac}.st-err{color:#fca5a5}.st-wait{color:var(--muted)}.st-done{color:#86efac;font-weight:600}
   /* Annotation d'images téléchargées */
   .dropzone{border:2px dashed var(--line);border-radius:12px;padding:34px 20px;text-align:center;
     color:var(--muted);cursor:pointer;background:var(--input)}
@@ -182,6 +191,7 @@
 
 <nav class="tabs">
   <button class="tab active" data-tab="analyse">🗺️ Analyse géographique</button>
+  <button class="tab" data-tab="batch">📋 Lot (liste de lieux)</button>
   <button class="tab" data-tab="annotate">🖼️ Annoter une image (Nord + échelle)</button>
 </nav>
 
@@ -372,6 +382,66 @@
   </div>
 </div>
 </div><!-- /tab-analyse -->
+
+<div id="tab-batch" class="tabpanel" style="display:none">
+  <div class="wrap" style="grid-template-columns:1fr">
+    <div class="col">
+      <div class="card">
+        <div class="hd">Traitement par lot — liste de lieux
+          <span class="muted" style="font-weight:400">un dossier téléchargé par lieu</span></div>
+        <div class="bd">
+          <p class="muted" style="margin-top:0">
+            Renseignez une <b>liste de lieux</b> : chaque ligne a un <b>nom libre</b> (celui du
+            dossier généré) et une <b>localisation</b> (adresse, lieu, ou coordonnées «&nbsp;lat, lon&nbsp;»).
+            Le bouton <b>Vérifier</b> géocode et confirme chaque localisation. La génération
+            télécharge, <b>pour chaque lieu, un dossier à son nom</b> contenant :
+            <b>satellite.webp</b>, <b>opentopomap.webp</b>, <b>donnees.json</b> et <b>fiche.pdf</b>.
+          </p>
+          <div class="searchbar" style="align-items:center">
+            <button class="ghost" id="batchAdd">＋ Ajouter une ligne</button>
+            <button class="ghost" id="batchPasteBtn">📋 Coller une liste</button>
+            <span class="muted">Zoom sat.</span>
+            <input id="batchZoomSat" type="number" min="10" max="19" value="17" style="max-width:70px"/>
+            <span class="muted">Zoom topo</span>
+            <input id="batchZoomTopo" type="number" min="10" max="17" value="15" style="max-width:70px"/>
+            <label class="muted">Taille</label>
+            <select id="batchGrid">
+              <option value="5">1024 px</option>
+              <option value="7">1536 px</option>
+              <option value="9">2048 px</option>
+              <option value="11">2560 px</option>
+            </select>
+            <button class="ghost" id="batchVerify">✓ Vérifier les localisations</button>
+            <button class="go" id="batchRun">⬇ Générer & télécharger</button>
+            <button class="ghost" id="batchDir" style="display:none">📁 Enregistrer dans un dossier…</button>
+          </div>
+          <div id="batchPaste" style="display:none;margin-top:10px">
+            <textarea id="batchPasteText" rows="6" placeholder="Un lieu par ligne. Séparez le nom et la localisation par « | » (ou « ; » / tabulation).&#10;Ex :&#10;Tour Eiffel | 48.8584, 2.2945&#10;Colisée | Piazza del Colosseo, Rome&#10;Maison | 12 rue de la Paix, Paris"
+              style="width:100%;background:var(--input);border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:10px"></textarea>
+            <div class="searchbar" style="margin-top:6px">
+              <button class="ghost" id="batchPasteApply">Importer les lignes</button>
+              <button class="ghost" id="batchPasteCancel">Annuler</button>
+            </div>
+          </div>
+          <div class="progress" id="batchProg"><i></i></div>
+          <div style="overflow-x:auto;margin-top:12px">
+            <table id="batchTable">
+              <thead><tr>
+                <th style="width:26px">#</th>
+                <th style="width:26%">Nom du dossier</th>
+                <th style="width:34%">Localisation (adresse ou lat, lon)</th>
+                <th>Statut / vérification</th>
+                <th style="width:36px"></th>
+              </tr></thead>
+              <tbody id="batchBody"></tbody>
+            </table>
+          </div>
+          <div class="muted" id="batchStatus" style="font-size:12px;margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /tab-batch -->
 
 <div id="tab-annotate" class="tabpanel" style="display:none">
   <div class="wrap" style="grid-template-columns:1fr">
@@ -1233,29 +1303,35 @@ function canvasBlob(canvas){return new Promise((res,rej)=>{
 function saveBlob(blob,filename){const u=URL.createObjectURL(blob);const a=document.createElement("a");
   a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);}
 
+// Compose une mosaïque de tuiles centrée, recadrée à la résolution native, avec
+// repère central + flèche Nord + barre d'échelle. Renvoie le canvas et le zoom
+// réellement utilisé. Réutilisé par le téléchargement unitaire et le lot.
+async function composeCanvas(template,maxZoom,lat,lon,z,grid){
+  grid=grid||5; z=Math.min(z,maxZoom);
+  const out=(grid-1)*TS;
+  let m=await fetchMosaic(template,lat,lon,z,grid);
+  // Trop de tuiles absentes à ce zoom ? on recule d'un cran (imagerie indispo).
+  if(m.ok < m.total*0.6 && z>3) m=await fetchMosaic(template,lat,lon,z-1,grid);
+  const {cv,xf,yf,x0,y0,half}=m;
+  const px=(xf-x0+half)*TS,py=(yf-y0+half)*TS;
+  let left=Math.round(px-out/2),top=Math.round(py-out/2);
+  left=Math.max(0,Math.min(left,grid*TS-out));top=Math.max(0,Math.min(top,grid*TS-out));
+  const c2=document.createElement("canvas");c2.width=out;c2.height=out;
+  const x2=c2.getContext("2d");
+  x2.imageSmoothingEnabled=false;                 // pas de flou : pixels natifs
+  x2.drawImage(cv,left,top,out,out,0,0,out,out);
+  x2.strokeStyle="#ef4444";x2.lineWidth=3;x2.beginPath();x2.arc(out/2,out/2,10,0,Math.PI*2);x2.stroke();
+  drawNorthScale(x2,out,out,mppAt(lat,m.z),{north:"tr"});
+  return {canvas:c2,zUsed:m.z,ok:m.ok,total:m.total};
+}
+
 // grid = nombre de tuiles par côté (5 par défaut). Sortie native = (grid-1)*256.
 async function composeDownload(template,maxZoom,lat,lon,z,filename,btn,grid){
-  grid=grid||5; z=Math.min(z,maxZoom);
   filename=toImgExt(filename);                    // force l'extension .webp
-  const out=(grid-1)*TS;
   const prev=btn?btn.textContent:null;if(btn){btn.textContent="…";btn.disabled=true;}
   try{
-    let m=await fetchMosaic(template,lat,lon,z,grid);
-    // Trop de tuiles absentes à ce zoom ? on recule d'un cran (imagerie indispo).
-    if(m.ok < m.total*0.6 && z>3) m=await fetchMosaic(template,lat,lon,z-1,grid);
-    const {cv,xf,yf,x0,y0,half}=m;
-    const px=(xf-x0+half)*TS,py=(yf-y0+half)*TS;
-    let left=Math.round(px-out/2),top=Math.round(py-out/2);
-    left=Math.max(0,Math.min(left,grid*TS-out));top=Math.max(0,Math.min(top,grid*TS-out));
-    const c2=document.createElement("canvas");c2.width=out;c2.height=out;
-    const x2=c2.getContext("2d");
-    x2.imageSmoothingEnabled=false;                 // pas de flou : pixels natifs
-    x2.drawImage(cv,left,top,out,out,0,0,out,out);
-    // repère central
-    x2.strokeStyle="#ef4444";x2.lineWidth=3;x2.beginPath();x2.arc(out/2,out/2,10,0,Math.PI*2);x2.stroke();
-    // flèche Nord + barre d'échelle (zoom réellement utilisé après repli éventuel)
-    drawNorthScale(x2,out,out,mppAt(lat,m.z),{north:"tr"});
-    saveBlob(await canvasBlob(c2),filename);       // export WebP q0.85
+    const {canvas}=await composeCanvas(template,maxZoom,lat,lon,z,grid);
+    saveBlob(await canvasBlob(canvas),filename);   // export WebP q0.85
   }catch(e){
     alert("Téléchargement impossible ("+(e.message||e)+"). Astuce : ouvrez la page "+
           "via un serveur local (http://localhost) pour autoriser l'export des tuiles.");
@@ -1517,8 +1593,7 @@ document.querySelectorAll(".tab").forEach(t=>{
   t.onclick=()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));
     const id=t.dataset.tab;
-    $("tab-analyse").style.display=id==="analyse"?"":"none";
-    $("tab-annotate").style.display=id==="annotate"?"":"none";
+    document.querySelectorAll(".tabpanel").forEach(p=>p.style.display=(p.id==="tab-"+id)?"":"none");
     if(id==="analyse"){setTimeout(()=>{if(map)map.invalidateSize();if(wbMap)wbMap.invalidateSize();},60);}
   };
 });
@@ -1813,8 +1888,226 @@ function renderAnnotItem(item){
     $("dlAllAnnot").disabled=true;$("clearAnnot").disabled=true;};
 })();
 
+/* ============================================================
+   Mode « Lot » — liste de lieux -> un dossier par lieu
+   (satellite.webp + opentopomap.webp + donnees.json + fiche.pdf),
+   empaquetés dans un ZIP (ou écrits sur disque via l'API Fichiers).
+   ============================================================ */
+
+/* ---- ZIP « store » (sans compression), en pur JS. Réutilise crc32(). ---- */
+function zipStore(entries){
+  const enc=new TextEncoder();
+  const u16=n=>[n&255,(n>>8)&255], u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255];
+  const parts=[], central=[]; let offset=0;
+  for(const e of entries){
+    const nameB=enc.encode(e.name), data=e.data, crc=crc32(data);
+    const local=new Uint8Array([].concat([0x50,0x4b,0x03,0x04],u16(20),u16(0),u16(0),u16(0),u16(0),
+      u32(crc),u32(data.length),u32(data.length),u16(nameB.length),u16(0)));
+    parts.push(local,nameB,data);
+    central.push(new Uint8Array([].concat([0x50,0x4b,0x01,0x02],u16(20),u16(20),u16(0),u16(0),u16(0),u16(0),
+      u32(crc),u32(data.length),u32(data.length),u16(nameB.length),u16(0),u16(0),u16(0),u16(0),
+      u32(0),u32(offset))), nameB);
+    offset+=local.length+nameB.length+data.length;
+  }
+  let cenSize=0; for(const c of central) cenSize+=c.length;
+  const end=new Uint8Array([].concat([0x50,0x4b,0x05,0x06],u16(0),u16(0),
+    u16(entries.length),u16(entries.length),u32(cenSize),u32(offset),u16(0)));
+  return new Blob([...parts,...central,end],{type:"application/zip"});
+}
+
+/* ---- Générateur PDF minimal : texte (Helvetica/WinAnsi) + une image JPEG. ---- */
+function dataURLtoBytes(durl){const bin=atob(durl.split(",")[1]);
+  const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a;}
+function buildPDF(opt){
+  const pageW=595,pageH=842,margin=40;
+  const latin1=s=>{const a=[];for(const ch of String(s)){const c=ch.codePointAt(0);a.push(c<256?c:63);}return a;};
+  const escTxt=s=>{const o=[];for(const b of latin1(s)){if(b===40||b===41||b===92)o.push(92);o.push(b);}return o;};
+  const hasImg=opt.jpeg&&opt.imgW&&opt.imgH;
+  const cb=[]; const pushBytes=a=>{for(const b of a)cb.push(b);};
+  const pushAscii=s=>{for(let i=0;i<s.length;i++)cb.push(s.charCodeAt(i));};
+  let ty=pageH-margin;
+  if(hasImg){
+    let dW=pageW-2*margin, dH=dW*opt.imgH/opt.imgW; const maxH=pageH*0.5;
+    if(dH>maxH){dH=maxH;dW=dH*opt.imgW/opt.imgH;}
+    const iy=pageH-margin-dH;
+    pushAscii(`q ${dW.toFixed(2)} 0 0 ${dH.toFixed(2)} ${margin} ${iy.toFixed(2)} cm /Im1 Do Q\n`);
+    ty=iy-26;
+  }
+  pushAscii(`BT /F1 16 Tf ${margin} ${ty.toFixed(2)} Td `);
+  cb.push(40);pushBytes(escTxt(opt.title||"GEOSINT"));cb.push(41);pushAscii(` Tj ET\n`);
+  ty-=22;
+  pushAscii(`BT /F1 11 Tf ${margin} ${ty.toFixed(2)} Td 14 TL `);
+  for(const ln of (opt.lines||[])){cb.push(40);pushBytes(escTxt(ln));cb.push(41);pushAscii(` Tj T*\n`);}
+  pushAscii(`ET\n`);
+  const content=new Uint8Array(cb);
+
+  const out=[]; let pos=0; const off=[];
+  const w=u8=>{out.push(u8);pos+=u8.length;};
+  const wa=s=>{const a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);w(a);};
+  w(new Uint8Array([0x25,0x50,0x44,0x46,0x2d,0x31,0x2e,0x34,0x0a,0x25,0xe2,0xe3,0xcf,0xd3,0x0a])); // %PDF-1.4
+  const n=hasImg?6:5;
+  const obj=(i,body)=>{off[i]=pos;wa(`${i} 0 obj\n`);if(typeof body==="function")body();else wa(body);wa(`endobj\n`);};
+  obj(1,`<< /Type /Catalog /Pages 2 0 R >>\n`);
+  obj(2,`<< /Type /Pages /Kids [3 0 R] /Count 1 >>\n`);
+  obj(3,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /Font << /F1 4 0 R >>`+
+        (hasImg?` /XObject << /Im1 6 0 R >>`:``)+` >> /Contents 5 0 R >>\n`);
+  obj(4,`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\n`);
+  obj(5,()=>{wa(`<< /Length ${content.length} >>\nstream\n`);w(content);wa(`\nendstream\n`);});
+  if(hasImg)obj(6,()=>{wa(`<< /Type /XObject /Subtype /Image /Width ${opt.imgW} /Height ${opt.imgH}`+
+    ` /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${opt.jpeg.length} >>\nstream\n`);
+    w(opt.jpeg);wa(`\nendstream\n`);});
+  const xref=pos;
+  wa(`xref\n0 ${n+1}\n0000000000 65535 f \n`);
+  for(let i=1;i<=n;i++)wa(`${String(off[i]).padStart(10,"0")} 00000 n \n`);
+  wa(`trailer\n<< /Size ${n+1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  let tot=0;for(const u of out)tot+=u.length;
+  const pdf=new Uint8Array(tot);let o=0;for(const u of out){pdf.set(u,o);o+=u.length;}
+  return pdf;
+}
+
+/* ---- Modèle & rendu du tableau de lot ---- */
+const BATCH=[];
+function sanitizeName(s){return (String(s||"").trim()
+  .replace(/[\/\\:*?"<>|]+/g," ").replace(/\s+/g," ").trim())||"lieu";}
+function batchAddRow(name,query){BATCH.push({name:name||"",query:query||"",lat:null,lon:null,
+  address:"",foundLabel:"",status:"—",statusKind:"wait"});renderBatch();}
+function renderBatch(){
+  const tb=$("batchBody");if(!tb)return;
+  tb.innerHTML=BATCH.map((r,i)=>{
+    const stTxt=esc(r.status||"—")+(r.lat!=null?` · ${r.lat.toFixed(5)}, ${r.lon.toFixed(5)}`:"")
+      +(r.address?` · ${esc(r.address.split(",").slice(0,3).join(","))}`:"");
+    return `<tr>
+      <td class="muted">${i+1}</td>
+      <td><input data-i="${i}" data-f="name" value="${esc(r.name)}" placeholder="ex. Maison Paris"/></td>
+      <td><input data-i="${i}" data-f="query" value="${esc(r.query)}" placeholder="adresse ou 48.8584, 2.2945"/></td>
+      <td class="st-${r.statusKind||'wait'}">${stTxt}</td>
+      <td><button class="rm" data-rm="${i}" title="Supprimer">✕</button></td>
+    </tr>`;
+  }).join("");
+  tb.querySelectorAll("input").forEach(inp=>inp.oninput=()=>{
+    const r=BATCH[+inp.dataset.i];if(!r)return;r[inp.dataset.f]=inp.value;
+    if(inp.dataset.f==="query"){r.lat=null;r.lon=null;r.status="modifié";r.statusKind="wait";}});
+  tb.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{BATCH.splice(+b.dataset.rm,1);renderBatch();});
+}
+async function geocodeRow(r){
+  const c=parseCoordInput(r.query);
+  if(c){r.lat=c.lat;r.lon=c.lon;}
+  else{
+    const res=await searchPlaces(r.query);
+    if(!res.length){r.status="introuvable";r.statusKind="err";return false;}
+    r.lat=+res[0].lat;r.lon=+res[0].lon;r.foundLabel=res[0].display_name;
+  }
+  try{const rv=await reverse(r.lat,r.lon);r.address=(rv.data&&rv.data["Adresse"])||r.foundLabel||"";}catch(e){}
+  r.status="vérifié";r.statusKind="ok";return true;
+}
+function batchLines(r){
+  return [
+    "Nom : "+(r.name||"—"),
+    "Localisation saisie : "+r.query,
+    r.address?("Adresse résolue : "+r.address):null,
+    `Coordonnées : ${r.lat.toFixed(6)}, ${r.lon.toFixed(6)}`,
+    "DMS : "+toDMS(r.lat,r.lon),
+    "UTM : "+(toUTM(r.lat,r.lon)||"—"),
+    "MGRS : "+(toMGRS(r.lat,r.lon)||"—"),
+    "Plus Code : "+olcEncode(r.lat,r.lon,11),
+    "Google Maps : https://www.google.com/maps/search/?api=1&query="+r.lat.toFixed(6)+","+r.lon.toFixed(6),
+    "OpenStreetMap : https://www.openstreetmap.org/?mlat="+r.lat.toFixed(6)+"&mlon="+r.lon.toFixed(6),
+    "Géoportail : https://www.geoportail.gouv.fr/carte?c="+r.lon.toFixed(6)+","+r.lat.toFixed(6)+"&z=17",
+    "",
+    "Généré le "+new Date().toLocaleString("fr-FR")+" · GEOSINT · données publiques.",
+  ].filter(v=>v!=null);
+}
+function batchJSON(r){
+  return JSON.stringify({
+    nom:r.name||null, localisation_saisie:r.query, adresse_resolue:r.address||null,
+    latitude:r.lat, longitude:r.lon, coordonnees:coordSet(r.lat,r.lon),
+    liens:{google_maps:`https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}`,
+      openstreetmap:`https://www.openstreetmap.org/?mlat=${r.lat}&mlon=${r.lon}`},
+    genere_le:new Date().toISOString(), source:"GEOSINT"
+  },null,2);
+}
+function setBatchProg(p,msg){const pr=$("batchProg");pr.classList.toggle("on",p>0&&p<1);
+  pr.firstElementChild.style.width=(p*100)+"%";$("batchStatus").textContent=msg||"";}
+function batchBusy(on){["batchRun","batchVerify","batchAdd","batchDir"].forEach(id=>{const b=$(id);if(b)b.disabled=on;});}
+
+async function batchVerifyAll(){
+  const rows=BATCH.filter(r=>(r.query||"").trim());
+  if(!rows.length){alert("Ajoutez au moins un lieu.");return;}
+  batchBusy(true);let i=0;
+  for(const r of rows){setBatchProg((i+.5)/rows.length,`Vérification : ${r.name||r.query}`);
+    try{await geocodeRow(r);}catch(e){r.status="erreur";r.statusKind="err";}
+    renderBatch();i++;}
+  setBatchProg(0,`${rows.length} lieu(x) vérifié(s).`);batchBusy(false);
+}
+async function batchProcess(useDir){
+  const rows=BATCH.filter(r=>(r.query||"").trim());
+  if(!rows.length){alert("Ajoutez au moins un lieu.");return;}
+  batchBusy(true);
+  const grid=parseInt($("batchGrid").value)||5;
+  const zSat=Math.max(1,Math.min(parseInt($("batchZoomSat").value)||17,19));
+  const zTopo=Math.max(1,Math.min(parseInt($("batchZoomTopo").value)||15,17));
+  const perPlace=[], used={}; let i=0, okCount=0;
+  for(const r of rows){
+    setBatchProg((i+.1)/rows.length,`Traitement : ${r.name||r.query}`);
+    try{
+      if(r.lat==null){await geocodeRow(r);renderBatch();}
+      if(r.lat==null){r.status="introuvable";r.statusKind="err";renderBatch();i++;continue;}
+      let folder=sanitizeName(r.name||(r.address||r.query).split(",")[0]||`lieu_${i+1}`);
+      if(used[folder]){folder=`${folder}_${used[folder]++}`;}else used[folder]=1;
+      const sat=await composeCanvas(ESRI,19,r.lat,r.lon,zSat,grid);
+      setBatchProg((i+.5)/rows.length,`Topo : ${r.name||r.query}`);
+      const topo=await composeCanvas(TOPO,17,r.lat,r.lon,zTopo,grid);
+      const satBlob=await canvasBlob(sat.canvas), topoBlob=await canvasBlob(topo.canvas);
+      const jpeg=dataURLtoBytes(sat.canvas.toDataURL("image/jpeg",0.85));
+      const pdf=buildPDF({title:`GEOSINT - ${r.name||folder}`,lines:batchLines(r),
+        jpeg,imgW:sat.canvas.width,imgH:sat.canvas.height});
+      const files=[
+        {name:"satellite.webp",data:new Uint8Array(await satBlob.arrayBuffer())},
+        {name:"opentopomap.webp",data:new Uint8Array(await topoBlob.arrayBuffer())},
+        {name:"donnees.json",data:new TextEncoder().encode(batchJSON(r))},
+        {name:"fiche.pdf",data:pdf},
+      ];
+      perPlace.push({folder,files});
+      r.status="généré ✓";r.statusKind="done";okCount++;
+    }catch(e){r.status="erreur : "+(e.message||e);r.statusKind="err";}
+    renderBatch();i++;
+  }
+  if(!perPlace.length){setBatchProg(0,"Aucun dossier généré.");batchBusy(false);return;}
+  setBatchProg(.98,"assemblage…");
+  try{
+    if(useDir&&window.showDirectoryPicker){
+      const root=await window.showDirectoryPicker();
+      for(const p of perPlace){const dir=await root.getDirectoryHandle(p.folder,{create:true});
+        for(const f of p.files){const fh=await dir.getFileHandle(f.name,{create:true});
+          const wr=await fh.createWritable();await wr.write(f.data);await wr.close();}}
+      setBatchProg(0,`${okCount} dossier(s) écrit(s) sur le disque.`);
+    }else{
+      const entries=[];for(const p of perPlace)for(const f of p.files)entries.push({name:`${p.folder}/${f.name}`,data:f.data});
+      saveBlob(zipStore(entries),"geosint_lots.zip");
+      setBatchProg(0,`${okCount} dossier(s) dans geosint_lots.zip.`);
+    }
+  }catch(e){setBatchProg(0,"Enregistrement annulé/impossible : "+(e.message||e));}
+  batchBusy(false);
+}
+(function bindBatch(){
+  if(!$("batchAdd"))return;
+  $("batchAdd").onclick=()=>batchAddRow("","");
+  $("batchVerify").onclick=batchVerifyAll;
+  $("batchRun").onclick=()=>batchProcess(false);
+  if(window.showDirectoryPicker){const d=$("batchDir");d.style.display="";d.onclick=()=>batchProcess(true);}
+  $("batchPasteBtn").onclick=()=>{const p=$("batchPaste");p.style.display=p.style.display==="none"?"":"none";};
+  $("batchPasteCancel").onclick=()=>{$("batchPaste").style.display="none";};
+  $("batchPasteApply").onclick=()=>{
+    const lines=($("batchPasteText").value||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    for(const ln of lines){const m=ln.split(/\s*[|;\t]\s*/);
+      if(m.length>=2)batchAddRow(m[0],m.slice(1).join(" "));else batchAddRow("",ln);}
+    $("batchPasteText").value="";$("batchPaste").style.display="none";
+  };
+  batchAddRow("","");   // une ligne vide au départ
+})();
+
 /* init */
-if(location.protocol==="file:"){$("fileWarn").style.display="block";$("status").textContent="ouvrez via lancer_interface.command";}
+if(location.protocol==="file:"){$("fileWarn").style.display="block";$("status").textContent="ouvrez via un serveur local";}
 // Thème : préférence mémorisée (défaut : sombre).
 try{ applyTheme(localStorage.getItem("geosint_theme")==="light"?"light":"dark"); }catch(e){ applyTheme("dark"); }
 // Mode de collecte : préférence mémorisée (défaut : complet).
