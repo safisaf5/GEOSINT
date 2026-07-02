@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   GEOSINT — Analyse géographique OSINT
-  Auteur : safisaf5 <abdurahmansafwan@gmail.com>
+  Auteur : safisaf5
   © 2026 safisaf5 — Licence MIT
 -->
 <html lang="fr">
@@ -14,7 +14,13 @@
   :root{
     --bg:#0f172a; --panel:#111c34; --card:#16233f; --line:#27395d;
     --fg:#e8eefb; --muted:#93a3c4; --accent:#3b82f6; --accent2:#22c55e;
-    --warn:#f59e0b; --err:#ef4444; --radius:12px;
+    --warn:#f59e0b; --err:#ef4444; --radius:12px; --input:#0B1730;
+  }
+  /* Thème clair (activé via <html data-theme="light">) */
+  [data-theme="light"]{
+    --bg:#eef2f7; --panel:#ffffff; --card:#ffffff; --line:#d6dfea;
+    --fg:#0f172a; --muted:#5a6b86; --accent:#2563eb; --accent2:#16a34a;
+    --input:#f3f6fb;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
@@ -38,14 +44,14 @@
             cursor:pointer;user-select:none}
   .card>.bd{padding:12px 14px}
   .searchbar{display:flex;gap:8px;flex-wrap:wrap}
-  .searchbar input{flex:1;min-width:160px;background:#0b1730;border:1px solid var(--line);
+  .searchbar input{flex:1;min-width:160px;background:var(--input);border:1px solid var(--line);
       color:var(--fg);padding:10px 12px;border-radius:10px;outline:none}
   .searchbar input:focus{border-color:var(--accent)}
-  select{background:#0b1730;border:1px solid var(--line);color:var(--fg);
+  select{background:var(--input);border:1px solid var(--line);color:var(--fg);
          padding:9px 10px;border-radius:10px;outline:none}
   button{background:var(--accent);color:#fff;border:none;padding:10px 14px;
          border-radius:10px;font-weight:600;cursor:pointer}
-  button.ghost{background:#0b1730;border:1px solid var(--line);color:var(--fg)}
+  button.ghost{background:var(--input);border:1px solid var(--line);color:var(--fg)}
   button.go{background:var(--accent2)}
   button:disabled{opacity:.5;cursor:not-allowed}
   #map{height:440px;width:100%}
@@ -53,7 +59,7 @@
   .coordbox b{color:var(--fg)}
   .suggest{position:relative}
   .suggest .list{position:absolute;z-index:1200;left:0;right:0;top:calc(100% + 4px);
-      background:#0b1730;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+      background:var(--input);border:1px solid var(--line);border-radius:10px;overflow:hidden;
       max-height:240px;overflow-y:auto}
   .suggest .list div{padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--line)}
   .suggest .list div:hover{background:#13233f}
@@ -67,28 +73,28 @@
   .kv th{width:42%}
   .src{color:var(--muted);font-size:11px;margin-top:8px}
   .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
-  .gallery .tile{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#0b1730}
+  .gallery .tile{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--input)}
   .gallery .tile .mini{height:130px;width:100%}
   .gallery .tile .cap{font-size:11px;color:var(--muted);padding:4px 6px}
   .access{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .access .item{background:#0b1730;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .access .item{background:var(--input);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
   .access .item .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
   .access .item .val{font-weight:600;margin-top:2px}
-  .progress{height:6px;background:#0b1730;border-radius:6px;overflow:hidden;margin-top:8px;display:none}
+  .progress{height:6px;background:var(--input);border-radius:6px;overflow:hidden;margin-top:8px;display:none}
   .progress.on{display:block}
   .progress > i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
   .muted{color:var(--muted)}
-  .pill{display:inline-block;font-size:11px;background:#0b1730;border:1px solid var(--line);
+  .pill{display:inline-block;font-size:11px;background:var(--input);border:1px solid var(--line);
         border-radius:20px;padding:1px 8px;margin:2px 4px 2px 0}
   .north{background:#fff;color:#0f172a;border-radius:6px;padding:3px 7px;text-align:center;
          font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.4);font-size:12px;line-height:1.05}
   .north small{font-weight:400}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .completeness{font-weight:700}
-  .leaflet-container{background:#0b1730}
+  .leaflet-container{background:var(--input)}
   /* Liens vers outils externes */
   .links{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
-  .links a{display:flex;align-items:center;gap:7px;background:#0b1730;border:1px solid var(--line);
+  .links a{display:flex;align-items:center;gap:7px;background:var(--input);border:1px solid var(--line);
     border-radius:10px;padding:8px 10px;color:var(--fg);text-decoration:none;font-size:12px;font-weight:600}
   .links a:hover{border-color:var(--accent);background:#13233f}
   .links a .ic{font-size:14px;flex:none}
@@ -97,33 +103,33 @@
   /* Photos géolocalisées (Wikimedia Commons) */
   .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
   .imgs a{display:block;border:1px solid var(--line);border-radius:8px;overflow:hidden;
-    background:#0b1730;text-decoration:none}
+    background:var(--input);text-decoration:none}
   .imgs a:hover{border-color:var(--accent)}
-  .imgs a img{width:100%;height:108px;object-fit:cover;display:block;background:#0b1730}
+  .imgs a img{width:100%;height:108px;object-fit:cover;display:block;background:var(--input)}
   .imgs a .cap{font-size:10px;color:var(--muted);padding:4px 6px;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis}
   td a{color:var(--accent);text-decoration:none}
   td a:hover{text-decoration:underline}
-  .copybtn{background:#0b1730;border:1px solid var(--line);color:var(--muted);border-radius:6px;
+  .copybtn{background:var(--input);border:1px solid var(--line);color:var(--muted);border-radius:6px;
     padding:2px 8px;font-size:11px;cursor:pointer;margin-left:6px;font-weight:600}
   .copybtn:hover{color:var(--fg);border-color:var(--accent)}
   .sunbar{height:8px;border-radius:6px;margin:4px 0 2px;
     background:linear-gradient(90deg,#1e293b,#f59e0b 50%,#1e293b)}
   /* Onglets */
   .tabs{display:flex;gap:8px;padding:12px 16px 0;max-width:1500px;margin:0 auto;flex-wrap:wrap}
-  .tab{background:#0b1730;border:1px solid var(--line);color:var(--muted);
+  .tab{background:var(--input);border:1px solid var(--line);color:var(--muted);
     border-radius:10px 10px 0 0;padding:9px 14px;font-weight:600;cursor:pointer}
   .tab.active{background:var(--card);color:var(--fg);border-bottom-color:var(--card)}
   /* Annotation d'images téléchargées */
   .dropzone{border:2px dashed var(--line);border-radius:12px;padding:34px 20px;text-align:center;
-    color:var(--muted);cursor:pointer;background:#0b1730}
+    color:var(--muted);cursor:pointer;background:var(--input)}
   .dropzone.drag{border-color:var(--accent);color:var(--fg);background:#13233f}
   .annotgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:14px}
-  .annotcard{border:1px solid var(--line);border-radius:10px;background:#0b1730;padding:8px}
+  .annotcard{border:1px solid var(--line);border-radius:10px;background:var(--input);padding:8px}
   .annotcard canvas{width:100%;height:auto;border-radius:6px;display:block;background:#000}
   .annotcard .nm{font-size:11px;color:var(--muted);margin:6px 0 2px;word-break:break-all}
   .annotcard .row{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
-  .annotcard input.num{width:84px;background:#0b1730;border:1px solid var(--line);color:var(--fg);
+  .annotcard input.num{width:84px;background:var(--input);border:1px solid var(--line);color:var(--fg);
     padding:5px 7px;border-radius:6px}
   /* Outil de mesure de surface sur la carte */
   .measurebox{position:absolute;z-index:1200;right:10px;bottom:10px;background:rgba(15,23,42,.94);
@@ -134,10 +140,10 @@
   .wb-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
   .wb-row input[type=range]{flex:1;min-width:160px}
   .wb-date{font-weight:700;font-size:15px}
-  #wbView{height:300px;border-radius:8px;background:#0b1730}
+  #wbView{height:300px;border-radius:8px;background:var(--input)}
   .yx-grid{display:grid;gap:1px;background:var(--line);border-radius:8px;overflow:hidden;
     width:100%;aspect-ratio:1/1}
-  .yx-grid img{width:100%;height:100%;object-fit:cover;display:block;background:#0b1730}
+  .yx-grid img{width:100%;height:100%;object-fit:cover;display:block;background:var(--input)}
   /* Impression / PDF */
   @media print{
     header,#fileWarn,.searchbar,.suggest,.progress,#map,.toolbar button,.toolbar select,
@@ -163,6 +169,8 @@
   <span class="tag">analyse géographique OSINT · autonome · données publiques live</span>
   <span class="tag" id="modeTag">mode : complet</span>
   <span class="tag" id="status">prêt</span>
+  <button class="ghost" id="themeBtn" title="Basculer thème clair / sombre"
+          style="margin-left:auto;padding:6px 11px;font-size:15px;line-height:1">🌙</button>
 </header>
 
 <div id="fileWarn" style="display:none;background:#7c2d12;color:#fff;padding:10px 20px;
@@ -410,7 +418,7 @@
 "use strict";
 /* ============================================================
    GEOSINT — Outil d'analyse géographique OSINT — interface autonome.
-   Auteur : safisaf5 <abdurahmansafwan@gmail.com> · © 2026 safisaf5 · MIT.
+   Auteur : safisaf5 · © 2026 safisaf5 · MIT.
    Tout s'exécute dans le navigateur, à partir d'APIs publiques.
    Aucune donnée n'est inventée : ce qui manque est marqué « non disponible ».
    ============================================================ */
@@ -435,6 +443,20 @@ const MODES = {
 };
 let currentMode = "full";
 function modeCfg(){ return MODES[currentMode] || MODES.full; }
+
+/* ---------------- Thème clair / sombre ----------------
+   Applique le thème sur <html data-theme="…"> ; préférence mémorisée. */
+function applyTheme(t){
+  const light = t==="light";
+  document.documentElement.setAttribute("data-theme", light?"light":"dark");
+  const b=$("themeBtn");
+  if(b){ b.textContent = light?"☀️":"🌙";
+         b.title = light?"Passer en thème sombre":"Passer en thème clair"; }
+  try{ localStorage.setItem("geosint_theme", light?"light":"dark"); }catch(e){}
+}
+function toggleTheme(){
+  applyTheme(document.documentElement.getAttribute("data-theme")==="light"?"dark":"light");
+}
 // Affiche/masque les cartes de la colonne gauche selon le mode choisi.
 function applyMode(m){
   currentMode = MODES[m] ? m : "full";
@@ -1453,6 +1475,7 @@ $("searchBtn").onclick=async()=>{const v=$("q").value.trim();if(!v)return;
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("searchBtn").click();}});
 $("genBtn").onclick=generate;
 $("mode").onchange=e=>applyMode(e.target.value);
+$("themeBtn").onclick=toggleTheme;
 $("manualBtn").onclick=()=>{const m=$("manual");m.style.display=m.style.display==="none"?"flex":"none";};
 $("applyManual").onclick=()=>{const la=parseFloat($("mlat").value),lo=parseFloat($("mlon").value);
   if(isFinite(la)&&isFinite(lo)){setPoint(la,lo,`${la.toFixed(5)}, ${lo.toFixed(5)}`);map.setView([la,lo],15);}};
@@ -1664,7 +1687,7 @@ async function composeYandexDownload(z,btn){
   try{
     const {x:xf,y:yf}=yandexTileXY(LAT,LON,z), x0=Math.floor(xf), y0=Math.floor(yf);
     const cv=document.createElement("canvas");cv.width=grid*TS;cv.height=grid*TS;
-    const ctx=cv.getContext("2d");ctx.fillStyle="#0b1730";ctx.fillRect(0,0,cv.width,cv.height);
+    const ctx=cv.getContext("2d");ctx.fillStyle="#0B1730";ctx.fillRect(0,0,cv.width,cv.height);
     const jobs=[];let ok=0;
     for(let dy=-half;dy<=half;dy++)for(let dx=-half;dx<=half;dx++){
       const tx=x0+dx,ty=y0+dy,ox=(dx+half)*TS,oy=(dy+half)*TS;
@@ -1795,6 +1818,8 @@ function renderAnnotItem(item){
 
 /* init */
 if(location.protocol==="file:"){$("fileWarn").style.display="block";$("status").textContent="ouvrez via lancer_interface.command";}
+// Thème : préférence mémorisée (défaut : sombre).
+try{ applyTheme(localStorage.getItem("geosint_theme")==="light"?"light":"dark"); }catch(e){ applyTheme("dark"); }
 // Mode de collecte : préférence mémorisée (défaut : complet).
 try{ const saved=localStorage.getItem("geosint_mode"); if(saved&&MODES[saved]) currentMode=saved; }catch(e){}
 applyMode(currentMode);

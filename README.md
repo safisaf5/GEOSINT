@@ -113,7 +113,7 @@ LICENSE         Licence MIT
 
 ## 👤 Auteur
 
-**safisaf5** — <abdurahmansafwan@gmail.com>
+**safisaf5**
 
 ## 📄 Licence
 
