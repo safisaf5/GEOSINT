@@ -63,6 +63,55 @@ Pour chaque objet trouvé, l'outil calcule et affiche : **surface**, **périmèt
 du périmètre** (copie par objet ou globale). Exports **GeoJSON** et **CSV** ;
 les objets sont aussi tracés sur la carte.
 
+## 🌾 Outil « layer Landuse » (`outil-landuse.html`)
+
+Page autonome dédiée à la **création d'un calque (layer) d'occupation du sol** sur une
+**zone précise**, avec fond **Positron** (© CARTO). C'est la première brique d'une carte
+paramétrable orientée recherche à un endroit donné (et non une vue « de base »).
+
+- **Zone précise** : recherche de lieu (Nominatim), emprise `bbox` éditable, bouton
+  « Vue → bbox », ou **dessin** d'un rectangle en 2 clics.
+- **Types de landuse paramétrables** : groupe *Agriculture* (champs, vergers, vignes,
+  prairies, serres…) et *Autres* (forêt, résidentiel, industriel…), plus des paires
+  `clé=valeur` OSM supplémentaires.
+- **Génération du GeoJSON** via Overpass : pour chaque polygone (way + relation
+  multipolygone) l'outil calcule **surface**, **périmètre**, dimensions, nombre de
+  sommets, **toutes les coordonnées**, et lit les noms **FR / EN / IT / DE** + le
+  **nom original**. Une **classe de taille (1→5)** est attribuée selon des seuils
+  paramétrables. Export **GeoJSON** et **CSV**.
+- **Code couleur en 5 tailles** (palette séquentielle accessible ColorBrewer YlGn) :
+  les petits champs restent **masqués en vue large** et **apparaissent au zoom** (zoom
+  minimal d'apparition réglable par taille). Coloration alternative « par type ».
+- **Stations d'eau** : points fixes (~15 grosses stations), GeoJSON éditable + gabarit.
+- **Vos coordonnées** : ajout de calques **GeoJSON** personnalisés (points, lignes,
+  polygones), collés ou importés.
+- **Nettoyeur de GeoJSON** : uploadez un GeoJSON contenant *toutes les colonnes* ;
+  l'outil **supprime les colonnes inutiles**, ne conserve que le nécessaire (type,
+  noms multilingues, id) et **recalcule la surface et le périmètre** depuis la
+  géométrie (coordonnées conservées). Export du GeoJSON nettoyé + CSV.
+
+Le layer produit est **indépendant et réutilisable** ailleurs (Maputnik, QGIS, autre
+style MapLibre).
+
+## 🗺️ Carte Positron / Maputnik (`carte-landuse.html`)
+
+Carte **MapLibre GL** paramétrable, éditable dans **Maputnik**, qui **consomme le layer**
+produit par `outil-landuse.html` (ou le récupère elle-même via Overpass). C'est la carte
+de recherche « à un endroit donné » basée sur le fond **Positron**.
+
+- **Layer landuse** : chargez le GeoJSON de l'outil, ou récupérez le landuse sur la zone.
+  Rendu avec le **code couleur 5 tailles** piloté par le zoom (petits champs révélés en
+  zoomant), coloration par taille ou par type ; noms des champs au zoom élevé.
+- **Fond Positron personnalisé** :
+  - **noms de pays masqués** (frontières conservées) ;
+  - **frontières renforcées** (plus épaisses / plus contrastées) ;
+  - **petits villages / hameaux masqués**, **grandes villes privilégiées** ;
+  - **autoroute + route (secondaire ~80 km/h) renforcées**, routes mineures épurées ;
+  - **gros fleuves renforcés** ;
+  - **relief / topographie** en option (ombrage *hillshade* depuis une source DEM).
+- **Stations d'eau** (points fixes ~15) et **calques GeoJSON personnalisés**.
+- **Export du style** MapLibre (`.json`) pour l'ouvrir et l'éditer dans **Maputnik**.
+
 ## ✨ Fonctionnalités
 
 - **Recherche multi-modes** : adresse / lieu / code postal (géocodage

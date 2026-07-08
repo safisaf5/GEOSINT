@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GEOSINT — Carte Landuse (Positron / MapLibre / Maputnik)</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
+<style>
+  :root{
+    --bg:#0f141b; --panel:#161d27; --panel2:#1d2733; --line:#2a3644;
+    --txt:#e7edf4; --muted:#9fb0c3; --accent:#4aa8ff; --accent2:#2b7fd4;
+    --ok:#39d98a; --warn:#ffb020; --err:#ff5a5a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
+    font:13px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  #app{display:flex;height:100vh;overflow:hidden}
+  #panel{width:372px;min-width:372px;height:100%;overflow-y:auto;
+    background:var(--panel);border-right:1px solid var(--line);padding:0 0 40px}
+  #panel h1{font-size:15px;margin:0;padding:14px 16px;letter-spacing:.2px;
+    border-bottom:1px solid var(--line);background:var(--panel2)}
+  #panel h1 small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:3px}
+  section{border-bottom:1px solid var(--line)}
+  section>.hd{padding:11px 16px;font-weight:600;cursor:pointer;display:flex;
+    align-items:center;justify-content:space-between;user-select:none}
+  section>.hd:hover{background:var(--panel2)}
+  section>.hd .chev{color:var(--muted);transition:transform .15s}
+  section.closed>.bd{display:none}
+  section.closed>.hd .chev{transform:rotate(-90deg)}
+  section>.bd{padding:6px 16px 16px}
+  label.row{display:flex;align-items:center;gap:8px;margin:6px 0;cursor:pointer}
+  label.row input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}
+  .fld{display:flex;flex-direction:column;gap:3px;margin:6px 0}
+  .fld>span{font-size:11px;color:var(--muted)}
+  input[type=text],input[type=number],textarea,select{
+    background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    border-radius:6px;padding:7px 8px;font:inherit;width:100%}
+  textarea{resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px}
+  button{background:var(--accent2);border:1px solid var(--accent2);color:#fff;
+    border-radius:6px;padding:8px 10px;font:inherit;font-weight:600;cursor:pointer}
+  button:hover{filter:brightness(1.1)}
+  button.ghost{background:transparent;color:var(--txt);border-color:var(--line)}
+  button.ghost:hover{background:var(--panel2)}
+  button:disabled{opacity:.5;cursor:not-allowed;filter:none}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .muted{color:var(--muted)}
+  .hint{font-size:11px;color:var(--muted);margin:4px 0}
+  .status{font-size:12px;margin-top:8px;padding:7px 9px;border-radius:6px;
+    background:var(--panel2);border:1px solid var(--line);min-height:18px}
+  .status.ok{border-color:var(--ok);color:#bff5da}
+  .status.err{border-color:var(--err);color:#ffc9c9}
+  .status.busy{border-color:var(--warn);color:#ffe4ad}
+  .subttl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:12px 0 4px}
+  .legend .item{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px}
+  .legend .sw{width:22px;height:14px;border-radius:3px;border:1px solid rgba(255,255,255,.25)}
+  #mapwrap{flex:1;position:relative}
+  #map{position:absolute;inset:0}
+  #topbar{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:8px;
+    pointer-events:none;flex-wrap:wrap;z-index:5}
+  #topbar .pill{pointer-events:auto;background:rgba(15,20,27,.86);border:1px solid var(--line);
+    border-radius:8px;padding:6px 10px;font-size:12px;backdrop-filter:blur(4px)}
+  #zoomInfo b{color:var(--accent)}
+  .maplibregl-popup-content{background:#141b24;color:#e7edf4;border:1px solid #2a3644;
+    border-radius:8px;font:12px/1.4 system-ui;padding:10px 12px}
+  .maplibregl-popup-content b{color:#fff}
+  .maplibregl-popup-tip{border-top-color:#141b24!important;border-bottom-color:#141b24!important}
+  .pk{color:var(--muted)} .pv{color:#fff;font-weight:600}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="panel">
+    <h1>🗺️ Carte Landuse — Positron
+      <small>MapLibre GL · éditable dans Maputnik · consomme le layer de <code>outil-landuse.html</code></small></h1>
+
+    <!-- 1. ZONE -->
+    <section id="s-zone">
+      <div class="hd" data-toggle>1 · Zone d'étude <span class="chev">▾</span></div>
+      <div class="bd">
+        <div class="fld"><span>Rechercher un lieu (Nominatim)</span>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="geoQ" placeholder="ex. Plaine du Pô, Italie"/>
+            <button class="ghost" id="geoGo" style="white-space:nowrap">Aller</button>
+          </div></div>
+        <div class="subttl">Emprise (bbox WGS84)</div>
+        <div class="grid2">
+          <div class="fld"><span>Nord</span><input type="number" id="bN" step="any"/></div>
+          <div class="fld"><span>Sud</span><input type="number" id="bS" step="any"/></div>
+          <div class="fld"><span>Ouest</span><input type="number" id="bW" step="any"/></div>
+          <div class="fld"><span>Est</span><input type="number" id="bE" step="any"/></div>
+        </div>
+        <div class="btns">
+          <button class="ghost" id="bboxFromView">⤢ Vue → bbox</button>
+          <button class="ghost" id="bboxToView">📍 bbox → vue</button>
+        </div>
+        <div class="hint" id="bboxInfo"></div>
+      </div>
+    </section>
+
+    <!-- 2. LAYER LANDUSE -->
+    <section id="s-layer">
+      <div class="hd" data-toggle>2 · Layer landuse <span class="chev">▾</span></div>
+      <div class="bd">
+        <div class="hint">Chargez le <b>GeoJSON produit par l'outil</b> (<code>outil-landuse.html</code>)
+          ou récupérez directement le landuse sur la zone ci-dessus.</div>
+        <div class="btns">
+          <input type="file" id="luFile" accept=".geojson,.json" style="display:none"/>
+          <button class="ghost" id="luFileBtn">Charger un GeoJSON</button>
+          <button class="ghost" id="dlGeo" disabled>Exporter GeoJSON</button>
+        </div>
+        <div class="subttl">— ou récupérer via Overpass —</div>
+        <div class="fld"><span>Types (agriculture cochés par défaut)</span>
+          <div id="grpTypes" class="grid2"></div></div>
+        <div class="grid2">
+          <div class="fld"><span>Timeout (s)</span><input type="number" id="opTimeout" value="60"/></div>
+          <div class="fld"><span>Surface min (m²)</span><input type="number" id="minArea" value="0"/></div>
+        </div>
+        <div class="btns"><button id="runFetch">⤓ Récupérer le landuse</button></div>
+        <div class="status" id="fetchStatus">En attente.</div>
+      </div>
+    </section>
+
+    <!-- 3. AFFICHAGE 5 TAILLES -->
+    <section id="s-style">
+      <div class="hd" data-toggle>3 · Code couleur (5 tailles) &amp; zoom <span class="chev">▾</span></div>
+      <div class="bd">
+        <div class="fld"><span>Colorer</span>
+          <select id="colorMode">
+            <option value="size">Par taille (5 tailles)</option>
+            <option value="type">Par type de landuse</option>
+          </select></div>
+        <div class="subttl">Seuils des 5 tailles (m²) — si non déjà présents</div>
+        <div class="grid4">
+          <div class="fld"><span>t1&lt;</span><input type="number" id="thr1" value="2000"/></div>
+          <div class="fld"><span>t2&lt;</span><input type="number" id="thr2" value="10000"/></div>
+          <div class="fld"><span>t3&lt;</span><input type="number" id="thr3" value="50000"/></div>
+          <div class="fld"><span>t4&lt;</span><input type="number" id="thr4" value="200000"/></div>
+        </div>
+        <div class="subttl">Zoom minimal d'apparition par taille</div>
+        <div class="hint">Petits champs masqués en vue large, révélés au zoom (carte de recherche).</div>
+        <div class="grid4">
+          <div class="fld"><span>T1</span><input type="number" id="z1" value="15"/></div>
+          <div class="fld"><span>T2</span><input type="number" id="z2" value="13"/></div>
+          <div class="fld"><span>T3</span><input type="number" id="z3" value="12"/></div>
+          <div class="fld"><span>T4</span><input type="number" id="z4" value="10"/></div>
+        </div>
+        <div class="hint">T5 : toujours visibles.</div>
+        <div class="fld"><span>Opacité de remplissage</span>
+          <input type="range" id="opacity" min="0.1" max="0.9" step="0.05" value="0.55"/></div>
+        <label class="row"><input type="checkbox" id="showLabels" checked/> noms des champs (zoom ≥ 14)</label>
+        <div class="btns"><button id="applyStyle">Appliquer</button></div>
+        <div class="subttl">Légende</div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </section>
+
+    <!-- 4. FOND POSITRON -->
+    <section id="s-base">
+      <div class="hd" data-toggle>4 · Fond Positron (paramètres) <span class="chev">▾</span></div>
+      <div class="bd">
+        <label class="row"><input type="checkbox" id="optNoCountry" checked/> masquer les noms de pays</label>
+        <label class="row"><input type="checkbox" id="optNoVillages" checked/> masquer petits villages / hameaux</label>
+        <label class="row"><input type="checkbox" id="optBigCities" checked/> privilégier les grandes villes</label>
+        <label class="row"><input type="checkbox" id="optBorders" checked/> frontières renforcées</label>
+        <label class="row"><input type="checkbox" id="optRivers" checked/> gros fleuves renforcés</label>
+        <label class="row"><input type="checkbox" id="optRoads" checked/> autoroute / route 80 renforcées</label>
+        <label class="row"><input type="checkbox" id="optRelief"/> relief / topographie (ombrage)</label>
+        <div class="fld"><span>Source DEM (terrarium)</span>
+          <input type="text" id="demUrl" value="https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"/></div>
+        <div class="hint">Le relief nécessite une source d'altitude accessible (peut être
+          indisponible selon le réseau).</div>
+        <div class="btns"><button id="applyBase">Appliquer le fond</button></div>
+      </div>
+    </section>
+
+    <!-- 5. STATIONS -->
+    <section id="s-stations" class="closed">
+      <div class="hd" data-toggle>5 · Stations d'eau (points fixes) <span class="chev">▾</span></div>
+      <div class="bd">
+        <div class="hint">~15 grosses stations. Éditez le GeoJSON (Point par station).</div>
+        <textarea id="stationsGeo" rows="7"></textarea>
+        <div class="btns">
+          <button id="applyStations">Placer</button>
+          <button class="ghost" id="tplStations">Gabarit 15</button>
+          <button class="ghost" id="dlStations">Télécharger</button>
+        </div>
+        <div class="status" id="stationsStatus"></div>
+      </div>
+    </section>
+
+    <!-- 6. CUSTOM -->
+    <section id="s-custom" class="closed">
+      <div class="hd" data-toggle>6 · Vos coordonnées / GeoJSON <span class="chev">▾</span></div>
+      <div class="bd">
+        <textarea id="customGeo" rows="5" placeholder='{"type":"FeatureCollection","features":[...]}'></textarea>
+        <div class="fld"><span>Couleur du calque</span><input type="text" id="customColor" value="#ff7ac6"/></div>
+        <div class="btns">
+          <button id="applyCustom">Ajouter</button>
+          <input type="file" id="customFile" accept=".geojson,.json" style="display:none"/>
+          <button class="ghost" id="customFileBtn">Importer</button>
+          <button class="ghost" id="clearCustom">Effacer</button>
+        </div>
+        <div class="status" id="customStatus"></div>
+      </div>
+    </section>
+
+    <!-- 7. EXPORT MAPUTNIK -->
+    <section id="s-export" class="closed">
+      <div class="hd" data-toggle>7 · Export / Maputnik <span class="chev">▾</span></div>
+      <div class="bd">
+        <div class="hint">Exportez le <b>style MapLibre</b> courant (Positron + calques landuse)
+          au format JSON pour l'éditer dans <b>Maputnik</b>.</div>
+        <div class="btns">
+          <button id="dlStyle">Télécharger le style (.json)</button>
+          <a href="https://maputnik.github.io/editor/" target="_blank" rel="noopener" style="align-self:center">Ouvrir Maputnik ↗</a>
+        </div>
+        <div class="hint">Dans Maputnik : <i>Open → Upload</i> le fichier téléchargé.</div>
+      </div>
+    </section>
+  </aside>
+
+  <div id="mapwrap">
+    <div id="map"></div>
+    <div id="topbar">
+      <div class="pill" id="zoomInfo">zoom <b>—</b></div>
+      <div class="pill" id="countInfo">0 champ(s)</div>
+      <div class="pill muted">Positron © CARTO · données © OpenStreetMap (ODbL)</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+document.querySelectorAll("[data-toggle]").forEach(h=>{h.onclick=()=>h.parentElement.classList.toggle("closed");});
+
+/* ---------- Types ---------- */
+const TYPES=[["farmland","Champs"],["orchard","Vergers"],["vineyard","Vignes"],["meadow","Prairies"],
+  ["farmyard","Fermes"],["greenhouse_horticulture","Serres"],["forest","Forêt"],["residential","Résidentiel"],
+  ["industrial","Industriel"],["commercial","Commercial"]];
+const DEFAULT_ON=new Set(["farmland","orchard","vineyard","meadow"]);
+$("grpTypes").innerHTML=TYPES.map(([v,l])=>
+  `<label class="row"><input type="checkbox" class="tType" value="${v}" ${DEFAULT_ON.has(v)?"checked":""}/> ${l}</label>`).join("");
+function selectedTypes(){return [...document.querySelectorAll(".tType:checked")].map(c=>c.value);}
+
+/* ---------- Géométrie ---------- */
+function haversine(la1,lo1,la2,lo2){const R=6371000,r=Math.PI/180;
+  const dLa=(la2-la1)*r,dLo=(lo2-lo1)*r;
+  const a=Math.sin(dLa/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLo/2)**2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(a)));}
+function polygonAreaM2(ll){const R=6378137;let area=0;const n=ll.length;if(n<3)return 0;
+  for(let i=0;i<n;i++){const a=ll[i],b=ll[(i+1)%n];
+    area+=(b[1]-a[1])*Math.PI/180*(2+Math.sin(a[0]*Math.PI/180)+Math.sin(b[0]*Math.PI/180));}
+  return Math.abs(area*R*R/2);}
+function ringPerimeter(ring){let s=0;for(let i=1;i<ring.length;i++)
+  s+=haversine(ring[i-1][0],ring[i-1][1],ring[i][0],ring[i][1]);return s;}
+function bboxDims(b){if(!b)return null;
+  return {w:haversine(b.minlat,b.minlon,b.minlat,b.maxlon),h:haversine(b.minlat,b.minlon,b.maxlat,b.minlon)};}
+function fmtArea(m2){if(m2>=1e6)return (m2/1e6).toFixed(2)+" km²";
+  if(m2>=1e4)return (m2/1e4).toFixed(2)+" ha";return Math.round(m2)+" m²";}
+function fmtDist(m){return m>=1000?(m/1000).toFixed(2)+" km":Math.round(m)+" m";}
+
+/* ---------- Overpass ---------- */
+const OVERPASS_ENDPOINTS=["https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass.openstreetmap.ru/api/interpreter"];
+function host(u){try{return new URL(u).host;}catch(e){return u;}}
+async function overpass(query){const body="data="+encodeURIComponent(query);let lastErr;
+  for(const ep of OVERPASS_ENDPOINTS){try{
+    const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
+    if(r.ok)return await r.json();lastErr=new Error("HTTP "+r.status+" ("+host(ep)+")");
+  }catch(e){lastErr=new Error("réseau/CORS ("+host(ep)+")");}}
+  for(const ep of OVERPASS_ENDPOINTS){try{
+    const t=ep+"?data="+encodeURIComponent(query);
+    const r=await fetch("https://api.allorigins.win/raw?url="+encodeURIComponent(t));
+    if(r.ok)return await r.json();}catch(e){lastErr=new Error("proxy ("+host(ep)+")");}}
+  throw lastErr||new Error("Overpass indisponible");}
+
+/* ---------- Carte ---------- */
+const POSITRON="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+const map=new maplibregl.Map({container:"map",style:POSITRON,center:[9.19,45.46],zoom:5,attributionControl:false});
+map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"top-right");
+map.addControl(new maplibregl.ScaleControl({unit:"metric"}),"bottom-right");
+map.addControl(new maplibregl.AttributionControl({compact:true}),"bottom-right");
+map.on("zoom",()=>{$("zoomInfo").innerHTML="zoom <b>"+map.getZoom().toFixed(1)+"</b>";});
+
+let LANDUSE_FC={type:"FeatureCollection",features:[]};
+let CUSTOM_LAYERS=[];
+function emptyFC(){return {type:"FeatureCollection",features:[]};}
+
+map.on("load",()=>{
+  syncBboxFromView();applyBase();
+  map.addSource("landuse-data",{type:"geojson",data:LANDUSE_FC});
+  addLanduseLayers();
+  map.addSource("stations-data",{type:"geojson",data:emptyFC()});
+  addStationLayers();
+  buildLegend();
+  $("zoomInfo").innerHTML="zoom <b>"+map.getZoom().toFixed(1)+"</b>";
+});
+
+/* ---------- Personnalisation du fond ---------- */
+function styleLayers(){return (map.getStyle().layers)||[];}
+function idHas(id,re){return re.test(id||"");}
+function setVis(id,v){try{map.setLayoutProperty(id,"visibility",v);}catch(e){}}
+function applyBase(){
+  const noCountry=$("optNoCountry").checked,noVill=$("optNoVillages").checked,
+    bigCities=$("optBigCities").checked,borders=$("optBorders").checked,
+    rivers=$("optRivers").checked,roads=$("optRoads").checked;
+  for(const ly of styleLayers()){
+    const id=ly.id,sl=ly["source-layer"]||"";
+    if(ly.type==="symbol"&&sl==="place"){
+      const isCountry=idHas(id,/country|continent/i);
+      const isState=idHas(id,/state|region|province/i);
+      const isSmall=idHas(id,/hamlet|village|suburb|neighbourhood|neighborhood|isolated|island|quarter/i);
+      if(isCountry){setVis(id,noCountry?"none":"visible");continue;}
+      if(isState&&noCountry){setVis(id,"none");continue;}
+      if(isSmall){setVis(id,noVill?"none":"visible");continue;}
+      setVis(id,"visible");
+      if(bigCities&&idHas(id,/city|town/i)){try{map.setLayerZoomRange(id,3,24);}catch(e){}}
+    }
+    if(sl==="boundary"&&ly.type==="line"&&borders){
+      try{map.setPaintProperty(id,"line-color","#54657a");}catch(e){}
+      try{map.setPaintProperty(id,"line-opacity",0.92);}catch(e){}
+      try{map.setPaintProperty(id,"line-width",["interpolate",["linear"],["zoom"],3,1.2,6,2.4,10,3.4]);}catch(e){}
+    }
+    if(sl==="waterway"&&ly.type==="line"&&rivers){
+      try{map.setPaintProperty(id,"line-color","#6fa8dc");}catch(e){}
+      try{map.setPaintProperty(id,"line-width",["interpolate",["linear"],["zoom"],6,1.2,10,2.6,14,5]);}catch(e){}
+    }
+    if(sl==="transportation"&&ly.type==="line"&&roads&&
+       idHas(id,/motorway|trunk|primary|secondary/i)&&!idHas(id,/tunnel|link/i)){
+      try{map.setPaintProperty(id,"line-width",["interpolate",["linear"],["zoom"],6,1.3,10,3,14,6]);}catch(e){}
+    }
+  }
+  applyRelief();
+}
+function applyRelief(){
+  const on=$("optRelief").checked,url=$("demUrl").value.trim();
+  if(!on){if(map.getLayer("hillshade"))map.removeLayer("hillshade");return;}
+  if(!map.getSource("dem-src")){
+    try{map.addSource("dem-src",{type:"raster-dem",tiles:[url],tileSize:256,encoding:"terrarium",maxzoom:14});}catch(e){}}
+  if(!map.getLayer("hillshade")){
+    let before;for(const ly of styleLayers()){if(ly.type==="symbol"){before=ly.id;break;}}
+    try{map.addLayer({id:"hillshade",type:"hillshade",source:"dem-src",
+      paint:{"hillshade-exaggeration":0.5,"hillshade-shadow-color":"#4a4a4a"}},before);}catch(e){}}
+}
+$("applyBase").onclick=applyBase;
+
+/* ---------- Couches landuse ---------- */
+const SIZE_COLORS=["#ffffcc","#c2e699","#78c679","#31a354","#006837"];
+const TYPE_COLORS={farmland:"#e5c76b",orchard:"#8fce6a",vineyard:"#a06bd0",meadow:"#9fd98a",
+  farmyard:"#d0a15a",greenhouse_horticulture:"#6bc7ce",forest:"#2f7d4f",grass:"#a8d98a",
+  residential:"#c9a0a0",commercial:"#d0a06b",industrial:"#9aa0a8",retail:"#d08aa0"};
+function sizeColorExpr(){const e=["match",["get","sizeClass"]];
+  SIZE_COLORS.forEach((c,i)=>e.push(i+1,c));e.push("#cccccc");return e;}
+function typeColorExpr(){const e=["match",["get","landuse"]];
+  for(const k in TYPE_COLORS)e.push(k,TYPE_COLORS[k]);e.push("#b0b8c0");return e;}
+function opacityExpr(){const O=parseFloat($("opacity").value)||0.55;
+  const z1=+$("z1").value,z2=+$("z2").value,z3=+$("z3").value,z4=+$("z4").value;
+  const show=cls=>["case",[">=",["get","sizeClass"],cls],O,0];
+  const stops=[[z4,4],[z3,3],[z2,2],[z1,1]].sort((a,b)=>a[0]-b[0]);
+  const expr=["step",["zoom"],show(5)];
+  let prev=-Infinity;for(const [z,cls] of stops){const zz=z<=prev?prev+0.001:z;expr.push(zz,show(cls));prev=zz;}
+  return expr;}
+function addLanduseLayers(){
+  let before;for(const ly of styleLayers()){if(ly.type==="symbol"){before=ly.id;break;}}
+  map.addLayer({id:"landuse-fill",type:"fill",source:"landuse-data",
+    paint:{"fill-color":sizeColorExpr(),"fill-opacity":opacityExpr()}},before);
+  map.addLayer({id:"landuse-outline",type:"line",source:"landuse-data",
+    paint:{"line-color":"#3a4a2a","line-width":["interpolate",["linear"],["zoom"],12,0.3,16,1.2],
+      "line-opacity":0.7}},before);
+  map.addLayer({id:"landuse-label",type:"symbol",source:"landuse-data",minzoom:14,
+    layout:{"text-field":["coalesce",["get","nom_fr"],["get","nom"],["get","landuse"]],
+      "text-size":11,"text-font":["Open Sans Regular","Arial Unicode MS Regular"],"text-max-width":8},
+    paint:{"text-color":"#20301a","text-halo-color":"#ffffff","text-halo-width":1.3}});
+  wirePopups();
+}
+function applyLanduseStyle(){
+  if(!map.getLayer("landuse-fill"))return;
+  const mode=$("colorMode").value;
+  map.setPaintProperty("landuse-fill","fill-color",mode==="type"?typeColorExpr():sizeColorExpr());
+  map.setPaintProperty("landuse-fill","fill-opacity",opacityExpr());
+  setVis("landuse-label",$("showLabels").checked?"visible":"none");
+  buildLegend();
+}
+$("applyStyle").onclick=applyLanduseStyle;
+function wirePopups(){
+  map.on("click","landuse-fill",e=>{const p=e.features[0].properties;
+    const row=(k,v)=>v?`<div><span class="pk">${k} :</span> <span class="pv">${v}</span></div>`:"";
+    const names=[["FR",p.nom_fr],["EN",p.nom_en],["IT",p.nom_it],["DE",p.nom_de]]
+      .filter(x=>x[1]).map(x=>`${x[0]} ${x[1]}`).join(" · ");
+    new maplibregl.Popup({maxWidth:"300px"}).setLngLat(e.lngLat).setHTML(
+      `<b>${p.nom||"(sans nom)"}</b><div class="pk" style="margin:2px 0 6px">${p.landuse||""}</div>`+
+      row("Surface",fmtArea(+p.surface_m2))+row("Périmètre",fmtDist(+p.perimetre_m))+
+      (p.largeur_m?`<div><span class="pk">Dimensions :</span> <span class="pv">${fmtDist(+p.largeur_m)} × ${fmtDist(+p.hauteur_m)}</span></div>`:"")+
+      row("Taille",`classe ${p.sizeClass}/5`)+
+      (names?`<div style="margin-top:6px" class="pk">${names}</div>`:"")).addTo(map);});
+  map.on("mouseenter","landuse-fill",()=>map.getCanvas().style.cursor="pointer");
+  map.on("mouseleave","landuse-fill",()=>map.getCanvas().style.cursor="");
+}
+function buildLegend(){const mode=$("colorMode").value;const L=$("legend");
+  if(mode==="type"){const used=new Set(LANDUSE_FC.features.map(f=>f.properties.landuse));
+    const items=Object.keys(TYPE_COLORS).filter(k=>!used.size||used.has(k));
+    L.innerHTML=(items.length?items:Object.keys(TYPE_COLORS)).map(k=>
+      `<div class="item"><span class="sw" style="background:${TYPE_COLORS[k]}"></span>${k}</div>`).join("");
+  }else{const t1=+$("thr1").value,t2=+$("thr2").value,t3=+$("thr3").value,t4=+$("thr4").value;
+    const lab=[`< ${fmtArea(t1)}`,`${fmtArea(t1)}–${fmtArea(t2)}`,`${fmtArea(t2)}–${fmtArea(t3)}`,
+      `${fmtArea(t3)}–${fmtArea(t4)}`,`≥ ${fmtArea(t4)}`];
+    L.innerHTML=SIZE_COLORS.map((c,i)=>
+      `<div class="item"><span class="sw" style="background:${c}"></span>Taille ${i+1} · ${lab[i]}</div>`).join("");}}
+["thr1","thr2","thr3","thr4","colorMode"].forEach(id=>$(id).addEventListener("change",buildLegend));
+
+/* ---------- Zone ---------- */
+function syncBboxFromView(){const b=map.getBounds();
+  $("bN").value=b.getNorth().toFixed(5);$("bS").value=b.getSouth().toFixed(5);
+  $("bW").value=b.getWest().toFixed(5);$("bE").value=b.getEast().toFixed(5);updBboxInfo();}
+function currentBbox(){const N=+$("bN").value,S=+$("bS").value,W=+$("bW").value,E=+$("bE").value;
+  if([N,S,W,E].some(v=>!isFinite(v)))return null;return {N,S,W,E};}
+function updBboxInfo(){const b=currentBbox();if(!b){$("bboxInfo").textContent="";return;}
+  const w=haversine((b.N+b.S)/2,b.W,(b.N+b.S)/2,b.E),h=haversine(b.S,b.W,b.N,b.W);
+  $("bboxInfo").textContent=`Emprise ≈ ${fmtDist(w)} × ${fmtDist(h)} (${(w*h/1e6).toFixed(1)} km²)`;}
+["bN","bS","bW","bE"].forEach(id=>$(id).oninput=updBboxInfo);
+$("bboxFromView").onclick=syncBboxFromView;
+$("bboxToView").onclick=()=>{const b=currentBbox();if(b)map.fitBounds([[b.W,b.S],[b.E,b.N]],{padding:30});};
+$("geoGo").onclick=async()=>{const q=$("geoQ").value.trim();if(!q)return;$("geoGo").disabled=true;
+  try{const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(q),
+      {headers:{"Accept-Language":"fr"}});const j=await r.json();
+    if(!j.length){alert("Lieu introuvable.");return;}const o=j[0];
+    if(o.boundingbox){const[bs,bn,bw,be]=o.boundingbox.map(Number);
+      map.fitBounds([[bw,bs],[be,bn]],{padding:30});setTimeout(syncBboxFromView,700);}
+    else map.flyTo({center:[+o.lon,+o.lat],zoom:12});
+  }catch(e){alert("Erreur géocodage : "+e.message);}finally{$("geoGo").disabled=false;}};
+
+/* ---------- Layer : classes de taille ---------- */
+function classFor(area){const t1=+$("thr1").value,t2=+$("thr2").value,t3=+$("thr3").value,t4=+$("thr4").value;
+  if(area<t1)return 1;if(area<t2)return 2;if(area<t3)return 3;if(area<t4)return 4;return 5;}
+function ensureSizeClass(fc){for(const f of fc.features||[]){const p=f.properties=f.properties||{};
+  if(p.sizeClass==null||p.sizeClass===""){const a=+p.surface_m2||areaOf(f.geometry);
+    p.surface_m2=Math.round(a);p.sizeClass=classFor(a);}}return fc;}
+function areaOf(geom){if(!geom)return 0;let area=0;
+  const ll=r=>r.map(c=>[c[1],c[0]]);
+  const poly=rings=>{if(!rings.length)return;area+=polygonAreaM2(ll(rings[0]));
+    for(let i=1;i<rings.length;i++)area-=polygonAreaM2(ll(rings[i]));};
+  if(geom.type==="Polygon")poly(geom.coordinates);
+  else if(geom.type==="MultiPolygon")geom.coordinates.forEach(poly);return Math.abs(area);}
+function setLanduse(fc){LANDUSE_FC=ensureSizeClass(fc);
+  if(map.getSource("landuse-data"))map.getSource("landuse-data").setData(LANDUSE_FC);
+  applyLanduseStyle();$("countInfo").textContent=`${(LANDUSE_FC.features||[]).length} champ(s)`;
+  $("dlGeo").disabled=(LANDUSE_FC.features||[]).length===0;}
+
+/* ---------- Chargement de GeoJSON ---------- */
+$("luFileBtn").onclick=()=>$("luFile").click();
+$("luFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{try{const fc=JSON.parse(rd.result);
+    const norm=fc.type==="FeatureCollection"?fc:(fc.type==="Feature"?{type:"FeatureCollection",features:[fc]}:null);
+    if(!norm)throw new Error("FeatureCollection attendu");
+    setLanduse(norm);
+    const b=bounds(norm);if(b)map.fitBounds(b,{padding:20});
+    setStatus($("fetchStatus"),`${norm.features.length} objet(s) chargé(s) depuis le fichier.`,"ok");
+  }catch(err){setStatus($("fetchStatus"),"GeoJSON invalide : "+err.message,"err");}};
+  rd.readAsText(f);};
+function bounds(fc){let minx=1/0,miny=1/0,maxx=-1/0,maxy=-1/0;
+  const scan=c=>{if(typeof c[0]==="number"){if(c[0]<minx)minx=c[0];if(c[0]>maxx)maxx=c[0];
+    if(c[1]<miny)miny=c[1];if(c[1]>maxy)maxy=c[1];}else c.forEach(scan);};
+  (fc.features||[]).forEach(f=>f.geometry&&scan(f.geometry.coordinates));
+  return isFinite(minx)?[[minx,miny],[maxx,maxy]]:null;}
+
+/* ---------- Récupération Overpass ---------- */
+function processEl(el){const t=el.tags||{};let area=0,perim=0,rings=[];
+  if(el.type==="way"&&el.geometry){const ring=el.geometry.filter(g=>g).map(g=>[g.lat,g.lon]);
+    if(ring.length<3)return null;area=polygonAreaM2(ring);perim=ringPerimeter(ring);rings=[ring];}
+  else if(el.type==="relation"&&el.members){let a=0,p=0;
+    for(const m of el.members){if(m.type==="way"&&m.geometry){const r=m.geometry.map(g=>[g.lat,g.lon]);
+      if(r.length<3)continue;if(m.role==="inner")a-=polygonAreaM2(r);else{a+=polygonAreaM2(r);p+=ringPerimeter(r);rings.push(r);}}}
+    area=Math.abs(a);perim=p;if(!rings.length)return null;}else return null;
+  const dims=bboxDims(el.bounds);const r0=rings[0];
+  const center=[r0.reduce((s,x)=>s+x[0],0)/r0.length,r0.reduce((s,x)=>s+x[1],0)/r0.length];
+  const luKey=["landuse","natural","leisure"].find(k=>t[k]);
+  return {id:`${el.type}/${el.id}`,landuse:luKey?t[luKey]:"",nom:t.name||t.int_name||"",
+    nom_fr:t["name:fr"]||"",nom_en:t["name:en"]||"",nom_it:t["name:it"]||"",nom_de:t["name:de"]||"",
+    area,perim,dims,rings,center,nverts:rings.reduce((s,r)=>s+r.length,0)};}
+function toFeature(r){const closed=ring=>{const c=ring.map(p=>[p[1],p[0]]);
+    const f=c[0],l=c[c.length-1];if(f[0]!==l[0]||f[1]!==l[1])c.push(f.slice());return c;};
+  const geom=r.rings.length===1?{type:"Polygon",coordinates:[closed(r.rings[0])]}
+    :{type:"MultiPolygon",coordinates:r.rings.map(rg=>[closed(rg)])};
+  return {type:"Feature",geometry:geom,properties:{id:r.id,landuse:r.landuse,nom:r.nom,
+    nom_fr:r.nom_fr,nom_en:r.nom_en,nom_it:r.nom_it,nom_de:r.nom_de,
+    surface_m2:Math.round(r.area),surface_ha:+(r.area/1e4).toFixed(3),perimetre_m:Math.round(r.perim),
+    largeur_m:r.dims?Math.round(r.dims.w):null,hauteur_m:r.dims?Math.round(r.dims.h):null,
+    sommets:r.nverts,sizeClass:classFor(r.area),
+    centre_lat:+r.center[0].toFixed(6),centre_lon:+r.center[1].toFixed(6)}};}
+function buildQuery(bbox,types,timeout){const bb=`${bbox.S},${bbox.W},${bbox.N},${bbox.E}`;
+  const re="^("+types.join("|")+")$";
+  return `[out:json][timeout:${timeout}];\n(\n  way["landuse"~"${re}"](${bb});\n  relation["landuse"~"${re}"](${bb});\n);\nout geom tags;`;}
+function setStatus(el,msg,cls){el.className="status"+(cls?" "+cls:"");el.textContent=msg;}
+$("runFetch").onclick=async()=>{const bbox=currentBbox();
+  if(!bbox){setStatus($("fetchStatus"),"Zone invalide.","err");return;}
+  const types=selectedTypes();if(!types.length){setStatus($("fetchStatus"),"Sélectionnez un type.","err");return;}
+  const timeout=Math.max(10,Math.min(180,+$("opTimeout").value||60));
+  const minArea=Math.max(0,+$("minArea").value||0);
+  setStatus($("fetchStatus"),"Requête Overpass…","busy");$("runFetch").disabled=true;
+  try{const json=await overpass(buildQuery(bbox,types,timeout));
+    let recs=(json.elements||[]).map(processEl).filter(Boolean).filter(r=>r.area>=minArea).sort((a,b)=>b.area-a.area);
+    setLanduse({type:"FeatureCollection",features:recs.map(toFeature)});
+    setStatus($("fetchStatus"),`${recs.length} objet(s). Surface totale ≈ ${fmtArea(recs.reduce((s,r)=>s+r.area,0))}.`,"ok");
+    if(recs.length)map.fitBounds([[bbox.W,bbox.S],[bbox.E,bbox.N]],{padding:20});
+  }catch(e){setStatus($("fetchStatus"),"Erreur : "+(e.message||e),"err");}
+  finally{$("runFetch").disabled=false;}};
+
+/* ---------- Exports ---------- */
+function download(name,txt,mime){const b=new Blob([txt],{type:mime||"application/octet-stream"});
+  const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(u),4000);}
+$("dlGeo").onclick=()=>download("landuse.geojson",JSON.stringify(LANDUSE_FC,null,2),"application/geo+json");
+$("dlStyle").onclick=()=>{const s=map.getStyle();s.name="GEOSINT Landuse (Positron)";
+  download("style-landuse-positron.json",JSON.stringify(s,null,2),"application/json");};
+
+/* ---------- Stations ---------- */
+function stationsTemplate(){const c=map.getCenter();const feats=[];
+  for(let i=1;i<=15;i++)feats.push({type:"Feature",
+    properties:{nom:`Station d'eau ${i}`,type:"grosse station d'eau",capacite:""},
+    geometry:{type:"Point",coordinates:[+(c.lng+(i%5-2)*0.03).toFixed(5),+(c.lat+(Math.floor(i/5)-1)*0.03).toFixed(5)]}});
+  return {type:"FeatureCollection",features:feats};}
+function addStationLayers(){
+  map.addLayer({id:"stations-halo",type:"circle",source:"stations-data",
+    paint:{"circle-radius":["interpolate",["linear"],["zoom"],5,5,12,11],"circle-color":"#1d6fd4","circle-opacity":0.25}});
+  map.addLayer({id:"stations-dot",type:"circle",source:"stations-data",
+    paint:{"circle-radius":["interpolate",["linear"],["zoom"],5,3.2,12,6.5],
+      "circle-color":"#1d6fd4","circle-stroke-color":"#ffffff","circle-stroke-width":1.6}});
+  map.addLayer({id:"stations-label",type:"symbol",source:"stations-data",minzoom:9,
+    layout:{"text-field":["get","nom"],"text-size":11,"text-offset":[0,1.2],"text-anchor":"top",
+      "text-font":["Open Sans Semibold","Arial Unicode MS Regular"]},
+    paint:{"text-color":"#0d3a6b","text-halo-color":"#ffffff","text-halo-width":1.4}});
+  map.on("click","stations-dot",e=>{const p=e.features[0].properties;
+    new maplibregl.Popup().setLngLat(e.lngLat).setHTML(`<b>${p.nom||"Station"}</b><div class="pk">${p.type||""}</div>`+
+      (p.capacite?`<div><span class="pk">Capacité :</span> <span class="pv">${p.capacite}</span></div>`:"")).addTo(map);});
+  map.on("mouseenter","stations-dot",()=>map.getCanvas().style.cursor="pointer");
+  map.on("mouseleave","stations-dot",()=>map.getCanvas().style.cursor="");
+}
+$("tplStations").onclick=()=>{$("stationsGeo").value=JSON.stringify(stationsTemplate(),null,2);};
+$("applyStations").onclick=()=>{try{const fc=JSON.parse($("stationsGeo").value);
+    map.getSource("stations-data").setData(fc);
+    setStatus($("stationsStatus"),`${(fc.features||[]).length} station(s) placée(s).`,"ok");}
+  catch(e){setStatus($("stationsStatus"),"GeoJSON invalide : "+e.message,"err");}};
+$("dlStations").onclick=()=>download("stations_eau.geojson",
+  $("stationsGeo").value.trim()||JSON.stringify(stationsTemplate(),null,2),"application/geo+json");
+
+/* ---------- Calques personnalisés ---------- */
+let customSeq=0;
+function addCustom(fc,color){const id="custom-"+(++customSeq);
+  map.addSource(id,{type:"geojson",data:fc});
+  map.addLayer({id:id+"-fill",type:"fill",source:id,filter:["==","$type","Polygon"],
+    paint:{"fill-color":color,"fill-opacity":0.25}});
+  map.addLayer({id:id+"-line",type:"line",source:id,filter:["!=","$type","Point"],
+    paint:{"line-color":color,"line-width":2}});
+  map.addLayer({id:id+"-pt",type:"circle",source:id,filter:["==","$type","Point"],
+    paint:{"circle-radius":5,"circle-color":color,"circle-stroke-color":"#fff","circle-stroke-width":1.5}});
+  map.addLayer({id:id+"-lbl",type:"symbol",source:id,minzoom:10,
+    layout:{"text-field":["coalesce",["get","name"],["get","nom"],""],"text-size":11,
+      "text-offset":[0,1],"text-anchor":"top","text-font":["Open Sans Regular","Arial Unicode MS Regular"]},
+    paint:{"text-color":color,"text-halo-color":"#fff","text-halo-width":1.3}});
+  CUSTOM_LAYERS.push(id);return fc.features?fc.features.length:0;}
+function parseGeo(txt){let g=JSON.parse(txt);
+  if(g.type==="Feature")g={type:"FeatureCollection",features:[g]};
+  if(g.type&&g.type!=="FeatureCollection"&&g.coordinates)
+    g={type:"FeatureCollection",features:[{type:"Feature",properties:{},geometry:g}]};return g;}
+$("applyCustom").onclick=()=>{try{const fc=parseGeo($("customGeo").value);
+    const n=addCustom(fc,$("customColor").value||"#ff7ac6");
+    setStatus($("customStatus"),`Calque ajouté (${n} objet(s)).`,"ok");}
+  catch(e){setStatus($("customStatus"),"GeoJSON invalide : "+e.message,"err");}};
+$("customFileBtn").onclick=()=>$("customFile").click();
+$("customFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{$("customGeo").value=rd.result;$("applyCustom").click();};rd.readAsText(f);};
+$("clearCustom").onclick=()=>{for(const id of CUSTOM_LAYERS){
+    ["-fill","-line","-pt","-lbl"].forEach(s=>{if(map.getLayer(id+s))map.removeLayer(id+s);});
+    if(map.getSource(id))map.removeSource(id);}
+  CUSTOM_LAYERS=[];setStatus($("customStatus"),"Calques effacés.","");};
+</script>
+</body>
+</html>
