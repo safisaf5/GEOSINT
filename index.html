@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <!--
-  GEOSINT — Analyse géographique OSINT
-  Auteur : safisaf5
-  © 2026 safisaf5 — Licence MIT
+  GEOSINT — OSINT geographic analysis
+  Author: safisaf5
+  © 2026 safisaf5 — MIT License
 -->
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>GEOSINT — Analyse géographique OSINT</title>
+<title>GEOSINT — OSINT geographic analysis</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
   :root{
@@ -16,7 +16,7 @@
     --fg:#e8eefb; --muted:#93a3c4; --accent:#3b82f6; --accent2:#22c55e;
     --warn:#f59e0b; --err:#ef4444; --radius:12px; --input:#0B1730;
   }
-  /* Thème clair (activé via <html data-theme="light">) */
+  /* Light theme (activated via <html data-theme="light">) */
   [data-theme="light"]{
     --bg:#eef2f7; --panel:#ffffff; --card:#ffffff; --line:#d6dfea;
     --fg:#0f172a; --muted:#5a6b86; --accent:#2563eb; --accent2:#16a34a;
@@ -92,7 +92,7 @@
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .completeness{font-weight:700}
   .leaflet-container{background:var(--input)}
-  /* Liens vers outils externes */
+  /* Links to external tools */
   .links{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
   .links a{display:flex;align-items:center;gap:7px;background:var(--input);border:1px solid var(--line);
     border-radius:10px;padding:8px 10px;color:var(--fg);text-decoration:none;font-size:12px;font-weight:600}
@@ -100,7 +100,7 @@
   .links a .ic{font-size:14px;flex:none}
   .links .grp{grid-column:1/-1;font-size:11px;color:var(--muted);text-transform:uppercase;
     letter-spacing:.04em;margin:6px 0 -2px;font-weight:700}
-  /* Photos géolocalisées (Wikimedia Commons) */
+  /* Geolocated photos (Wikimedia Commons) */
   .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
   .imgs a{display:block;border:1px solid var(--line);border-radius:8px;overflow:hidden;
     background:var(--input);text-decoration:none}
@@ -115,12 +115,12 @@
   .copybtn:hover{color:var(--fg);border-color:var(--accent)}
   .sunbar{height:8px;border-radius:6px;margin:4px 0 2px;
     background:linear-gradient(90deg,#1e293b,#f59e0b 50%,#1e293b)}
-  /* Onglets */
+  /* Tabs */
   .tabs{display:flex;gap:8px;padding:12px 16px 0;max-width:1500px;margin:0 auto;flex-wrap:wrap}
   .tab{background:var(--input);border:1px solid var(--line);color:var(--muted);
     border-radius:10px 10px 0 0;padding:9px 14px;font-weight:600;cursor:pointer}
   .tab.active{background:var(--card);color:var(--fg);border-bottom-color:var(--card)}
-  /* Lot (liste de lieux) */
+  /* Batch (list of places) */
   #batchTable input{width:100%;background:var(--input);border:1px solid var(--line);
     color:var(--fg);padding:6px 8px;border-radius:8px;outline:none}
   #batchTable input:focus{border-color:var(--accent)}
@@ -144,7 +144,7 @@
   #batchSug div{padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13px}
   #batchSug div:last-child{border-bottom:0}
   #batchSug div:hover{background:var(--card)}
-  /* Annotation d'images téléchargées */
+  /* Annotation of downloaded images */
   .dropzone{border:2px dashed var(--line);border-radius:12px;padding:34px 20px;text-align:center;
     color:var(--muted);cursor:pointer;background:var(--input)}
   .dropzone.drag{border-color:var(--accent);color:var(--fg);background:#13233f}
@@ -155,12 +155,12 @@
   .annotcard .row{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
   .annotcard input.num{width:84px;background:var(--input);border:1px solid var(--line);color:var(--fg);
     padding:5px 7px;border-radius:6px}
-  /* Outil de mesure de surface sur la carte */
+  /* Area measurement tool on the map */
   .measurebox{position:absolute;z-index:1200;right:10px;bottom:10px;background:rgba(15,23,42,.94);
     border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;display:none;max-width:240px}
   .measurebox.on{display:block}
   .measurebox b{color:var(--fg)}
-  /* Imagerie datée (Wayback) & Yandex */
+  /* Dated imagery (Wayback) & Yandex */
   .wb-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
   .wb-row input[type=range]{flex:1;min-width:160px}
   .wb-date{font-weight:700;font-size:15px}
@@ -168,7 +168,7 @@
   .yx-grid{display:grid;gap:1px;background:var(--line);border-radius:8px;overflow:hidden;
     width:100%;aspect-ratio:1/1}
   .yx-grid img{width:100%;height:100%;object-fit:cover;display:block;background:var(--input)}
-  /* Impression / PDF */
+  /* Print / PDF */
   @media print{
     header,#fileWarn,.searchbar,.suggest,.progress,#map,.toolbar button,.toolbar select,
     .gallery,#cSat,#cTopo,#cLinks,#cCommons,#cDownload,#cWayback,#cYandex,#tab-annotate,
@@ -190,169 +190,169 @@
 <body>
 <header>
   <h1>🛰️ GEOSINT</h1>
-  <span class="tag">analyse géographique OSINT · autonome · données publiques live</span>
-  <span class="tag" id="modeTag">mode : complet</span>
-  <span class="tag" id="status">prêt</span>
-  <button class="ghost" id="themeBtn" title="Basculer thème clair / sombre"
+  <span class="tag">OSINT geographic analysis · standalone · live public data</span>
+  <span class="tag" id="modeTag">mode: full</span>
+  <span class="tag" id="status">ready</span>
+  <button class="ghost" id="themeBtn" title="Toggle light / dark theme"
           style="margin-left:auto;padding:6px 11px;font-size:15px;line-height:1">🌙</button>
 </header>
 
 <div id="fileWarn" style="display:none;background:#7c2d12;color:#fff;padding:10px 20px;
      border-bottom:1px solid #9a3412;font-size:13px">
-  ⚠️ Page ouverte en <b>file://</b> : les serveurs OSM/Overpass bloquent les requêtes
-  (origine « null »). Lancez plutôt <b>lancer_interface.command</b> (double-clic) pour
-  ouvrir la page via <b>http://localhost</b> — tout fonctionnera alors.
+  ⚠️ Page opened via <b>file://</b>: OSM/Overpass servers block requests
+  (origin "null"). Instead launch <b>lancer_interface.command</b> (double-click) to
+  open the page via <b>http://localhost</b> — everything will then work.
 </div>
 
 <nav class="tabs">
-  <button class="tab active" data-tab="analyse">🗺️ Analyse géographique</button>
-  <button class="tab" data-tab="batch">📋 Lot (liste de lieux)</button>
-  <button class="tab" data-tab="annotate">🖼️ Annoter une image (Nord + échelle)</button>
+  <button class="tab active" data-tab="analyse">🗺️ Geographic analysis</button>
+  <button class="tab" data-tab="batch">📋 Batch (list of places)</button>
+  <button class="tab" data-tab="annotate">🖼️ Annotate an image (North + scale)</button>
 </nav>
 
 <div id="tab-analyse" class="tabpanel">
 <div class="wrap">
-  <!-- Colonne gauche : carte & contrôles -->
+  <!-- Left column: map & controls -->
   <div class="col">
     <div class="card">
       <div class="bd">
         <div class="suggest">
           <div class="searchbar">
-            <input id="q" placeholder="Adresse, lieu, coordonnées ou MGRS (ex. 31U DQ 48251 11932)"
+            <input id="q" placeholder="Address, place, coordinates or MGRS (e.g. 31U DQ 48251 11932)"
                    autocomplete="off"/>
-            <button id="searchBtn">Rechercher</button>
-            <button class="go" id="genBtn">🛰️ Générer</button>
+            <button id="searchBtn">Search</button>
+            <button class="go" id="genBtn">🛰️ Generate</button>
           </div>
           <div class="list" id="sugList" style="display:none"></div>
         </div>
         <div class="searchbar" style="margin-top:8px;align-items:center">
-          <label class="muted" for="mode" style="font-weight:600">Portée de la collecte</label>
-          <select id="mode" title="Choisir les sources interrogées lors de la génération">
-            <option value="satcarte">🛰️ Satellite + carte</option>
-            <option value="full">🌐 Tout</option>
+          <label class="muted" for="mode" style="font-weight:600">Collection scope</label>
+          <select id="mode" title="Choose the sources queried during generation">
+            <option value="satcarte">🛰️ Satellite + map</option>
+            <option value="full">🌐 Everything</option>
           </select>
           <span class="muted" id="modeHint" style="font-size:12px"></span>
         </div>
         <div class="progress" id="prog"><i></i></div>
         <div class="coordbox" style="margin-top:10px">
-          <span>Point : <b id="ll">—</b></span>
-          <button class="copybtn" id="copyLL" title="Copier les coordonnées">⧉ copier</button>
-          <button class="copybtn" id="copyLink" title="Copier un lien vers ce point">🔗 lien</button>
+          <span>Point: <b id="ll">—</b></span>
+          <button class="copybtn" id="copyLL" title="Copy coordinates">⧉ copy</button>
+          <button class="copybtn" id="copyLink" title="Copy a link to this point">🔗 link</button>
           <span class="muted" id="placelabel"></span>
-          <button class="ghost" id="manualBtn" style="margin-left:auto;padding:6px 10px">Saisie manuelle</button>
+          <button class="ghost" id="manualBtn" style="margin-left:auto;padding:6px 10px">Manual entry</button>
         </div>
         <div id="manual" style="display:none;margin-top:8px" class="searchbar">
           <input id="mlat" placeholder="latitude" inputmode="decimal"/>
           <input id="mlon" placeholder="longitude" inputmode="decimal"/>
-          <button class="ghost" id="applyManual">Appliquer</button>
+          <button class="ghost" id="applyManual">Apply</button>
         </div>
       </div>
     </div>
 
     <div class="card" style="position:relative">
-      <div class="hd">Carte
+      <div class="hd">Map
         <span style="display:flex;gap:6px;align-items:center;font-weight:400">
-          <button class="ghost" id="measureBtn" style="padding:5px 9px;font-size:12px">📐 Mesurer une surface</button>
+          <button class="ghost" id="measureBtn" style="padding:5px 9px;font-size:12px">📐 Measure an area</button>
         </span>
       </div>
       <div id="map"></div>
       <div class="measurebox" id="measureBox">
-        <div id="measureInfo" class="muted">Cliquez sur la carte pour poser les sommets d'une zone.
-          Double-clic pour fermer.</div>
+        <div id="measureInfo" class="muted">Click on the map to place the vertices of an area.
+          Double-click to close.</div>
         <div class="row" style="display:flex;gap:6px;margin-top:6px">
-          <button class="ghost" id="measureClear" style="padding:3px 8px;font-size:11px">Effacer</button>
-          <button class="ghost" id="measureDone" style="padding:3px 8px;font-size:11px">Terminer</button>
+          <button class="ghost" id="measureClear" style="padding:3px 8px;font-size:11px">Clear</button>
+          <button class="ghost" id="measureDone" style="padding:3px 8px;font-size:11px">Done</button>
         </div>
       </div>
     </div>
 
     <div class="card" id="cExtract">
-      <div class="hd" data-toggle>Extraction d'objets OSM — surface, périmètre & coordonnées
+      <div class="hd" data-toggle>OSM object extraction — area, perimeter & coordinates
         <span class="badge b-empty" id="bExtract">—</span></div>
       <div class="bd">
         <div class="searchbar" style="align-items:center">
-          <label class="muted">Type — clé</label>
+          <label class="muted">Type — key</label>
           <input id="exKey" value="landuse" style="max-width:140px" placeholder="landuse"/>
           <span class="muted">=</span>
-          <input id="exVal" style="max-width:170px" placeholder="valeur (vide = toutes)"/>
-          <button class="go" id="exRun">Extraire (emprise carte)</button>
+          <input id="exVal" style="max-width:170px" placeholder="value (empty = all)"/>
+          <button class="go" id="exRun">Extract (map extent)</button>
         </div>
         <div id="exQuery" class="muted" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;
           white-space:pre-wrap;margin-top:8px;background:var(--input);border:1px solid var(--line);
           border-radius:8px;padding:8px"></div>
         <div class="toolbar" style="margin-top:8px">
           <button class="ghost" id="exGeo" disabled>⬇ GeoJSON</button>
-          <button class="ghost" id="exCsv" disabled>⬇ CSV (résumé)</button>
-          <button class="ghost" id="exCoords" disabled>⧉ Toutes les coordonnées</button>
+          <button class="ghost" id="exCsv" disabled>⬇ CSV (summary)</button>
+          <button class="ghost" id="exCoords" disabled>⧉ All coordinates</button>
           <span class="muted" id="exInfo"></span>
         </div>
         <div style="overflow-x:auto;margin-top:8px"><table id="exTable"></table></div>
-        <div class="src">Source : Overpass (OSM) · géométrie complète (<code>out geom</code>)
-          sur l'emprise visible de la carte · ODbL 1.0, © OpenStreetMap contributors.</div>
+        <div class="src">Source: Overpass (OSM) · full geometry (<code>out geom</code>)
+          over the visible map extent · ODbL 1.0, © OpenStreetMap contributors.</div>
       </div>
     </div>
 
     <div class="card" id="cLinks">
-      <div class="hd" data-toggle>Ouvrir dans des outils externes
-        <span class="muted" style="font-weight:400">cartes · imagerie · photos terrain</span></div>
+      <div class="hd" data-toggle>Open in external tools
+        <span class="muted" style="font-weight:400">maps · imagery · ground photos</span></div>
       <div class="bd"><div class="links" id="links"></div></div>
     </div>
 
     <div class="card" id="cDownload">
-      <div class="hd">Téléchargement des plans <span class="muted" style="font-weight:400">qualité native</span></div>
+      <div class="hd">Map download <span class="muted" style="font-weight:400">native quality</span></div>
       <div class="bd">
         <div class="searchbar" style="align-items:center">
-          <label class="muted">Taille / qualité</label>
+          <label class="muted">Size / quality</label>
           <select id="qgrid">
             <option value="5">Standard · 1024 px</option>
-            <option value="7">Grand · 1536 px</option>
-            <option value="9">Très grand · 2048 px</option>
+            <option value="7">Large · 1536 px</option>
+            <option value="9">Very large · 2048 px</option>
             <option value="11">Maximum · 2560 px</option>
             <option value="15">Ultra · 3584 px</option>
           </select>
-          <button class="ghost" id="dlMain">⬇ Vue principale (HQ)</button>
+          <button class="ghost" id="dlMain">⬇ Main view (HQ)</button>
         </div>
         <div class="searchbar" style="margin-top:8px;align-items:center">
-          <label class="muted">Plan personnalisé</label>
+          <label class="muted">Custom map</label>
           <select id="cSource">
-            <option value="esri">Satellite Esri</option>
+            <option value="esri">Esri Satellite</option>
             <option value="topo">OpenTopoMap</option>
             <option value="osm">OSM standard</option>
           </select>
           <span class="muted">zoom</span>
           <input id="cZoom" type="number" min="1" max="20" value="18" style="max-width:80px"/>
-          <button class="ghost" id="dlCustom">⬇ Télécharger ce plan</button>
+          <button class="ghost" id="dlCustom">⬇ Download this map</button>
         </div>
         <div class="muted" style="font-size:11px;margin-top:6px">
-          La taille choisie s'applique à tous les boutons ⬇ (galeries comprises).
-          Plus c'est grand, plus il y a de tuiles à charger.
+          The chosen size applies to all ⬇ buttons (galleries included).
+          The larger it is, the more tiles there are to load.
         </div>
       </div>
     </div>
 
     <div class="card" id="cAcces">
-      <div class="hd" data-toggle>Accès — comment s'y rendre <span class="badge b-empty" id="bAcces">—</span></div>
-      <div class="bd"><div class="access" id="acces"><span class="muted">Lancez une analyse.</span></div></div>
+      <div class="hd" data-toggle>Access — how to get there <span class="badge b-empty" id="bAcces">—</span></div>
+      <div class="bd"><div class="access" id="acces"><span class="muted">Run an analysis.</span></div></div>
     </div>
 
     <div class="card" id="cCommons">
-      <div class="hd" data-toggle>Photos géolocalisées (Wikimedia Commons) <span class="badge b-empty" id="bCommons">—</span></div>
+      <div class="hd" data-toggle>Geolocated photos (Wikimedia Commons) <span class="badge b-empty" id="bCommons">—</span></div>
       <div class="bd">
-        <div class="imgs" id="commons"><span class="muted">Lancez une analyse.</span></div>
-        <div class="src">Source : Wikimedia Commons (geosearch) — photos géolocalisées dans un rayon de 10 km.</div>
+        <div class="imgs" id="commons"><span class="muted">Run an analysis.</span></div>
+        <div class="src">Source: Wikimedia Commons (geosearch) — geolocated photos within a 10 km radius.</div>
       </div>
     </div>
 
     <div class="card" id="cSat">
-      <div class="hd" data-toggle>Imagerie satellite (Esri) <span class="badge b-empty" id="bSat">—</span></div>
+      <div class="hd" data-toggle>Satellite imagery (Esri) <span class="badge b-empty" id="bSat">—</span></div>
       <div class="bd">
         <div class="gallery" id="sat"></div>
-        <div class="src">Source : Esri World Imagery — © Esri, Maxar, Earthstar Geographics.</div>
+        <div class="src">Source: Esri World Imagery — © Esri, Maxar, Earthstar Geographics.</div>
       </div>
     </div>
 
     <div class="card" id="cWayback">
-      <div class="hd" data-toggle>Imagerie datée — Esri Wayback
+      <div class="hd" data-toggle>Dated imagery — Esri Wayback
         <span class="badge b-empty" id="bWayback">—</span></div>
       <div class="bd">
         <div class="wb-row">
@@ -361,59 +361,59 @@
           <button class="ghost" id="wbNext" style="padding:6px 10px">▶</button>
         </div>
         <div class="wb-row" style="justify-content:space-between">
-          <span>Cliché : <span class="wb-date" id="wbDate">—</span></span>
+          <span>Snapshot: <span class="wb-date" id="wbDate">—</span></span>
           <span class="muted" id="wbCount"></span>
-          <button class="ghost" id="wbDl" style="padding:5px 9px;font-size:12px">⬇ WebP (Nord + échelle)</button>
+          <button class="ghost" id="wbDl" style="padding:5px 9px;font-size:12px">⬇ WebP (North + scale)</button>
         </div>
         <div id="wbView"></div>
-        <div class="src">Source : Esri World Imagery Wayback — archives datées de l'imagerie
-          satellite. Faites glisser le curseur pour comparer les dates (et repérer un cliché flouté).
+        <div class="src">Source: Esri World Imagery Wayback — dated archives of satellite
+          imagery. Drag the slider to compare dates (and spot a blurred snapshot).
           © Esri, Maxar, Earthstar Geographics.</div>
       </div>
     </div>
 
     <div class="card" id="cYandex">
-      <div class="hd" data-toggle>Imagerie satellite Yandex
+      <div class="hd" data-toggle>Yandex satellite imagery
         <span class="badge b-empty" id="bYandex">—</span></div>
       <div class="bd">
         <div class="wb-row">
           <label class="muted">Zoom</label>
           <input type="range" id="yxZoom" min="12" max="19" value="17" style="flex:1;min-width:140px"/>
           <span class="muted" id="yxZoomLbl">z17</span>
-          <button class="ghost" id="yxDl" style="padding:5px 9px;font-size:12px">⬇ WebP (Nord + échelle)</button>
+          <button class="ghost" id="yxDl" style="padding:5px 9px;font-size:12px">⬇ WebP (North + scale)</button>
           <a id="yxOpen" href="#" target="_blank" rel="noopener"
-             style="font-size:12px;font-weight:600">Ouvrir Yandex Maps ↗</a>
+             style="font-size:12px;font-weight:600">Open Yandex Maps ↗</a>
         </div>
         <div class="yx-grid" id="yxGrid"></div>
-        <div class="src">Source : Yandex Satellite (projection ellipsoïdale corrigée).
-          Le téléchargement WebP (avec Nord + échelle) passe par un proxy CORS&nbsp;; la taille
-          suit le sélecteur « Taille / qualité » ci-dessus.</div>
+        <div class="src">Source: Yandex Satellite (corrected ellipsoidal projection).
+          The WebP download (with North + scale) goes through a CORS proxy&nbsp;; the size
+          follows the "Size / quality" selector above.</div>
       </div>
     </div>
 
     <div class="card" id="cTopo">
-      <div class="hd" data-toggle>Cartes OpenTopoMap <span class="badge b-empty" id="bTopo">—</span></div>
+      <div class="hd" data-toggle>OpenTopoMap maps <span class="badge b-empty" id="bTopo">—</span></div>
       <div class="bd">
         <div class="gallery" id="topo"></div>
-        <div class="src">Source : OpenTopoMap (CC-BY-SA) · données © OpenStreetMap (ODbL).</div>
+        <div class="src">Source: OpenTopoMap (CC-BY-SA) · data © OpenStreetMap (ODbL).</div>
       </div>
     </div>
   </div>
 
-  <!-- Colonne droite : rapport -->
+  <!-- Right column: report -->
   <div class="col">
     <div class="card">
-      <div class="hd">Dossier
-        <span>Complétude : <span class="completeness" id="compl">—</span></span>
+      <div class="hd">Report
+        <span>Completeness: <span class="completeness" id="compl">—</span></span>
       </div>
       <div class="bd">
         <div class="toolbar">
           <button class="ghost" id="dlJson" disabled>⬇ JSON</button>
           <button class="ghost" id="dlGeo" disabled>⬇ GeoJSON</button>
           <button class="ghost" id="dlCsv" disabled>⬇ CSV</button>
-          <button class="ghost" id="dlHtml" disabled>⬇ Fiche HTML</button>
-          <button class="ghost" id="dlPdf" disabled>🖨 PDF / Imprimer</button>
-          <button class="ghost" id="copyReport" disabled>⧉ Copier le rapport</button>
+          <button class="ghost" id="dlHtml" disabled>⬇ HTML sheet</button>
+          <button class="ghost" id="dlPdf" disabled>🖨 PDF / Print</button>
+          <button class="ghost" id="copyReport" disabled>⧉ Copy report</button>
           <span class="muted" id="genAt"></span>
         </div>
       </div>
@@ -428,79 +428,79 @@
   <div class="wrap" style="grid-template-columns:1fr">
     <div class="col">
       <div class="card">
-        <div class="hd">Traitement par lot — liste de lieux
-          <span class="muted" style="font-weight:400">un dossier téléchargé par lieu</span></div>
+        <div class="hd">Batch processing — list of places
+          <span class="muted" style="font-weight:400">one downloaded folder per place</span></div>
         <div class="bd">
           <p class="muted" style="margin-top:0">
-            Renseignez une <b>liste de lieux</b> : chaque ligne a un <b>nom libre</b> (celui du
-            dossier généré) et une <b>localisation</b> (adresse avec autocomplétion, coordonnées
-            «&nbsp;lat, lon&nbsp;», ou <b>MGRS</b>).
-            Le bouton <b>Vérifier</b> géocode et confirme chaque localisation. La génération
-            télécharge, <b>pour chaque lieu, un dossier à son nom</b> contenant : les <b>vues
-            satellite et OpenTopoMap aux zooms cochés</b> (une image par zoom), <b>donnees.json</b>
-            et une <b>fiche.pdf</b> (texte : coordonnées &amp; liens, sans image).
+            Enter a <b>list of places</b>: each row has a <b>free-form name</b> (that of the
+            generated folder) and a <b>location</b> (address with autocomplete, coordinates
+            "&nbsp;lat, lon&nbsp;", or <b>MGRS</b>).
+            The <b>Verify</b> button geocodes and confirms each location. Generation
+            downloads, <b>for each place, a folder named after it</b> containing: the <b>satellite
+            and OpenTopoMap views at the checked zooms</b> (one image per zoom), <b>data.json</b>
+            and a <b>report.pdf</b> (text: coordinates &amp; links, no image).
           </p>
           <div class="searchbar" style="align-items:center">
-            <button class="ghost" id="batchAdd">＋ Ajouter une ligne</button>
-            <button class="ghost" id="batchPasteBtn">📋 Coller une liste</button>
-            <button class="ghost" id="batchSettingsBtn">⚙ Paramètres</button>
-            <label class="muted">Résolution</label>
+            <button class="ghost" id="batchAdd">＋ Add a row</button>
+            <button class="ghost" id="batchPasteBtn">📋 Paste a list</button>
+            <button class="ghost" id="batchSettingsBtn">⚙ Settings</button>
+            <label class="muted">Resolution</label>
             <select id="batchGrid">
               <option value="5">1024 px</option>
               <option value="7">1536 px</option>
               <option value="9">2048 px</option>
               <option value="11">2560 px</option>
             </select>
-            <button class="ghost" id="batchVerify">✓ Vérifier les localisations</button>
-            <button class="go" id="batchRun">⬇ Générer & télécharger</button>
-            <button class="ghost" id="batchDir" style="display:none">📁 Enregistrer dans un dossier…</button>
+            <button class="ghost" id="batchVerify">✓ Verify locations</button>
+            <button class="go" id="batchRun">⬇ Generate & download</button>
+            <button class="ghost" id="batchDir" style="display:none">📁 Save to a folder…</button>
           </div>
           <div id="batchSettings" style="display:none;margin-top:10px;background:var(--input);
             border:1px solid var(--line);border-radius:10px;padding:12px">
             <div class="muted" style="margin-bottom:8px;font-weight:700">
-              Que télécharger pour chaque lieu — mêmes sources que la page principale :</div>
+              What to download for each place — same sources as the main page:</div>
             <div style="display:flex;flex-wrap:wrap;gap:26px">
               <div class="optcol">
-                <div class="opthd">Images (une par zoom coché)</div>
+                <div class="opthd">Images (one per checked zoom)</div>
                 <label><input type="checkbox" id="optEsri" checked/> Satellite (Esri)</label>
                 <label><input type="checkbox" id="optTopo" checked/> OpenTopoMap</label>
                 <label><input type="checkbox" id="optOsm"/> OSM standard</label>
                 <label><input type="checkbox" id="optYandex"/> Yandex satellite</label>
-                <label><input type="checkbox" id="optWayback"/> Imagerie datée (Wayback, récent)</label>
+                <label><input type="checkbox" id="optWayback"/> Dated imagery (Wayback, recent)</label>
               </div>
               <div class="optcol">
-                <div class="opthd">Données &amp; fiche</div>
-                <label><input type="checkbox" id="optJson" checked/> donnees.json</label>
+                <div class="opthd">Data &amp; sheet</div>
+                <label><input type="checkbox" id="optJson" checked/> data.json</label>
                 <label><input type="checkbox" id="optGeojson"/> GeoJSON</label>
                 <label><input type="checkbox" id="optCsv"/> CSV</label>
-                <label><input type="checkbox" id="optHtml"/> Fiche HTML</label>
-                <label><input type="checkbox" id="optPdf" checked/> Fiche PDF (texte)</label>
+                <label><input type="checkbox" id="optHtml"/> HTML sheet</label>
+                <label><input type="checkbox" id="optPdf" checked/> PDF sheet (text)</label>
               </div>
               <div class="optcol">
-                <div class="opthd">Extraction OSM (surface/périmètre)</div>
-                <label><input type="checkbox" id="optExtract"/> Inclure l'extraction</label>
+                <div class="opthd">OSM extraction (area/perimeter)</div>
+                <label><input type="checkbox" id="optExtract"/> Include the extraction</label>
                 <div class="searchbar" style="gap:6px">
-                  <input id="optExKey" value="landuse" style="max-width:100px" placeholder="clé"/>
+                  <input id="optExKey" value="landuse" style="max-width:100px" placeholder="key"/>
                   <span class="muted">=</span>
-                  <input id="optExVal" style="max-width:110px" placeholder="valeur (option.)"/>
+                  <input id="optExVal" style="max-width:110px" placeholder="value (optional)"/>
                 </div>
-                <label style="font-weight:400">Rayon
+                <label style="font-weight:400">Radius
                   <input id="optExRadius" type="number" value="500" min="50" max="5000" style="max-width:76px"/> m</label>
-                <span class="muted" style="font-size:11px">→ extraction_&lt;clé&gt;.geojson + .csv</span>
+                <span class="muted" style="font-size:11px">→ extraction_&lt;key&gt;.geojson + .csv</span>
               </div>
             </div>
           </div>
           <div style="margin-top:10px">
-            <div class="muted" style="margin-bottom:4px">Zooms (tailles) à inclure — une image
-              par zoom coché (OpenTopoMap : zooms ≤ 17) :</div>
+            <div class="muted" style="margin-bottom:4px">Zooms (sizes) to include — one image
+              per checked zoom (OpenTopoMap: zooms ≤ 17):</div>
             <div id="batchZooms" class="zoomsel"></div>
           </div>
           <div id="batchPaste" style="display:none;margin-top:10px">
-            <textarea id="batchPasteText" rows="6" placeholder="Un lieu par ligne. Séparez le nom et la localisation par « | » (ou « ; » / tabulation).&#10;Ex :&#10;Tour Eiffel | 48.8584, 2.2945&#10;Colisée | Piazza del Colosseo, Rome&#10;Maison | 12 rue de la Paix, Paris"
+            <textarea id="batchPasteText" rows="6" placeholder="One place per line. Separate the name and the location with &quot; | &quot; (or &quot; ; &quot; / tab).&#10;E.g.:&#10;Eiffel Tower | 48.8584, 2.2945&#10;Colosseum | Piazza del Colosseo, Rome&#10;House | 12 rue de la Paix, Paris"
               style="width:100%;background:var(--input);border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:10px"></textarea>
             <div class="searchbar" style="margin-top:6px">
-              <button class="ghost" id="batchPasteApply">Importer les lignes</button>
-              <button class="ghost" id="batchPasteCancel">Annuler</button>
+              <button class="ghost" id="batchPasteApply">Import the rows</button>
+              <button class="ghost" id="batchPasteCancel">Cancel</button>
             </div>
           </div>
           <div class="progress" id="batchProg"><i></i></div>
@@ -508,9 +508,9 @@
             <table id="batchTable">
               <thead><tr>
                 <th style="width:26px">#</th>
-                <th style="width:26%">Nom du dossier</th>
-                <th style="width:34%">Localisation (adresse, lat/lon ou MGRS)</th>
-                <th>Statut / vérification</th>
+                <th style="width:26%">Folder name</th>
+                <th style="width:34%">Location (address, lat/lon or MGRS)</th>
+                <th>Status / verification</th>
                 <th style="width:36px"></th>
               </tr></thead>
               <tbody id="batchBody"></tbody>
@@ -527,35 +527,35 @@
   <div class="wrap" style="grid-template-columns:1fr">
     <div class="col">
       <div class="card">
-        <div class="hd">Annoter des images téléchargées — Nord & échelle</div>
+        <div class="hd">Annotate downloaded images — North & scale</div>
         <div class="bd">
           <p class="muted" style="margin-top:0">
-            Déposez des images (captures satellite, plans…). L'échelle est lue dans le
-            <b>nom du fichier</b> (ex. «&nbsp;…_200m.webp&nbsp;», «&nbsp;…_1.5km.png&nbsp;»), ou à défaut
-            dans les <b>métadonnées PNG</b> (pour d'anciennes captures PNG). Les exports de l'outil
-            sont au format <b>WebP</b>. Les fichiers <b>.crdownload</b> (téléchargements interrompus
-            mais complets) sont acceptés.
-            Une <b>flèche Nord</b> et une <b>barre d'échelle</b> sont ajoutées ; la valeur reste
-            modifiable image par image.
+            Drop images (satellite captures, maps…). The scale is read from the
+            <b>file name</b> (e.g. "&nbsp;…_200m.webp&nbsp;", "&nbsp;…_1.5km.png&nbsp;"), or otherwise
+            from the <b>PNG metadata</b> (for older PNG captures). The tool's exports
+            are in <b>WebP</b> format. <b>.crdownload</b> files (interrupted but complete
+            downloads) are accepted.
+            A <b>North arrow</b> and a <b>scale bar</b> are added; the value stays
+            editable image by image.
           </p>
           <div id="dropzone" class="dropzone">
-            Glissez des images ici, ou cliquez pour choisir des fichiers
+            Drag images here, or click to choose files
             <input type="file" id="fileInput" accept="image/*,.crdownload" multiple style="display:none"/>
           </div>
           <div class="searchbar" style="margin-top:10px;align-items:center">
-            <label class="muted">Le nombre du nom de fichier =</label>
+            <label class="muted">The number in the file name =</label>
             <select id="scaleMeaning">
-              <option value="width">largeur totale de l'image</option>
-              <option value="bar">longueur de la barre d'échelle</option>
+              <option value="width">total image width</option>
+              <option value="bar">scale bar length</option>
             </select>
-            <label class="muted">Flèche Nord</label>
+            <label class="muted">North arrow</label>
             <select id="northPos">
-              <option value="tr">en haut à droite</option>
-              <option value="tl">en haut à gauche</option>
-              <option value="br">en bas à droite</option>
+              <option value="tr">top right</option>
+              <option value="tl">top left</option>
+              <option value="br">bottom right</option>
             </select>
-            <button class="ghost" id="dlAllAnnot" disabled>⬇ Tout retélécharger</button>
-            <button class="ghost" id="clearAnnot" disabled>Vider</button>
+            <button class="ghost" id="dlAllAnnot" disabled>⬇ Re-download all</button>
+            <button class="ghost" id="clearAnnot" disabled>Clear</button>
           </div>
           <div id="annotList" class="annotgrid"></div>
         </div>
@@ -568,67 +568,67 @@
 <script>
 "use strict";
 /* ============================================================
-   GEOSINT — Outil d'analyse géographique OSINT — interface autonome.
-   Auteur : safisaf5 · © 2026 safisaf5 · MIT.
-   Tout s'exécute dans le navigateur, à partir d'APIs publiques.
-   Aucune donnée n'est inventée : ce qui manque est marqué « non disponible ».
+   GEOSINT — OSINT geographic analysis tool — standalone interface.
+   Author: safisaf5 · © 2026 safisaf5 · MIT.
+   Everything runs in the browser, from public APIs.
+   No data is fabricated: whatever is missing is marked "not available".
    ============================================================ */
 
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 const TOPO = "https://a.tile.opentopomap.org/{z}/{x}/{y}.png";
 const OSM  = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
-let LAT = 46.2074, LON = 6.1559, LABEL = "";   // Jet d'eau de Genève (point par défaut)
+let LAT = 46.2074, LON = 6.1559, LABEL = "";   // Jet d'eau, Geneva (default point)
 let REPORT = null;
 const $ = (id)=>document.getElementById(id);
 
-/* ---------------- Modes de collecte ----------------
-   Trois portées, du plus léger (imagerie satellite seule) au plus complet.
-   Chaque drapeau active/désactive une famille de sources ; l'imagerie satellite
-   (Esri, Wayback, Yandex) est le socle commun présent dans tous les modes. */
+/* ---------------- Collection modes ----------------
+   Several scopes, from the lightest (satellite imagery only) to the most complete.
+   Each flag enables/disables a family of sources; satellite imagery
+   (Esri, Wayback, Yandex) is the common base present in all modes. */
 const MODES = {
-  satcarte: {label:"Satellite + carte", hint:"Imagerie satellite (Esri, Wayback datée, Yandex) + cartes (OpenTopoMap). Sans collecte OSM.",
+  satcarte: {label:"Satellite + map", hint:"Satellite imagery (Esri, dated Wayback, Yandex) + maps (OpenTopoMap). No OSM collection.",
              osm:false, topo:true, relief:false, cities:false, wikipedia:false, commons:false},
-  full:     {label:"Tout",              hint:"Complet : imagerie + cartes + données OSM (réseau, transports, POI, environnement, accès, relief, villes) + Wikipédia + photos géolocalisées.",
+  full:     {label:"Everything",       hint:"Complete: imagery + maps + OSM data (network, transport, POI, environment, access, relief, cities) + Wikipedia + geolocated photos.",
              osm:true,  topo:true, relief:true,  cities:true,  wikipedia:true,  commons:true},
 };
 let currentMode = "full";
 function modeCfg(){ return MODES[currentMode] || MODES.full; }
 
-/* ---------------- Thème clair / sombre ----------------
-   Applique le thème sur <html data-theme="…"> ; préférence mémorisée. */
+/* ---------------- Light / dark theme ----------------
+   Applies the theme on <html data-theme="…">; preference remembered. */
 function applyTheme(t){
   const light = t==="light";
   document.documentElement.setAttribute("data-theme", light?"light":"dark");
   const b=$("themeBtn");
   if(b){ b.textContent = light?"☀️":"🌙";
-         b.title = light?"Passer en thème sombre":"Passer en thème clair"; }
+         b.title = light?"Switch to dark theme":"Switch to light theme"; }
   try{ localStorage.setItem("geosint_theme", light?"light":"dark"); }catch(e){}
 }
 function toggleTheme(){
   applyTheme(document.documentElement.getAttribute("data-theme")==="light"?"dark":"light");
 }
-// Affiche/masque les cartes de la colonne gauche selon le mode choisi.
+// Show/hide the left-column cards depending on the chosen mode.
 function applyMode(m){
   currentMode = MODES[m] ? m : "full";
   const c = modeCfg();
   const show = (id,on)=>{ const el=$(id); if(el) el.style.display = on ? "" : "none"; };
-  show("cTopo",    c.topo);       // cartographie topographique (OSM)
-  show("cAcces",   c.osm);        // accès dérivé des axes/transports OSM
-  show("cCommons", c.commons);    // photos géolocalisées Wikimedia Commons
-  // cSat / cWayback / cYandex / cLinks / cDownload : imagerie & outils, toujours visibles.
+  show("cTopo",    c.topo);       // topographic cartography (OSM)
+  show("cAcces",   c.osm);        // access derived from OSM roads/transport
+  show("cCommons", c.commons);    // geolocated Wikimedia Commons photos
+  // cSat / cWayback / cYandex / cLinks / cDownload: imagery & tools, always visible.
   const hint=$("modeHint"); if(hint) hint.textContent = c.hint;
-  const tag=$("modeTag");   if(tag)  tag.textContent  = "mode : "+c.label.toLowerCase();
+  const tag=$("modeTag");   if(tag)  tag.textContent  = "mode: "+c.label.toLowerCase();
   const sel=$("mode");      if(sel && sel.value!==currentMode) sel.value=currentMode;
   try{ localStorage.setItem("geosint_mode", currentMode); }catch(e){}
 }
 
-/* ---------------- Conversions de coordonnées (côté client) ----------- */
+/* ---------------- Coordinate conversions (client-side) ----------- */
 function toDMS(lat,lon){
   const f=(v,p,n)=>{const h=v>=0?p:n;v=Math.abs(v);const d=Math.floor(v);
     const mf=(v-d)*60;const m=Math.floor(mf);const s=((mf-m)*60).toFixed(1);
     return `${d}°${String(m).padStart(2,"0")}'${s}"${h}`;};
-  return `${f(lat,"N","S")} ${f(lon,"E","O")}`;
+  return `${f(lat,"N","S")} ${f(lon,"E","W")}`;
 }
 function toWebMercator(lat,lon){
   const x=lon*20037508.34/180;
@@ -670,13 +670,13 @@ function haversine(a,b,c,d){const R=6371008.8,t=x=>x*Math.PI/180;
 function bearing(a,b,c,d){const t=x=>x*Math.PI/180;const y=Math.sin(t(d-b))*Math.cos(t(c));
   const x=Math.cos(t(a))*Math.sin(t(c))-Math.sin(t(a))*Math.cos(t(c))*Math.cos(t(d-b));
   return (Math.atan2(y,x)*180/Math.PI+360)%360;}
-function cardinal(b){return ["N","NE","E","SE","S","SO","O","NO"][Math.round(b/45)%8];}
+function cardinal(b){return ["N","NE","E","SE","S","SW","W","NW"][Math.round(b/45)%8];}
 function fmtDist(m){return m>=1000?`${(m/1000).toFixed(1)} km`:`${Math.round(m)} m`;}
 
 function coordSet(lat,lon){
   const wm=toWebMercator(lat,lon);
   const o={
-    "Décimal":`${lat.toFixed(6)}, ${lon.toFixed(6)}`,
+    "Decimal":`${lat.toFixed(6)}, ${lon.toFixed(6)}`,
     "DMS":toDMS(lat,lon),
     "UTM":toUTM(lat,lon),
     "MGRS":toMGRS(lat,lon),
@@ -684,13 +684,13 @@ function coordSet(lat,lon){
     "Plus Code (OLC)":olcEncode(lat,lon,11),
     "EPSG:3857":`${wm[0]}, ${wm[1]}`,
   };
-  if(inSwitzerland(lat,lon)) o["Suisse (approx.)"]="point en Suisse — LV95 calculé dans l'app Python";
+  if(inSwitzerland(lat,lon)) o["Switzerland (approx.)"]="point in Switzerland — LV95 computed in the Python app";
   return o;
 }
 
 /* ---------------- Plus Code (Open Location Code) ----------------
-   Implémentation conforme à la spécification Google OLC (algorithme ouvert,
-   calculé localement — aucune requête réseau). */
+   Implementation compliant with the Google OLC specification (open algorithm,
+   computed locally — no network request). */
 const OLC_ALPHA="23456789CFGHJMPQRVWX";
 const OLC_SEP="+", OLC_SEPPOS=8, OLC_PAD="0";
 const OLC_PAIR_RES=[20.0,1.0,0.05,0.0025,0.000125];
@@ -722,7 +722,7 @@ function olcEncode(lat,lon,len){
   return code;
 }
 
-/* ---------------- MGRS (à partir d'UTM/WGS84) ---------------- */
+/* ---------------- MGRS (from UTM/WGS84) ---------------- */
 function utmNum(lat,lon){
   const a=6378137,f=1/298.257223563,k0=0.9996,e2=f*(2-f),ep2=e2/(1-e2);
   const zone=Math.floor((lon+180)/6)+1;
@@ -756,7 +756,7 @@ function toMGRS(lat,lon){
   return `${zone}${band} ${col}${row} ${e5} ${n5}`;
 }
 
-/* ---------------- Décodage MGRS -> lat,lon (recherche par MGRS) ---------------- */
+/* ---------------- MGRS decoding -> lat,lon (search by MGRS) ---------------- */
 const MGRS_COL_LETTERS="AJSAJS", MGRS_ROW_LETTERS="AFAFAF";
 function mgrsMinNorthing(b){const v={C:1.1,D:2.0,E:2.8,F:3.7,G:4.6,H:5.5,J:6.4,K:7.3,L:8.2,
   M:9.1,N:0,P:0.8,Q:1.9,R:2.6,S:3.5,T:4.4,U:5.3,V:6.2,W:7.0,X:7.9}[b];return v==null?0:v*1e6;}
@@ -796,34 +796,34 @@ function utmToLatLon(zone,north,easting,northing){
   if(!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>90)return null;
   return {lat,lon};
 }
-// Interprète la saisie comme coordonnées : décimal « 48.85, 2.29 » ou MGRS « 31U DQ 48251 11932 ».
+// Interprets the input as coordinates: decimal "48.85, 2.29" or MGRS "31U DQ 48251 11932".
 function parseCoordInput(q){
   const s=(q||"").trim();
   const dm=s.match(/^(-?\d{1,3}(?:[.,]\d+)?)[,;\s]+(-?\d{1,3}(?:[.,]\d+)?)$/);
   if(dm){const la=parseFloat(dm[1].replace(",",".")), lo=parseFloat(dm[2].replace(",","."));
-    if(isFinite(la)&&isFinite(lo)&&Math.abs(la)<=90&&Math.abs(lo)<=180)return {lat:la,lon:lo,kind:"décimal"};}
+    if(isFinite(la)&&isFinite(lo)&&Math.abs(la)<=90&&Math.abs(lo)<=180)return {lat:la,lon:lo,kind:"decimal"};}
   const mg=mgrsToLatLon(s);
   if(mg)return {lat:mg.lat,lon:mg.lon,kind:"MGRS"};
   return null;
 }
 
 
-/* ---------------- Wikipédia à proximité ---------------- */
+/* ---------------- Nearby Wikipedia ---------------- */
 async function wikipediaNearby(lat,lon){
   const url=`https://fr.wikipedia.org/w/api.php?action=query&format=json&origin=*`+
     `&list=geosearch&gscoord=${lat}%7C${lon}&gsradius=10000&gslimit=30`;
   const d=await jget(url);
   const arr=(d.query&&d.query.geosearch)||[];
-  if(!arr.length)return {name:"wikipedia",title:"Wikipédia à proximité",empty:true,
-    src:{s:"Wikipédia (geosearch)",u:"https://fr.wikipedia.org",l:"CC BY-SA 4.0"}};
+  if(!arr.length)return {name:"wikipedia",title:"Nearby Wikipedia",empty:true,
+    src:{s:"Wikipedia (geosearch)",u:"https://fr.wikipedia.org",l:"CC BY-SA 4.0"}};
   const items=arr.map(g=>({name:g.title,lat:g.lat,lon:g.lon,dist:g.dist,
     dir:cardinal(bearing(lat,lon,g.lat,g.lon)),kind:"article",
     url:`https://fr.wikipedia.org/?curid=${g.pageid}`})).sort((a,b)=>a.dist-b.dist);
-  return {name:"wikipedia",title:"Wikipédia à proximité",items,
-    src:{s:"Wikipédia (geosearch)",u:"https://fr.wikipedia.org",l:"CC BY-SA 4.0"}};
+  return {name:"wikipedia",title:"Nearby Wikipedia",items,
+    src:{s:"Wikipedia (geosearch)",u:"https://fr.wikipedia.org",l:"CC BY-SA 4.0"}};
 }
 
-/* ---------------- Photos géolocalisées (Wikimedia Commons) ---------------- */
+/* ---------------- Geolocated photos (Wikimedia Commons) ---------------- */
 async function commonsPhotos(lat,lon){
   const url=`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*`+
     `&generator=geosearch&ggscoord=${lat}%7C${lon}&ggsradius=10000&ggslimit=24&ggsnamespace=6`+
@@ -840,55 +840,55 @@ async function commonsPhotos(lat,lon){
   return arr;
 }
 
-/* ---------------- Distances vers grandes villes ---------------- */
+/* ---------------- Distances to major cities ---------------- */
 const BIG_CITIES=[
-  ["Paris",48.8566,2.3522],["Londres",51.5074,-0.1278],["Berlin",52.52,13.405],
-  ["Madrid",40.4168,-3.7038],["Rome",41.9028,12.4964],["Lisbonne",38.7223,-9.1393],
-  ["Amsterdam",52.3676,4.9041],["Bruxelles",50.8503,4.3517],["Vienne",48.2082,16.3738],
-  ["Zurich",47.3769,8.5417],["Genève",46.2044,6.1432],["Berne",46.948,7.4474],
-  ["Milan",45.4642,9.19],["Munich",48.1351,11.582],["Barcelone",41.3851,2.1734],
-  ["Lyon",45.764,4.8357],["Marseille",43.2965,5.3698],["Francfort",50.1109,8.6821],
-  ["Copenhague",55.6761,12.5683],["Stockholm",59.3293,18.0686],["Oslo",59.9139,10.7522],
-  ["Varsovie",52.2297,21.0122],["Prague",50.0755,14.4378],["Athènes",37.9838,23.7275],
-  ["Istanbul",41.0082,28.9784],["Moscou",55.7558,37.6173],["Dublin",53.3498,-6.2603],
+  ["Paris",48.8566,2.3522],["London",51.5074,-0.1278],["Berlin",52.52,13.405],
+  ["Madrid",40.4168,-3.7038],["Rome",41.9028,12.4964],["Lisbon",38.7223,-9.1393],
+  ["Amsterdam",52.3676,4.9041],["Brussels",50.8503,4.3517],["Vienna",48.2082,16.3738],
+  ["Zurich",47.3769,8.5417],["Geneva",46.2044,6.1432],["Bern",46.948,7.4474],
+  ["Milan",45.4642,9.19],["Munich",48.1351,11.582],["Barcelona",41.3851,2.1734],
+  ["Lyon",45.764,4.8357],["Marseille",43.2965,5.3698],["Frankfurt",50.1109,8.6821],
+  ["Copenhagen",55.6761,12.5683],["Stockholm",59.3293,18.0686],["Oslo",59.9139,10.7522],
+  ["Warsaw",52.2297,21.0122],["Prague",50.0755,14.4378],["Athens",37.9838,23.7275],
+  ["Istanbul",41.0082,28.9784],["Moscow",55.7558,37.6173],["Dublin",53.3498,-6.2603],
   ["New York",40.7128,-74.006],["Los Angeles",34.0522,-118.2437],["Chicago",41.8781,-87.6298],
-  ["Toronto",43.6532,-79.3832],["Mexico",19.4326,-99.1332],["São Paulo",-23.5505,-46.6333],
-  ["Buenos Aires",-34.6037,-58.3816],["Le Caire",30.0444,31.2357],["Lagos",6.5244,3.3792],
-  ["Johannesburg",-26.2041,28.0473],["Nairobi",-1.2921,36.8219],["Dubaï",25.2048,55.2708],
-  ["Mumbai",19.076,72.8777],["Delhi",28.7041,77.1025],["Pékin",39.9042,116.4074],
-  ["Shanghai",31.2304,121.4737],["Tokyo",35.6762,139.6503],["Séoul",37.5665,126.978],
-  ["Singapour",1.3521,103.8198],["Bangkok",13.7563,100.5018],["Sydney",-33.8688,151.2093],
+  ["Toronto",43.6532,-79.3832],["Mexico City",19.4326,-99.1332],["São Paulo",-23.5505,-46.6333],
+  ["Buenos Aires",-34.6037,-58.3816],["Cairo",30.0444,31.2357],["Lagos",6.5244,3.3792],
+  ["Johannesburg",-26.2041,28.0473],["Nairobi",-1.2921,36.8219],["Dubai",25.2048,55.2708],
+  ["Mumbai",19.076,72.8777],["Delhi",28.7041,77.1025],["Beijing",39.9042,116.4074],
+  ["Shanghai",31.2304,121.4737],["Tokyo",35.6762,139.6503],["Seoul",37.5665,126.978],
+  ["Singapore",1.3521,103.8198],["Bangkok",13.7563,100.5018],["Sydney",-33.8688,151.2093],
 ];
 function cityDistances(lat,lon){
   const all=BIG_CITIES.map(([n,la,lo])=>({name:n,lat:la,lon:lo,
-    dist:haversine(lat,lon,la,lo),dir:cardinal(bearing(lat,lon,la,lo)),kind:"ville"}))
+    dist:haversine(lat,lon,la,lo),dir:cardinal(bearing(lat,lon,la,lo)),kind:"city"}))
     .sort((a,b)=>a.dist-b.dist);
   const items=all.slice(0,8);
-  return {name:"villes",title:"Grandes villes les plus proches",items,
-    src:{s:"Calcul local (orthodromie)",u:"",l:"—"}};
+  return {name:"villes",title:"Nearest major cities",items,
+    src:{s:"Local computation (great-circle)",u:"",l:"—"}};
 }
 
-/* ---------------- Liens vers outils externes ---------------- */
+/* ---------------- Links to external tools ---------------- */
 function buildLinks(lat,lon){
   const la=lat.toFixed(6), lo=lon.toFixed(6), z=16;
   const olc=encodeURIComponent(olcEncode(lat,lon,11));
   return [
-    {grp:"Cartes"},
+    {grp:"Maps"},
     {ic:"🗺️",t:"Google Maps",u:`https://www.google.com/maps/search/?api=1&query=${la},${lo}`},
     {ic:"🌍",t:"Google Earth",u:`https://earth.google.com/web/@${la},${lo},0a,1000d,35y,0h,0t,0r`},
     {ic:"📷",t:"Street View",u:`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${la},${lo}`},
     {ic:"🅱️",t:"Bing Maps",u:`https://www.bing.com/maps?cp=${la}~${lo}&lvl=${z}&style=h`},
-    {ic:"🍎",t:"Apple Plans",u:`https://maps.apple.com/?ll=${la},${lo}&q=Point`},
+    {ic:"🍎",t:"Apple Maps",u:`https://maps.apple.com/?ll=${la},${lo}&q=Point`},
     {ic:"Я",t:"Yandex Maps",u:`https://yandex.com/maps/?pt=${lo},${la}&z=${z}&l=sat`},
     {ic:"🧭",t:"OpenStreetMap",u:`https://www.openstreetmap.org/?mlat=${la}&mlon=${lo}#map=${z}/${la}/${lo}`},
     {ic:"📐",t:"OSM (GeoHack)",u:`https://geohack.toolforge.org/geohack.php?params=${la};${lo}`},
-    {grp:"Imagerie & terrain"},
+    {grp:"Imagery & terrain"},
     {ic:"🛰️",t:"Sentinel (EO)",u:`https://apps.sentinel-hub.com/eo-browser/?lat=${la}&lng=${lo}&zoom=13`},
     {ic:"🌎",t:"NASA Worldview",u:`https://worldview.earthdata.nasa.gov/?v=${(lon-1).toFixed(3)},${(lat-0.6).toFixed(3)},${(lon+1).toFixed(3)},${(lat+0.6).toFixed(3)}`},
     {ic:"📸",t:"Mapillary",u:`https://www.mapillary.com/app/?lat=${la}&lng=${lo}&z=${z}`},
     {ic:"🛣️",t:"KartaView",u:`https://kartaview.org/map/@${la},${lo},${z}z`},
     {ic:"🗾",t:"Wikimapia",u:`https://wikimapia.org/#lang=fr&lat=${la}&lon=${lo}&z=${z}`},
-    {grp:"Coordonnées & autres"},
+    {grp:"Coordinates & others"},
     {ic:"🔤",t:"Plus Code",u:`https://plus.codes/${olc}`},
     {ic:"🟥",t:"what3words",u:`https://what3words.com/?maptype=satellite&map=${la},${lo},${z}`},
     {ic:"🇫🇷",t:"Géoportail",u:`https://www.geoportail.gouv.fr/carte?c=${lo},${la}&z=${z}&l0=ORTHOIMAGERY.ORTHOPHOTOS`},
@@ -909,7 +909,7 @@ function renderLinks(){
   ).join("");
 }
 
-/* ---------------- Carte Leaflet ---------------- */
+/* ---------------- Leaflet map ---------------- */
 let map, marker, layerCtl;
 function initMap(){
   map=L.map("map",{zoomControl:true}).setView([LAT,LON],14);
@@ -917,16 +917,16 @@ function initMap(){
   const osm=L.tileLayer(OSM,{maxZoom:19,attribution:"© OpenStreetMap"});
   const sat=L.tileLayer(ESRI,{maxZoom:20,maxNativeZoom:19,attribution:"© Esri, Maxar, Earthstar Geographics"});
   layerCtl=L.control.layers({"OpenTopoMap":topo,"OSM standard":osm,"Esri satellite":sat},null,{collapsed:false}).addTo(map);
-  L.control.scale({imperial:false,metric:true}).addTo(map);     // barre d'échelle
-  // Flèche Nord (contrôle personnalisé)
+  L.control.scale({imperial:false,metric:true}).addTo(map);     // scale bar
+  // North arrow (custom control)
   const North=L.Control.extend({options:{position:"topright"},
-    onAdd:function(){const d=L.DomUtil.create("div","north");d.innerHTML="↑<br><small>Nord</small>";return d;}});
+    onAdd:function(){const d=L.DomUtil.create("div","north");d.innerHTML="↑<br><small>North</small>";return d;}});
   map.addControl(new North());
   marker=L.marker([LAT,LON],{draggable:true}).addTo(map);
   marker.on("dragend",e=>{const p=e.target.getLatLng();setPoint(p.lat,p.lng,"");});
   map.on("click",e=>{if(MEASURING){addMeasureVertex(e.latlng);return;}setPoint(e.latlng.lat,e.latlng.lng,"");});
   map.on("dblclick",()=>{if(MEASURING)setMeasuring(false);});
-  // Mémorise le fond de carte actif (pour « Vue principale »).
+  // Remember the active base map (for "Main view").
   map.on("baselayerchange",e=>{
     CURRENT_BASE = e.name.indexOf("Esri")>=0?BASES.esri
                  : e.name.indexOf("OSM")>=0?BASES.osm : BASES.topo;});
@@ -949,14 +949,14 @@ function shareURL(){
   return `${location.origin}${location.pathname}#${z}/${LAT.toFixed(5)}/${LON.toFixed(5)}`;
 }
 async function copyText(txt,btn){
-  const ok=()=>{if(btn){const o=btn.textContent;btn.textContent="✓ copié";setTimeout(()=>btn.textContent=o,1200);}};
+  const ok=()=>{if(btn){const o=btn.textContent;btn.textContent="✓ copied";setTimeout(()=>btn.textContent=o,1200);}};
   try{await navigator.clipboard.writeText(txt);ok();}
   catch(e){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);
     ta.select();try{document.execCommand("copy");ok();}catch(_){}ta.remove();}
 }
 
-/* ---------------- Appels APIs ---------------- */
-const UA = "?email=contact@exemple.org";  // courtoisie Nominatim
+/* ---------------- API calls ---------------- */
+const UA = "?email=contact@exemple.org";  // Nominatim courtesy
 async function jget(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(r.status);return r.json();}
 
 async function searchPlaces(q){
@@ -967,12 +967,12 @@ async function reverse(lat,lon){
   const url=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=fr&addressdetails=1&lat=${lat}&lon=${lon}`;
   const d=await jget(url);const a=d.address||{};
   const data={
-    "Adresse":d.display_name,"Type":d.type,"Catégorie":d.category,
-    "Pays":a.country,"Région":a.state||a.region,"Département":a.county,
-    "Commune":a.city||a.town||a.village||a.municipality,
-    "Quartier":a.suburb||a.neighbourhood||a.quarter,"Code postal":a.postcode,
+    "Address":d.display_name,"Type":d.type,"Category":d.category,
+    "Country":a.country,"Region":a.state||a.region,"County":a.county,
+    "Municipality":a.city||a.town||a.village||a.municipality,
+    "District":a.suburb||a.neighbourhood||a.quarter,"Postal code":a.postcode,
   };
-  return {name:"identite",title:"Identité du lieu",data:clean(data),
+  return {name:"identite",title:"Place identity",data:clean(data),
     src:{s:"Nominatim (OSM)",u:url,l:"ODbL 1.0"}};
 }
 async function elevation(lat,lon){
@@ -980,19 +980,19 @@ async function elevation(lat,lon){
   const pts=[[lat,lon],[lat+o,lon],[lat-o,lon],[lat,lon+o],[lat,lon-o]];
   const url=`https://api.open-meteo.com/v1/elevation?latitude=${pts.map(p=>p[0]).join(",")}&longitude=${pts.map(p=>p[1]).join(",")}`;
   const d=await jget(url);const e=d.elevation;
-  if(!e||!e.length)throw new Error("vide");
-  const data={"Altitude (m)":Math.round(e[0]),
-    "Altitude min (m)":Math.round(Math.min(...e)),
-    "Altitude max (m)":Math.round(Math.max(...e))};
+  if(!e||!e.length)throw new Error("empty");
+  const data={"Elevation (m)":Math.round(e[0]),
+    "Min elevation (m)":Math.round(Math.min(...e)),
+    "Max elevation (m)":Math.round(Math.max(...e))};
   if(e.length===5){const dz=Math.hypot(e[1]-e[2],e[3]-e[4]);const dist=haversine(lat,lon,lat+o,lon);
-    const slope=dist?dz/(2*dist):0;data["Pente (%)"]=(slope*100).toFixed(1);
+    const slope=dist?dz/(2*dist):0;data["Slope (%)"]=(slope*100).toFixed(1);
     const aspect=(Math.atan2(-(e[3]-e[4]),-(e[1]-e[2]))*180/Math.PI+360)%360;
-    data["Orientation"]=cardinal(aspect);}
-  return {name:"relief",title:"Géographie & relief",data:clean(data),
+    data["Aspect"]=cardinal(aspect);}
+  return {name:"relief",title:"Geography & relief",data:clean(data),
     src:{s:"Open-Meteo Elevation (Copernicus DEM)",u:url,l:"CC BY 4.0"}};
 }
 
-/* Overpass — features OSM (plusieurs miroirs, GET, repli automatique) */
+/* Overpass — OSM features (several mirrors, GET, automatic fallback) */
 const OVERPASS_ENDPOINTS=[
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
@@ -1002,17 +1002,17 @@ const OVERPASS_ENDPOINTS=[
 async function overpass(query){
   const body="data="+encodeURIComponent(query);
   let lastErr;
-  // 1) POST direct (méthode canonique d'Overpass ; sur réponse 200 il renvoie
-  //    Access-Control-Allow-Origin:* — fonctionne même en file://).
+  // 1) Direct POST (Overpass's canonical method; on a 200 response it returns
+  //    Access-Control-Allow-Origin:* — works even under file://).
   for(const ep of OVERPASS_ENDPOINTS){
     try{
       const r=await fetch(ep,{method:"POST",
         headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
       if(r.ok) return await r.json();
       lastErr=new Error("HTTP "+r.status+" ("+host(ep)+")");
-    }catch(e){lastErr=new Error("réseau/CORS ("+host(ep)+")");}
+    }catch(e){lastErr=new Error("network/CORS ("+host(ep)+")");}
   }
-  // 2) Repli via proxy CORS (secours si origine « null » et erreurs serveur).
+  // 2) Fallback via CORS proxy (rescue when origin is "null" and on server errors).
   for(const ep of OVERPASS_ENDPOINTS){
     try{
       const target=ep+"?data="+encodeURIComponent(query);
@@ -1020,11 +1020,11 @@ async function overpass(query){
       if(r.ok) return await r.json();
     }catch(e){lastErr=new Error("proxy ("+host(ep)+")");}
   }
-  throw lastErr||new Error("Overpass indisponible");
+  throw lastErr||new Error("Overpass unavailable");
 }
 function host(u){try{return new URL(u).host;}catch(e){return u;}}
-// Normalise un nom pour le dédoublonnage : minuscules, sans accents, sans
-// ponctuation (« Le Nôtre » == « Le Notre », « Rapp - X » == « Rapp – X »).
+// Normalizes a name for deduplication: lowercase, no accents, no
+// punctuation ("Le Nôtre" == "Le Notre", "Rapp - X" == "Rapp – X").
 function normName(s){return (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
   .toLowerCase().replace(/[^a-z0-9]+/g," ").trim();}
 
@@ -1037,12 +1037,12 @@ function parseEls(json,lat,lon,requireName=true,limit=40){
     if(elat==null&&el.center){elat=el.center.lat;elon=el.center.lon;}
     if(elat==null)continue;
     const kind=kindOf(t);
-    raw.push({name:name||"",lat:elat,lon:elon,    // jamais le « type » comme titre
+    raw.push({name:name||"",lat:elat,lon:elon,    // never the "type" as the title
       dist:haversine(lat,lon,elat,elon),
       dir:cardinal(bearing(lat,lon,elat,elon)),kind,tags:t,
-      _key:normName(name)|| ("__"+kind)});  // unnamed -> regroupé par type
+      _key:normName(name)|| ("__"+kind)});  // unnamed -> grouped by type
   }
-  // Tri par distance PUIS dédup par nom (on garde l'occurrence la plus proche).
+  // Sort by distance THEN dedupe by name (keep the nearest occurrence).
   raw.sort((a,b)=>a.dist-b.dist);
   const seen=new Set();const out=[];
   for(const it of raw){if(seen.has(it._key))continue;seen.add(it._key);
@@ -1051,15 +1051,15 @@ function parseEls(json,lat,lon,requireName=true,limit=40){
 }
 function kindOf(t){for(const k of["amenity","shop","tourism","leisure","railway","highway","public_transport","aeroway","natural","landuse","waterway","boundary"])if(t[k])return `${k}=${t[k]}`;return"feature";}
 
-// UNE seule requête Overpass (évite la limite de connexions simultanées des
-// serveurs publics, cause des « Failed to fetch »), puis on répartit par
-// catégorie selon les tags.
+// A SINGLE Overpass request (avoids the concurrent-connection limit of
+// public servers, a cause of "Failed to fetch"), then we split by
+// category according to the tags.
 async function osmBundle(lat,lon){
   const r=1800, rEnv=5000, rT=8000, rA=20000;
   const q=`[out:json][timeout:25];(`+
     `way["highway"~"motorway|trunk|primary|secondary|tertiary"](around:1300,${lat},${lon});`+
     `way["railway"~"rail|tram|subway|light_rail"](around:1300,${lat},${lon});`+
-    // Transports : uniquement les gares / haltes ferroviaires (pas de bus).
+    // Transport: only train stations / halts (no buses).
     `node["railway"~"station|halt"]["name"](around:${rT},${lat},${lon});`+
     `way["railway"~"station|halt"]["name"](around:${rT},${lat},${lon});`+
     `node["aeroway"="aerodrome"](around:${rA},${lat},${lon});`+
@@ -1069,23 +1069,23 @@ async function osmBundle(lat,lon){
     `node["tourism"~"museum|hotel|attraction|viewpoint"](around:${r},${lat},${lon});`+
     `way["natural"~"wood|water|peak|wetland|beach|cliff|glacier"](around:${rEnv},${lat},${lon});`+
     `way["landuse"~"forest|meadow|farmland|vineyard"](around:${rEnv},${lat},${lon});`+
-    // Voies d'eau « empruntables » seulement : rivières et canaux (pas les ruisseaux/fossés).
+    // Only "navigable" waterways: rivers and canals (not streams/ditches).
     `way["waterway"~"river|canal"](around:${rEnv},${lat},${lon});`+
     `way["leisure"="park"](around:${rEnv},${lat},${lon});`+
     `node["natural"="peak"](around:${rEnv},${lat},${lon});`+
-    `);out center tags;`;   // pas de plafond : sinon les nœuds (POI) évincent les voies (routes)
+    `);out center tags;`;   // no cap: otherwise the nodes (POIs) crowd out the ways (roads)
 
   let json;
   try{ json=await overpass(q); }
   catch(e){ const err=String(e.message||e);
-    return {poi:errSec("poi","Points d'intérêt",err),
-            transports:errSec("transports","Transports",err),
-            reseau:errSec("reseau","Réseau routier & ferré",err),
-            environnement:errSec("environnement","Environnement naturel",err)};
+    return {poi:errSec("poi","Points of interest",err),
+            transports:errSec("transports","Transport",err),
+            reseau:errSec("reseau","Road & rail network",err),
+            environnement:errSec("environnement","Natural environment",err)};
   }
 
   const RAIL_NET=new Set(["rail","tram","subway","light_rail"]);
-  const RAIL_STOP=new Set(["station","halt"]);     // gares & haltes ferroviaires (pas de bus/tram)
+  const RAIL_STOP=new Set(["station","halt"]);     // train stations & halts (no bus/tram)
   const cat={reseau:[],transports:[],poi:[],environnement:[],places:[]};
   for(const el of (json.elements||[])){
     const t=el.tags||{};
@@ -1096,8 +1096,8 @@ async function osmBundle(lat,lon){
     else if(t.amenity||t.shop||t.tourism) cat.poi.push(el);
     else if(t.natural||t.landuse||t.waterway||t.leisure==="park") cat.environnement.push(el);
   }
-  // 2e requête (séquentielle) : axes majeurs les plus proches, à large rayon
-  // (l'autoroute peut être bien au-delà du rayon local de 1300 m).
+  // 2nd request (sequential): nearest major roads, at a wide radius
+  // (the motorway may be well beyond the local 1300 m radius).
   let axes=[];
   try{
     const qa=`[out:json][timeout:25];(`+
@@ -1107,10 +1107,10 @@ async function osmBundle(lat,lon){
       `);out center tags;`;
     const ja=await overpass(qa);
     axes=parseEls(ja,lat,lon,false,60);
-  }catch(e){/* l'accès dégrade proprement si cette requête échoue */}
+  }catch(e){/* access degrades gracefully if this request fails */}
 
-  // On veut TOUJOURS afficher l'autoroute la plus proche : si aucune n'a été
-  // trouvée dans le rayon initial, on élargit progressivement jusqu'à en trouver une.
+  // We ALWAYS want to show the nearest motorway: if none was found
+  // within the initial radius, widen progressively until one is found.
   if(!axes.some(i=>/^motorway/.test((i.tags||{}).highway||""))){
     for(const R of [80000,160000,320000]){
       try{
@@ -1118,12 +1118,12 @@ async function osmBundle(lat,lon){
           `way["highway"="motorway"](around:${R},${lat},${lon});out center tags;`);
         const mo=parseEls(jm,lat,lon,false,500).filter(i=>(i.tags||{}).highway==="motorway");
         if(mo.length){axes=axes.concat(mo);break;}
-      }catch(e){/* on tente le rayon suivant */}
+      }catch(e){/* try the next radius */}
     }
   }
 
-  // 3e requête (séparée) : villes/métropole. Isolée car le large rayon (place=city)
-  // peut être lourd ; un échec ici ne doit PAS vider le reste du rapport.
+  // 3rd request (separate): cities/metropolis. Isolated because the wide radius (place=city)
+  // can be heavy; a failure here must NOT empty the rest of the report.
   try{
     const qp=`[out:json][timeout:30];(`+
       `node["place"="city"]["name"](around:150000,${lat},${lon});`+
@@ -1132,22 +1132,22 @@ async function osmBundle(lat,lon){
       `);out tags;`;
     const jp=await overpass(qp);
     cat.places=(jp.elements||[]).filter(el=>(el.tags||{}).place);
-  }catch(e){/* repli : grandes villes (cityDistances) */}
+  }catch(e){/* fallback: major cities (cityDistances) */}
 
   const villes=placesSection(cat.places,lat,lon);
   const out={
-    poi:        secItems("poi","Points d'intérêt",            parseEls({elements:cat.poi},lat,lon,true)),
-    transports: secItems("transports","Gares & aéroports",   parseEls({elements:cat.transports},lat,lon,true)),
-    reseau:     secItems("reseau","Réseau routier & ferré",  parseEls({elements:cat.reseau},lat,lon,false)),
-    environnement: secItems("environnement","Environnement naturel", parseEls({elements:cat.environnement},lat,lon,false)),
+    poi:        secItems("poi","Points of interest",         parseEls({elements:cat.poi},lat,lon,true)),
+    transports: secItems("transports","Stations & airports", parseEls({elements:cat.transports},lat,lon,true)),
+    reseau:     secItems("reseau","Road & rail network",     parseEls({elements:cat.reseau},lat,lon,false)),
+    environnement: secItems("environnement","Natural environment", parseEls({elements:cat.environnement},lat,lon,false)),
     axes,
   };
-  if(villes) out.villes=villes;     // sinon on garde le repli « grandes villes » (cityDistances)
+  if(villes) out.villes=villes;     // otherwise we keep the "major cities" fallback (cityDistances)
   return out;
 }
 
-/* Villes / métropole les plus proches — données réelles OSM (place=city|town|village).
-   On met en avant la métropole (place=city) la plus proche, même éloignée. */
+/* Nearest cities / metropolis — real OSM data (place=city|town|village).
+   We highlight the nearest metropolis (place=city), even if far away. */
 function placesSection(els,lat,lon){
   if(!els||!els.length)return null;
   const arr=els.map(el=>{const t=el.tags||{};
@@ -1155,14 +1155,14 @@ function placesSection(els,lat,lon){
       dist:haversine(lat,lon,el.lat,el.lon),
       dir:cardinal(bearing(lat,lon,el.lat,el.lon)),
       place:t.place,pop:+(t.population||0),
-      kind:t.place==="city"?"ville":t.place==="town"?"commune":"village"};
+      kind:t.place==="city"?"city":t.place==="town"?"town":"village"};
   }).filter(x=>x.lat!=null&&x.name).sort((a,b)=>a.dist-b.dist);
   const seen=new Set(),list=[];
   for(const it of arr){const k=normName(it.name);if(seen.has(k))continue;seen.add(k);list.push(it);}
   const metro=list.filter(x=>x.place==="city").sort((a,b)=>a.dist-b.dist)[0]
             || list.slice().sort((a,b)=>(b.pop||0)-(a.pop||0))[0];
-  if(metro)metro.kind="métropole la plus proche";
-  return {name:"villes",title:"Villes proches & métropole",items:list.slice(0,12),
+  if(metro)metro.kind="nearest metropolis";
+  return {name:"villes",title:"Nearby cities & metropolis",items:list.slice(0,12),
     metroLabel:metro?`${metro.name} — ${fmtDist(metro.dist)} ${metro.dir}`:null,
     src:{s:"Overpass (OSM) · place=city/town/village",u:"https://overpass-api.de/",l:"ODbL 1.0"}};
 }
@@ -1173,53 +1173,53 @@ function secItems(name,title,items){
 }
 function errSec(name,title,err){return {name,title,error:err,src:OSM_SRC};}
 
-/* Mesures d'accès dérivées */
+/* Derived access measurements */
 function axisLabel(it){const ref=(it.tags||{}).ref;const nm=it.name&&!/^highway=/.test(it.name)?it.name:null;
-  const lbl=[ref,nm].filter(Boolean).join(" · ")||"route";
+  const lbl=[ref,nm].filter(Boolean).join(" · ")||"road";
   return `${lbl} — ${fmtDist(it.dist)} ${it.dir}`;}
 function buildAccess(report){
   const m={};const get=(k)=>report.sections[k];
   const near=(arr,pred)=>arr&&arr.find(pred);
-  // Axes majeurs les plus proches (requête large) : autoroute / voie rapide / secondaire.
+  // Nearest major roads (wide query): motorway / expressway / secondary.
   const axes=report._axes||[];
   const mo=near(axes,i=>["motorway","motorway_link"].includes(i.tags.highway));
-  if(mo)m["Autoroute la plus proche"]=axisLabel(mo);
+  if(mo)m["Nearest motorway"]=axisLabel(mo);
   const vr=near(axes,i=>["trunk","trunk_link"].includes(i.tags.highway));
-  if(vr)m["Voie rapide la plus proche"]=axisLabel(vr);
+  if(vr)m["Nearest expressway"]=axisLabel(vr);
   const sec=near(axes,i=>i.tags.highway==="secondary");
-  if(sec)m["Route secondaire (≈80 km/h)"]=axisLabel(sec);
-  // Compléments locaux : route principale (primaire) à proximité immédiate.
+  if(sec)m["Secondary road (≈80 km/h)"]=axisLabel(sec);
+  // Local additions: main road (primary) in the immediate vicinity.
   const rd=get("reseau"); if(rd&&rd.items){
     if(!sec){const s2=near(rd.items,i=>i.tags.highway==="secondary");
-      if(s2)m["Route secondaire (≈80 km/h)"]=axisLabel(s2);}
+      if(s2)m["Secondary road (≈80 km/h)"]=axisLabel(s2);}
     const p=near(rd.items,i=>i.tags.highway==="primary");
-    if(p)m["Route principale"]=axisLabel(p);
+    if(p)m["Main road"]=axisLabel(p);
   }
   const tr=get("transports"); if(tr&&tr.items){
     const g=near(tr.items,i=>["station","halt"].includes((i.tags||{}).railway)&&i.name);
-    if(g)m["Gare la plus proche"]=`${g.name} — ${fmtDist(g.dist)} ${g.dir}`;
+    if(g)m["Nearest station"]=`${g.name} — ${fmtDist(g.dist)} ${g.dir}`;
     const ae=near(tr.items,i=>(i.tags||{}).aeroway==="aerodrome"&&i.name);
-    if(ae)m["Aéroport"]=`${ae.name} — ${fmtDist(ae.dist)} ${ae.dir}`;
+    if(ae)m["Airport"]=`${ae.name} — ${fmtDist(ae.dist)} ${ae.dir}`;
   }
-  // Voie d'eau empruntable la plus proche (rivière / canal) = voie d'accès potentielle.
+  // Nearest navigable waterway (river / canal) = potential access route.
   const env=get("environnement"); if(env&&env.items){
     const w=near(env.items,i=>/^waterway=(river|canal)/.test(i.kind||""));
-    if(w)m["Voie d'eau (accès potentiel)"]=`${w.name||"cours d'eau"} — ${fmtDist(w.dist)} ${w.dir}`;
+    if(w)m["Waterway (potential access)"]=`${w.name||"watercourse"} — ${fmtDist(w.dist)} ${w.dir}`;
   }
-  // Métropole la plus proche (issue des données OSM).
-  const vl=get("villes"); if(vl&&vl.metroLabel)m["Métropole la plus proche"]=vl.metroLabel;
+  // Nearest metropolis (from OSM data).
+  const vl=get("villes"); if(vl&&vl.metroLabel)m["Nearest metropolis"]=vl.metroLabel;
   return m;
 }
 
-/* ---------------- Galeries satellite / topo (mini-cartes) ----------- */
-// Affiche un aperçu Leaflet + un bouton qui assemble les tuiles en PNG
-// téléchargeable (les serveurs Esri / OSM / OpenTopoMap autorisent le CORS,
-// ce qui permet d'exporter le canvas sans le « salir »).
+/* ---------------- Satellite / topo galleries (mini-maps) ----------- */
+// Shows a Leaflet preview + a button that assembles the tiles into a
+// downloadable PNG (the Esri / OSM / OpenTopoMap servers allow CORS,
+// which lets the canvas be exported without "tainting" it).
 function gallery(elId,tileUrl,maxZoom,zooms,prefix){
   const host=$(elId);host.innerHTML="";
-  // bouton « tout télécharger »
+  // "download all" button
   const bar=document.createElement("div");bar.style.cssText="grid-column:1/-1;margin-bottom:4px";
-  const all=document.createElement("button");all.className="ghost";all.textContent="⬇ Télécharger toutes les images";
+  const all=document.createElement("button");all.className="ghost";all.textContent="⬇ Download all images";
   all.style.cssText="padding:6px 10px;font-size:12px";
   all.onclick=async()=>{all.disabled=true;const t=all.textContent;
     for(const z of zooms){await composeDownload(tileUrl,maxZoom,LAT,LON,z.z,`${prefix}_z${z.z}_${slug(z.lbl)}.png`,null,qgrid());}
@@ -1246,8 +1246,8 @@ function gallery(elId,tileUrl,maxZoom,zooms,prefix){
 }
 function slug(s){return String(s).replace(/[^0-9a-zA-Z]+/g,"").toLowerCase();}
 
-/* ---- Métadonnées PNG (tEXt) : on inscrit l'échelle dans le PNG exporté,
-   et on sait la relire (utile quand le nom de fichier est perdu, ex. .crdownload). */
+/* ---- PNG metadata (tEXt): we write the scale into the exported PNG,
+   and can read it back (useful when the file name is lost, e.g. .crdownload). */
 const CRC_TABLE=(function(){const t=[];for(let n=0;n<256;n++){let c=n;
   for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
 function crc32(bytes){let c=0xFFFFFFFF;for(let i=0;i<bytes.length;i++)
@@ -1265,7 +1265,7 @@ function pngTextChunk(keyword,text){
 async function pngWithText(blob,kv){
   try{
     const buf=new Uint8Array(await blob.arrayBuffer());
-    const ihdrEnd=8+4+4+13+4;                  // signature + chunk IHDR complet
+    const ihdrEnd=8+4+4+13+4;                  // signature + complete IHDR chunk
     if(buf.length<ihdrEnd||buf[0]!==0x89)return blob;
     const chunks=Object.keys(kv).map(k=>pngTextChunk(k,kv[k]));
     const extra=chunks.reduce((s,c)=>s+c.length,0);
@@ -1295,7 +1295,7 @@ function pngReadText(arrayBuffer){
   return res;
 }
 
-/* ---- Flèche Nord + barre d'échelle (dessinées sur un canvas) ---- */
+/* ---- North arrow + scale bar (drawn on a canvas) ---- */
 function mppAt(lat,z){return 156543.03392*Math.cos(lat*Math.PI/180)/Math.pow(2,z);}
 function niceScaleMeters(maxMeters){
   if(!(maxMeters>0))return 0;
@@ -1307,8 +1307,8 @@ function fmtScale(m){
   if(m>=1000){const k=m/1000;return `${k%1?k.toFixed(1):k} km`;}
   return `${m%1?m.toFixed(m<1?2:1):Math.round(m)} m`;
 }
-// Dessine une flèche Nord et une barre d'échelle. mpp = mètres/pixel de l'image.
-// opts.north : "tr"|"tl"|"br" · opts.rotation : degrés (0 = nord en haut).
+// Draws a North arrow and a scale bar. mpp = meters/pixel of the image.
+// opts.north: "tr"|"tl"|"br" · opts.rotation: degrees (0 = north up).
 function drawNorthScale(ctx,w,h,mpp,opts){
   opts=opts||{};
   const s=Math.max(1,Math.min(w,h)/640), pad=Math.round(Math.min(w,h)*0.03)+6;
@@ -1341,16 +1341,16 @@ function drawNorthScale(ctx,w,h,mpp,opts){
   ctx.restore();
 }
 
-/* ---- Assemblage de tuiles -> PNG haute qualité téléchargeable ----
-   Stratégie « meilleure qualité » : on assemble une grande mosaïque (GRID×GRID)
-   au zoom le plus profond possible et on exporte à la RÉSOLUTION NATIVE des
-   tuiles (aucun redimensionnement). Repli d'un cran de zoom si trop de trous. */
-const TS=256;   // taille native d'une tuile
-function qgrid(){const v=parseInt(($("qgrid")||{}).value);return isFinite(v)?v:5;}  // tuiles/côté
+/* ---- Tile assembly -> downloadable high-quality PNG ----
+   "Best quality" strategy: assemble a large mosaic (GRID×GRID)
+   at the deepest possible zoom and export at the tiles' NATIVE
+   RESOLUTION (no resizing). Step back one zoom level if too many gaps. */
+const TS=256;   // native size of a tile
+function qgrid(){const v=parseInt(($("qgrid")||{}).value);return isFinite(v)?v:5;}  // tiles/side
 const BASES={esri:{url:ESRI,max:20,name:"satellite_esri"},
              topo:{url:TOPO,max:17,name:"opentopomap"},
              osm:{url:OSM,max:19,name:"osm"}};
-let CURRENT_BASE=BASES.topo;   // fond actif sur la carte principale
+let CURRENT_BASE=BASES.topo;   // active base layer on the main map
 
 function deg2num(lat,lon,z){const lr=lat*Math.PI/180,n=2**z;
   return [(lon+180)/360*n,(1-Math.asinh(Math.tan(lr))/Math.PI)/2*n];}
@@ -1373,24 +1373,24 @@ async function fetchMosaic(template,lat,lon,z,grid){
   return {cv,xf,yf,x0,y0,half,z,ok,total:grid*grid};
 }
 
-/* ---- Export image : toujours en WebP (qualité 0.85) ----
-   Toutes les images produites par l'outil sont téléchargées au format WebP,
-   nettement plus léger que le PNG à qualité visuelle équivalente. */
+/* ---- Image export: always WebP (quality 0.85) ----
+   All images produced by the tool are downloaded in WebP format,
+   noticeably lighter than PNG at equivalent visual quality. */
 const IMG_MIME="image/webp", IMG_Q=0.85, IMG_EXT="webp";
 function toImgExt(name){return String(name).replace(/\.(png|jpe?g|webp)$/i,"")+"."+IMG_EXT;}
 function canvasBlob(canvas){return new Promise((res,rej)=>{
-  try{canvas.toBlob(b=>b?res(b):rej(new Error("canvas vide")),IMG_MIME,IMG_Q);}catch(e){rej(e);}});}
+  try{canvas.toBlob(b=>b?res(b):rej(new Error("empty canvas")),IMG_MIME,IMG_Q);}catch(e){rej(e);}});}
 function saveBlob(blob,filename){const u=URL.createObjectURL(blob);const a=document.createElement("a");
   a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);}
 
-// Compose une mosaïque de tuiles centrée, recadrée à la résolution native, avec
-// repère central + flèche Nord + barre d'échelle. Renvoie le canvas et le zoom
-// réellement utilisé. Réutilisé par le téléchargement unitaire et le lot.
+// Composes a centered tile mosaic, cropped to native resolution, with a
+// central marker + North arrow + scale bar. Returns the canvas and the zoom
+// actually used. Reused by the single download and the batch.
 async function composeCanvas(template,maxZoom,lat,lon,z,grid){
   grid=grid||5; z=Math.min(z,maxZoom);
   const out=(grid-1)*TS;
   let m=await fetchMosaic(template,lat,lon,z,grid);
-  // Trop de tuiles absentes à ce zoom ? on recule d'un cran (imagerie indispo).
+  // Too many missing tiles at this zoom? step back one level (imagery unavailable).
   if(m.ok < m.total*0.6 && z>3) m=await fetchMosaic(template,lat,lon,z-1,grid);
   const {cv,xf,yf,x0,y0,half}=m;
   const px=(xf-x0+half)*TS,py=(yf-y0+half)*TS;
@@ -1398,49 +1398,49 @@ async function composeCanvas(template,maxZoom,lat,lon,z,grid){
   left=Math.max(0,Math.min(left,grid*TS-out));top=Math.max(0,Math.min(top,grid*TS-out));
   const c2=document.createElement("canvas");c2.width=out;c2.height=out;
   const x2=c2.getContext("2d");
-  x2.imageSmoothingEnabled=false;                 // pas de flou : pixels natifs
+  x2.imageSmoothingEnabled=false;                 // no blur: native pixels
   x2.drawImage(cv,left,top,out,out,0,0,out,out);
   x2.strokeStyle="#ef4444";x2.lineWidth=3;x2.beginPath();x2.arc(out/2,out/2,10,0,Math.PI*2);x2.stroke();
   drawNorthScale(x2,out,out,mppAt(lat,m.z),{north:"tr"});
   return {canvas:c2,zUsed:m.z,ok:m.ok,total:m.total};
 }
 
-// grid = nombre de tuiles par côté (5 par défaut). Sortie native = (grid-1)*256.
+// grid = number of tiles per side (5 by default). Native output = (grid-1)*256.
 async function composeDownload(template,maxZoom,lat,lon,z,filename,btn,grid){
-  filename=toImgExt(filename);                    // force l'extension .webp
+  filename=toImgExt(filename);                    // force the .webp extension
   const prev=btn?btn.textContent:null;if(btn){btn.textContent="…";btn.disabled=true;}
   try{
     const {canvas}=await composeCanvas(template,maxZoom,lat,lon,z,grid);
-    saveBlob(await canvasBlob(canvas),filename);   // export WebP q0.85
+    saveBlob(await canvasBlob(canvas),filename);   // WebP q0.85 export
   }catch(e){
-    alert("Téléchargement impossible ("+(e.message||e)+"). Astuce : ouvrez la page "+
-          "via un serveur local (http://localhost) pour autoriser l'export des tuiles.");
+    alert("Download failed ("+(e.message||e)+"). Tip: open the page "+
+          "via a local server (http://localhost) to allow exporting the tiles.");
   }finally{if(btn){btn.textContent=prev;btn.disabled=false;}}
 }
 
-/* ---------------- Rendu ---------------- */
+/* ---------------- Rendering ---------------- */
 function clean(o){const r={};for(const k in o)if(o[k]!=null&&o[k]!=="")r[k]=o[k];return r;}
 function badge(el,kind){const b=$(el);b.className="badge "+(kind==="ok"?"b-ok":kind==="err"?"b-err":"b-empty");
-  b.textContent=kind==="ok"?"ok":kind==="err"?"erreur":"vide";}
+  b.textContent=kind==="ok"?"ok":kind==="err"?"error":"empty";}
 
 function renderSection(sec){
   let body="";
-  if(sec.error){body=`<div class="muted">Erreur : ${sec.error}</div>`;}
-  else if(sec.empty){body=`<div class="muted">Donnée non disponible.</div>`;}
+  if(sec.error){body=`<div class="muted">Error: ${sec.error}</div>`;}
+  else if(sec.empty){body=`<div class="muted">Data not available.</div>`;}
   else if(sec.items){
-    body=(sec.metroLabel?`<div style="margin-bottom:8px">🏙️ Métropole la plus proche : <b>${esc(sec.metroLabel)}</b></div>`:"")+
-      `<table><tr><th>Nom</th><th>Type</th><th>Distance</th><th>Dir.</th></tr>`+
+    body=(sec.metroLabel?`<div style="margin-bottom:8px">🏙️ Nearest metropolis: <b>${esc(sec.metroLabel)}</b></div>`:"")+
+      `<table><tr><th>Name</th><th>Type</th><th>Distance</th><th>Dir.</th></tr>`+
       sec.items.slice(0,25).map(i=>{
-        const label=i.name?esc(i.name):'<span class="muted">— (sans nom)</span>';
+        const label=i.name?esc(i.name):'<span class="muted">— (unnamed)</span>';
         const nm=i.url&&i.name?`<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.name)}</a>`:label;
         return `<tr><td>${nm}</td><td class="muted">${esc(i.kind)}</td><td>${fmtDist(i.dist)}</td><td>${i.dir}</td></tr>`;
       }).join("")+`</table>`;
   } else if(sec.data){
     body=`<table class="kv">`+Object.entries(sec.data).map(([k,v])=>`<tr><th>${esc(k)}</th><td>${esc(String(v))}</td></tr>`).join("")+`</table>`;
   }
-  const src=sec.src?`<div class="src">Source : ${esc(sec.src.s)}${sec.src.u?` · <a href="${sec.src.u}" target="_blank">lien</a>`:""} · licence ${esc(sec.src.l)} · récupéré ${new Date().toLocaleString("fr-FR")}</div>`:"";
+  const src=sec.src?`<div class="src">Source: ${esc(sec.src.s)}${sec.src.u?` · <a href="${sec.src.u}" target="_blank">link</a>`:""} · license ${esc(sec.src.l)} · retrieved ${new Date().toLocaleString("en-GB")}</div>`:"";
   const st=sec.error?"err":(sec.empty?"empty":"ok");
-  return `<div class="card"><div class="hd" data-toggle>${esc(sec.title)} <span class="badge ${st==='ok'?'b-ok':st==='err'?'b-err':'b-empty'}">${st==='ok'?'ok':st==='err'?'erreur':'vide'}</span></div><div class="bd">${body}${src}</div></div>`;
+  return `<div class="card"><div class="hd" data-toggle>${esc(sec.title)} <span class="badge ${st==='ok'?'b-ok':st==='err'?'b-err':'b-empty'}">${st==='ok'?'ok':st==='err'?'error':'empty'}</span></div><div class="bd">${body}${src}</div></div>`;
 }
 function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
 
@@ -1450,15 +1450,15 @@ function endProg(){setTimeout(()=>$("prog").classList.remove("on"),500);}
 
 async function generate(){
   const c=modeCfg();
-  $("genBtn").disabled=true;$("status").textContent="collecte…";
+  $("genBtn").disabled=true;$("status").textContent="collecting…";
   const sections={};
   REPORT={location:{lat:LAT,lon:LON,label:LABEL},mode:currentMode,generated_at:new Date().toISOString(),sections};
-  // Coordonnées (instantané) — présent dans tous les modes
-  sections["coordonnees"]={name:"coordonnees",title:"Coordonnées",data:coordSet(LAT,LON),
-    src:{s:"Calcul local (JS)",u:"",l:"—"}};
-  setProg(.08,"coordonnées");
+  // Coordinates (instant) — present in all modes
+  sections["coordonnees"]={name:"coordonnees",title:"Coordinates",data:coordSet(LAT,LON),
+    src:{s:"Local computation (JS)",u:"",l:"—"}};
+  setProg(.08,"coordinates");
 
-  // Imagerie satellite (socle commun à tous les modes) + cartographie topo (OSM)
+  // Satellite imagery (common base for all modes) + topo cartography (OSM)
   gallery("sat",ESRI,19,[{z:10,lbl:"≈20 km"},{z:13,lbl:"≈3 km"},{z:14,lbl:"≈2 km"},{z:15,lbl:"≈1 km"},{z:16,lbl:"≈500 m"},{z:17,lbl:"≈300 m"},{z:18,lbl:"≈200 m"},{z:19,lbl:"≈70 m"}],"satellite_esri");
   badge("bSat","ok");
   if(c.topo){
@@ -1466,20 +1466,20 @@ async function generate(){
     badge("bTopo","ok");
   }
 
-  // Liens externes (local, instantané) — toujours utiles
+  // External links (local, instant) — always useful
   renderLinks();
-  // Distances vers grandes villes : repli local, seulement si le mode couvre l'OSM.
+  // Distances to major cities: local fallback, only if the mode covers OSM.
   if(c.cities) sections["villes"]=cityDistances(LAT,LON);
 
-  // Photos géolocalisées Wikimedia Commons (mode complet uniquement)
+  // Geolocated Wikimedia Commons photos (full mode only)
   let commonsP=Promise.resolve();
   if(c.commons){
-    $("commons").innerHTML='<span class="muted">recherche…</span>';
+    $("commons").innerHTML='<span class="muted">searching…</span>';
     commonsP=commonsPhotos(LAT,LON).then(renderCommons)
-      .catch(()=>{$("commons").innerHTML='<span class="muted">Aucune photo géolocalisée trouvée (ou source indisponible).</span>';badge("bCommons","empty");});
+      .catch(()=>{$("commons").innerHTML='<span class="muted">No geolocated photo found (or source unavailable).</span>';badge("bCommons","empty");});
   }
 
-  // Tâches réseau, activées selon le mode.
+  // Network tasks, enabled depending on the mode.
   const tasks=[];
   if(c.osm)      tasks.push(["identite",reverse(LAT,LON)],["osm",osmBundle(LAT,LON)]);
   if(c.relief)   tasks.push(["relief",elevation(LAT,LON)]);
@@ -1497,13 +1497,13 @@ async function generate(){
   }));
   await commonsP;
 
-  // Imagerie datée (Wayback) & Yandex — socle imagerie, non bloquant, tous modes.
+  // Dated imagery (Wayback) & Yandex — imagery base, non-blocking, all modes.
   initWayback();
   refreshYandex();
-  // Zones OSM cliquables (surfaces) : seulement si le mode couvre l'OSM.
+  // Clickable OSM zones (areas): only if the mode covers OSM.
   if(c.osm){
     loadAreaPolygons(LAT,LON);
-    // Accès dérivé des axes/transports OSM
+    // Access derived from OSM roads/transport
     const acc=buildAccess(REPORT);REPORT.access=acc;
     renderAccess(acc);
   }else{
@@ -1513,14 +1513,14 @@ async function generate(){
 
   renderAll();
   computeCompleteness();
-  $("genAt").textContent="généré "+new Date().toLocaleString("fr-FR");
+  $("genAt").textContent="generated "+new Date().toLocaleString("en-GB");
   ["dlJson","dlGeo","dlCsv","dlHtml","dlPdf","copyReport"].forEach(id=>$(id).disabled=false);
-  $("genBtn").disabled=false;$("status").textContent="terminé";endProg();
+  $("genBtn").disabled=false;$("status").textContent="done";endProg();
 }
 
 function renderAccess(acc){
   const host=$("acces");const keys=Object.keys(acc);
-  if(!keys.length){host.innerHTML='<span class="muted">Aucun axe/transport détecté à proximité.</span>';badge("bAcces","empty");return;}
+  if(!keys.length){host.innerHTML='<span class="muted">No road/transport detected nearby.</span>';badge("bAcces","empty");return;}
   host.innerHTML=keys.map(k=>`<div class="item"><div class="lbl">${esc(k)}</div><div class="val">${esc(acc[k])}</div></div>`).join("");
   badge("bAcces","ok");
 }
@@ -1528,7 +1528,7 @@ let COMMONS=[];
 function renderCommons(arr){
   COMMONS=arr||[];
   const host=$("commons");
-  if(!COMMONS.length){host.innerHTML='<span class="muted">Aucune photo géolocalisée trouvée à proximité.</span>';badge("bCommons","empty");return;}
+  if(!COMMONS.length){host.innerHTML='<span class="muted">No geolocated photo found nearby.</span>';badge("bCommons","empty");return;}
   host.innerHTML=COMMONS.slice(0,24).map(p=>{
     const d=p.dist<1e11?` · ${fmtDist(p.dist)}`:"";
     return `<a href="${esc(p.desc||p.thumb)}" target="_blank" rel="noopener" title="${esc(p.title)}">`+
@@ -1555,14 +1555,14 @@ function download(name,content,type){const b=new Blob([content],{type});const u=
   const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
 function toGeoJSON(){
   const f=[];const L0=REPORT.location;
-  f.push({type:"Feature",geometry:{type:"Point",coordinates:[L0.lon,L0.lat]},properties:{role:"point_analyse",label:L0.label}});
+  f.push({type:"Feature",geometry:{type:"Point",coordinates:[L0.lon,L0.lat]},properties:{role:"analysis_point",label:L0.label}});
   for(const s of Object.values(REPORT.sections)){if(s.items)for(const it of s.items)
     f.push({type:"Feature",geometry:{type:"Point",coordinates:[it.lon,it.lat]},
-      properties:{rubrique:s.name,name:it.name,kind:it.kind,distance_m:Math.round(it.dist),direction:it.dir}});}
+      properties:{section:s.name,name:it.name,kind:it.kind,distance_m:Math.round(it.dist),direction:it.dir}});}
   return JSON.stringify({type:"FeatureCollection",features:f},null,2);
 }
 function toCSV(){
-  const rows=[["rubrique","nom","type","distance_m","direction","latitude","longitude","url"]];
+  const rows=[["section","name","type","distance_m","direction","latitude","longitude","url"]];
   for(const s of Object.values(REPORT.sections)){
     if(!s.items)continue;
     for(const it of s.items)rows.push([s.name,it.name,it.kind||"",Math.round(it.dist||0),it.dir||"",
@@ -1573,43 +1573,43 @@ function toCSV(){
 }
 function reportText(){
   const L0=REPORT.location;const out=[];
-  out.push(`ANALYSE GÉOGRAPHIQUE — ${L0.label||"point"}`);
-  out.push(`Coordonnées : ${L0.lat.toFixed(6)}, ${L0.lon.toFixed(6)} (${toDMS(L0.lat,L0.lon)})`);
-  out.push(`Plus Code : ${olcEncode(L0.lat,L0.lon,11)}  ·  MGRS : ${toMGRS(L0.lat,L0.lon)||"—"}`);
-  out.push(`Lien : ${shareURL()}`);
-  out.push(`Complétude : ${REPORT.completeness||0} %`);
-  if(REPORT.access&&Object.keys(REPORT.access).length){out.push("","ACCÈS");
-    for(const [k,v] of Object.entries(REPORT.access))out.push(`  • ${k} : ${v}`);}
+  out.push(`GEOGRAPHIC ANALYSIS — ${L0.label||"point"}`);
+  out.push(`Coordinates: ${L0.lat.toFixed(6)}, ${L0.lon.toFixed(6)} (${toDMS(L0.lat,L0.lon)})`);
+  out.push(`Plus Code: ${olcEncode(L0.lat,L0.lon,11)}  ·  MGRS: ${toMGRS(L0.lat,L0.lon)||"—"}`);
+  out.push(`Link: ${shareURL()}`);
+  out.push(`Completeness: ${REPORT.completeness||0} %`);
+  if(REPORT.access&&Object.keys(REPORT.access).length){out.push("","ACCESS");
+    for(const [k,v] of Object.entries(REPORT.access))out.push(`  • ${k}: ${v}`);}
   for(const k of ORDER){const s=REPORT.sections[k];if(!s||s.error||s.empty)continue;
     out.push("",s.title.toUpperCase());
     if(s.items)s.items.slice(0,12).forEach(i=>out.push(`  • ${i.name} — ${fmtDist(i.dist)} ${i.dir}`));
-    else if(s.data)for(const [a,b] of Object.entries(s.data))out.push(`  • ${a} : ${b}`);}
-  out.push("","Généré le "+new Date().toLocaleString("fr-FR")+" · données publiques (OSM/Open-Meteo/Wikipédia…)");
+    else if(s.data)for(const [a,b] of Object.entries(s.data))out.push(`  • ${a}: ${b}`);}
+  out.push("","Generated on "+new Date().toLocaleString("en-GB")+" · public data (OSM/Open-Meteo/Wikipedia…)");
   return out.join("\n");
 }
 function ficheHTML(){
   const L0=REPORT.location;
-  let h=`<!doctype html><meta charset=utf-8><title>Fiche ${esc(L0.label||"")}</title>`+
+  let h=`<!doctype html><meta charset=utf-8><title>Sheet ${esc(L0.label||"")}</title>`+
     `<body style="font-family:sans-serif;max-width:780px;margin:30px auto;color:#0f172a">`+
-    `<h1>Fiche OSINT — ${esc(L0.label||"Localisation")}</h1>`+
-    `<p><b>Coordonnées :</b> ${L0.lat.toFixed(6)}, ${L0.lon.toFixed(6)} · ${toDMS(L0.lat,L0.lon)}<br>`+
-    `<b>Plus Code :</b> ${esc(olcEncode(L0.lat,L0.lon,11))} · <b>MGRS :</b> ${esc(toMGRS(L0.lat,L0.lon)||"—")}</p>`+
-    `<p><b>Liens :</b> <a href="https://www.google.com/maps/search/?api=1&query=${L0.lat},${L0.lon}">Maps</a> · `+
+    `<h1>OSINT sheet — ${esc(L0.label||"Location")}</h1>`+
+    `<p><b>Coordinates:</b> ${L0.lat.toFixed(6)}, ${L0.lon.toFixed(6)} · ${toDMS(L0.lat,L0.lon)}<br>`+
+    `<b>Plus Code:</b> ${esc(olcEncode(L0.lat,L0.lon,11))} · <b>MGRS:</b> ${esc(toMGRS(L0.lat,L0.lon)||"—")}</p>`+
+    `<p><b>Links:</b> <a href="https://www.google.com/maps/search/?api=1&query=${L0.lat},${L0.lon}">Maps</a> · `+
     `<a href="https://earth.google.com/web/@${L0.lat},${L0.lon},0a,1000d,35y">Earth</a> · `+
     `<a href="https://www.geoportail.gouv.fr/carte?c=${L0.lon},${L0.lat}&z=16">Géoportail</a> · `+
     `<a href="https://www.openstreetmap.org/?mlat=${L0.lat}&mlon=${L0.lon}#map=16/${L0.lat}/${L0.lon}">OSM</a> · `+
     `<a href="https://apps.sentinel-hub.com/eo-browser/?lat=${L0.lat}&lng=${L0.lon}&zoom=13">Sentinel</a></p>`+
-    `<p><b>Complétude :</b> ${REPORT.completeness||0} %</p>`;
-  if(Object.keys(REPORT.access||{}).length){h+="<h2>Accès</h2><ul>"+Object.entries(REPORT.access).map(([k,v])=>`<li><b>${esc(k)} :</b> ${esc(v)}</li>`).join("")+"</ul>";}
+    `<p><b>Completeness:</b> ${REPORT.completeness||0} %</p>`;
+  if(Object.keys(REPORT.access||{}).length){h+="<h2>Access</h2><ul>"+Object.entries(REPORT.access).map(([k,v])=>`<li><b>${esc(k)}:</b> ${esc(v)}</li>`).join("")+"</ul>";}
   for(const k of ORDER){const s=REPORT.sections[k];if(!s||s.error||s.empty)continue;h+=`<h2>${esc(s.title)}</h2>`;
     if(s.items)h+="<ul>"+s.items.slice(0,15).map(i=>{
       const nm=i.url?`<a href="${esc(i.url)}">${esc(i.name)}</a>`:esc(i.name);
       return `<li>${nm} — ${fmtDist(i.dist)} ${i.dir}</li>`;}).join("")+"</ul>";
     else if(s.data)h+="<table border=1 cellpadding=4 style='border-collapse:collapse'>"+Object.entries(s.data).map(([a,b])=>`<tr><td><b>${esc(a)}</b></td><td>${esc(String(b))}</td></tr>`).join("")+"</table>";}
-  if(COMMONS&&COMMONS.length){h+="<h2>Photos géolocalisées (Wikimedia Commons)</h2>"+
+  if(COMMONS&&COMMONS.length){h+="<h2>Geolocated photos (Wikimedia Commons)</h2>"+
     "<div style='display:flex;flex-wrap:wrap;gap:6px'>"+COMMONS.slice(0,12).map(p=>
       `<a href="${esc(p.desc||p.thumb)}"><img src="${esc(p.thumb)}" style="width:130px;height:96px;object-fit:cover;border:1px solid #ccc"></a>`).join("")+"</div>";}
-  h+=`<p style="color:#777;font-size:12px;margin-top:24px">Généré le ${new Date().toLocaleString("fr-FR")} · données publiques (OpenStreetMap, Open-Meteo, Wikipédia/Wikimedia). Estimations indicatives.</p>`;
+  h+=`<p style="color:#777;font-size:12px;margin-top:24px">Generated on ${new Date().toLocaleString("en-GB")} · public data (OpenStreetMap, Open-Meteo, Wikipedia/Wikimedia). Indicative estimates.</p>`;
   h+="</body>";return h;
 }
 
@@ -1628,11 +1628,11 @@ $("q").addEventListener("input",e=>{clearTimeout(sugTimer);const v=e.target.valu
   },350);});
 $("searchBtn").onclick=async()=>{const v=$("q").value.trim();if(!v)return;
   const c=parseCoordInput(v);
-  if(c){setPoint(c.lat,c.lon,`${c.kind} : ${c.lat.toFixed(5)}, ${c.lon.toFixed(5)}`);
-    map.setView([c.lat,c.lon],16);$("sugList").style.display="none";$("status").textContent=c.kind+" reconnu";return;}
+  if(c){setPoint(c.lat,c.lon,`${c.kind}: ${c.lat.toFixed(5)}, ${c.lon.toFixed(5)}`);
+    map.setView([c.lat,c.lon],16);$("sugList").style.display="none";$("status").textContent=c.kind+" recognized";return;}
   const res=await searchPlaces(v);
   if(res.length){const r=res[0];setPoint(+r.lat,+r.lon,r.display_name.split(",")[0]);map.setView([+r.lat,+r.lon],15);$("sugList").style.display="none";}
-  else $("status").textContent="aucun résultat";};
+  else $("status").textContent="no result";};
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("searchBtn").click();}});
 $("genBtn").onclick=generate;
 $("mode").onchange=e=>applyMode(e.target.value);
@@ -1640,22 +1640,22 @@ $("themeBtn").onclick=toggleTheme;
 $("manualBtn").onclick=()=>{const m=$("manual");m.style.display=m.style.display==="none"?"flex":"none";};
 $("applyManual").onclick=()=>{const la=parseFloat($("mlat").value),lo=parseFloat($("mlon").value);
   if(isFinite(la)&&isFinite(lo)){setPoint(la,lo,`${la.toFixed(5)}, ${lo.toFixed(5)}`);map.setView([la,lo],15);}};
-$("dlJson").onclick=()=>download("dossier.json",JSON.stringify(REPORT,(k,v)=>k==="tags"?undefined:v,2),"application/json");
-$("dlGeo").onclick=()=>download("dossier.geojson",toGeoJSON(),"application/geo+json");
-$("dlCsv").onclick=()=>download("dossier.csv","﻿"+toCSV(),"text/csv;charset=utf-8");
-$("dlHtml").onclick=()=>download("fiche.html",ficheHTML(),"text/html");
+$("dlJson").onclick=()=>download("report.json",JSON.stringify(REPORT,(k,v)=>k==="tags"?undefined:v,2),"application/json");
+$("dlGeo").onclick=()=>download("report.geojson",toGeoJSON(),"application/geo+json");
+$("dlCsv").onclick=()=>download("report.csv","﻿"+toCSV(),"text/csv;charset=utf-8");
+$("dlHtml").onclick=()=>download("report.html",ficheHTML(),"text/html");
 $("dlPdf").onclick=()=>window.print();
 $("copyReport").onclick=function(){if(REPORT)copyText(reportText(),this);};
 $("copyLL").onclick=function(){copyText(`${LAT.toFixed(6)}, ${LON.toFixed(6)}`,this);};
 $("copyLink").onclick=function(){copyText(shareURL(),this);};
 
-// Télécharge la vue principale (fond actif, centre + zoom courants de la carte).
+// Downloads the main view (active base layer, current map center + zoom).
 $("dlMain").onclick=function(){
   const c=map.getCenter();const z=Math.min(map.getZoom(),CURRENT_BASE.max);
   composeDownload(CURRENT_BASE.url,CURRENT_BASE.max,c.lat,c.lng,z,
     `vue_${CURRENT_BASE.name}_z${z}.png`,this,qgrid());
 };
-// Plan personnalisé : source + zoom libres.
+// Custom map: free source + zoom.
 $("dlCustom").onclick=function(){
   const b=BASES[$("cSource").value]||BASES.esri;
   let z=parseInt($("cZoom").value);if(!isFinite(z))z=16;
@@ -1664,16 +1664,16 @@ $("dlCustom").onclick=function(){
 };
 
 /* ============================================================
-   Outil d'extraction d'objets OSM (surface, périmètre, coordonnées).
-   Requête Overpass « nwr[clé=valeur]({{bbox}}); out geom; » sur l'emprise
-   visible de la carte, puis calcul local des mesures géodésiques.
+   OSM object extraction tool (area, perimeter, coordinates).
+   Overpass query "nwr[key=value]({{bbox}}); out geom;" over the visible
+   map extent, then local computation of the geodesic measurements.
    ============================================================ */
 let EX_RESULTS=[], exLayer=null;
 function bboxFromMap(){const b=map.getBounds();
   return `${b.getSouth().toFixed(6)},${b.getWest().toFixed(6)},${b.getNorth().toFixed(6)},${b.getEast().toFixed(6)}`;}
 function exBuildQuery(key,val,bbox){
   const sel=val?`["${key}"="${val}"]`:`["${key}"]`;
-  return `[out:json][timeout:25];\n// géométrie complète (geom)\nnwr${sel}(${bbox});\nout geom;`;}
+  return `[out:json][timeout:25];\n// full geometry (geom)\nnwr${sel}(${bbox});\nout geom;`;}
 function ringPerimeter(ring){let s=0;for(let i=1;i<ring.length;i++)
   s+=haversine(ring[i-1][0],ring[i-1][1],ring[i][0],ring[i][1]);return s;}
 function bboxDims(b){if(!b)return null;
@@ -1700,31 +1700,31 @@ function exProcess(el){
 }
 async function exRun(){
   const key=($("exKey").value||"").trim(), val=($("exVal").value||"").trim();
-  if(!key){alert("Indiquez au moins une clé OSM (ex. landuse, building, natural…).");return;}
+  if(!key){alert("Provide at least one OSM key (e.g. landuse, building, natural…).");return;}
   const bbox=bboxFromMap(), q=exBuildQuery(key,val,bbox);
   $("exQuery").textContent=q;
   const btn=$("exRun"),prev=btn.textContent;btn.disabled=true;btn.textContent="…";
-  $("exInfo").textContent="requête Overpass…";badge("bExtract","empty");
+  $("exInfo").textContent="Overpass query…";badge("bExtract","empty");
   try{
     const json=await overpass(q);
     EX_RESULTS=(json.elements||[]).map(exProcess).filter(r=>r.nverts>0).sort((a,b)=>b.area-a.area);
     renderExtract();
     badge("bExtract",EX_RESULTS.length?"ok":"empty");
-    $("exInfo").textContent=`${EX_RESULTS.length} objet(s) · emprise (S,O,N,E) ${bbox}`;
+    $("exInfo").textContent=`${EX_RESULTS.length} object(s) · extent (S,W,N,E) ${bbox}`;
     ["exGeo","exCsv","exCoords"].forEach(id=>$(id).disabled=!EX_RESULTS.length);
-  }catch(e){badge("bExtract","err");$("exInfo").textContent="Erreur : "+(e.message||e);}
+  }catch(e){badge("bExtract","err");$("exInfo").textContent="Error: "+(e.message||e);}
   finally{btn.disabled=false;btn.textContent=prev;}
 }
 function renderExtract(){
   const t=$("exTable");
   if(exLayer){map.removeLayer(exLayer);exLayer=null;}
-  if(!EX_RESULTS.length){t.innerHTML='<tr><td class="muted">Aucun objet trouvé sur l\'emprise visible. Élargissez la vue ou changez la clé/valeur.</td></tr>';return;}
+  if(!EX_RESULTS.length){t.innerHTML='<tr><td class="muted">No object found in the visible extent. Widen the view or change the key/value.</td></tr>';return;}
   exLayer=L.layerGroup().addTo(map);
-  t.innerHTML=`<tr><th>Nom</th><th>Type</th><th>Surface</th><th>Périmètre</th><th>Dimensions</th><th>Somm.</th><th></th></tr>`+
+  t.innerHTML=`<tr><th>Name</th><th>Type</th><th>Area</th><th>Perimeter</th><th>Dimensions</th><th>Vert.</th><th></th></tr>`+
     EX_RESULTS.map((r,i)=>{
       if(r.coords.length>=3&&r.area){
         L.polygon(r.coords,{color:"#a855f7",weight:1,fillColor:"#a855f7",fillOpacity:.12})
-         .bindPopup(`<b>${esc(r.name||"(sans nom)")}</b><br>${esc(r.kind)}<br>Surface : <b>${fmtArea(r.area)}</b><br>Périmètre : <b>${fmtDist(r.perim)}</b>`)
+         .bindPopup(`<b>${esc(r.name||"(unnamed)")}</b><br>${esc(r.kind)}<br>Area: <b>${fmtArea(r.area)}</b><br>Perimeter: <b>${fmtDist(r.perim)}</b>`)
          .addTo(exLayer);
       }
       return `<tr>
@@ -1748,14 +1748,14 @@ function exGeoJSON(list){
       geom={type:"Polygon",coordinates:[ring]};}
     else if(r.coords.length>1)geom={type:"LineString",coordinates:r.coords.map(c=>[c[1],c[0]])};
     else geom={type:"Point",coordinates:[r.coords[0][1],r.coords[0][0]]};
-    return {type:"Feature",geometry:geom,properties:{id:r.id,nom:r.name,type:r.kind,
-      surface_m2:Math.round(r.area),perimetre_m:Math.round(r.perim),
-      largeur_m:r.dims?Math.round(r.dims.w):null,hauteur_m:r.dims?Math.round(r.dims.h):null,
-      sommets:r.nverts}};});
+    return {type:"Feature",geometry:geom,properties:{id:r.id,name:r.name,type:r.kind,
+      area_m2:Math.round(r.area),perimeter_m:Math.round(r.perim),
+      width_m:r.dims?Math.round(r.dims.w):null,height_m:r.dims?Math.round(r.dims.h):null,
+      vertices:r.nverts}};});
   return JSON.stringify({type:"FeatureCollection",features:feats},null,2);
 }
 function exCSV(list){
-  const rows=[["id","nom","type","surface_m2","perimetre_m","largeur_m","hauteur_m","sommets","centre_lat","centre_lon"]];
+  const rows=[["id","name","type","area_m2","perimeter_m","width_m","height_m","vertices","center_lat","center_lon"]];
   for(const r of (list||EX_RESULTS))rows.push([r.id,r.name,r.kind,Math.round(r.area),Math.round(r.perim),
     r.dims?Math.round(r.dims.w):"",r.dims?Math.round(r.dims.h):"",r.nverts,
     r.center?r.center[0].toFixed(6):"",r.center?r.center[1].toFixed(6):""]);
@@ -1772,11 +1772,11 @@ $("exCoords").onclick=function(){
 $("exQuery").textContent=exBuildQuery("landuse","","{{bbox}}");
 
 /* ============================================================
-   Onglets · mesure de surface · zones cliquables · Wayback ·
-   Yandex · annotation d'images. (Ajouts.)
+   Tabs · area measurement · clickable zones · Wayback ·
+   Yandex · image annotation. (Additions.)
    ============================================================ */
 
-/* ---------------- Onglets ---------------- */
+/* ---------------- Tabs ---------------- */
 document.querySelectorAll(".tab").forEach(t=>{
   t.onclick=()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));
@@ -1786,7 +1786,7 @@ document.querySelectorAll(".tab").forEach(t=>{
   };
 });
 
-/* ---------------- Surfaces : aire d'un polygone (géodésique) ---------------- */
+/* ---------------- Areas: polygon area (geodesic) ---------------- */
 function polygonAreaM2(ll){
   const R=6378137; let area=0; const n=ll.length; if(n<3)return 0;
   for(let i=0;i<n;i++){const a=ll[i],b=ll[(i+1)%n];
@@ -1799,7 +1799,7 @@ function fmtArea(m2){
   return Math.round(m2)+" m²";
 }
 
-/* ---------------- Outil de mesure (dessin d'une zone sur la carte) ---------------- */
+/* ---------------- Measurement tool (drawing an area on the map) ---------------- */
 let MEASURING=false, measurePts=[], measureMarkers=[], measureLayer=null;
 function setMeasuring(on){
   MEASURING=on;
@@ -1827,11 +1827,11 @@ function measurePerimeter(pts){let s=0;for(let i=1;i<pts.length;i++)
   s+=haversine(pts[i-1].lat,pts[i-1].lng,pts[i].lat,pts[i].lng);return s;}
 function updateMeasureInfo(){
   const n=measurePts.length;
-  if(n<2){$("measureInfo").innerHTML="Cliquez sur la carte pour poser les sommets d'une zone. Double-clic pour fermer.";return;}
+  if(n<2){$("measureInfo").innerHTML="Click on the map to place the vertices of an area. Double-click to close.";return;}
   const per=measurePerimeter(measurePts);
   if(n>=3){const a=polygonAreaM2(measurePts.map(p=>[p.lat,p.lng]));
-    $("measureInfo").innerHTML=`Surface : <b>${fmtArea(a)}</b><br>Périmètre : <b>${fmtDist(per)}</b> · ${n} sommets`;}
-  else $("measureInfo").innerHTML=`Distance : <b>${fmtDist(per)}</b> · ${n} points`;
+    $("measureInfo").innerHTML=`Area: <b>${fmtArea(a)}</b><br>Perimeter: <b>${fmtDist(per)}</b> · ${n} vertices`;}
+  else $("measureInfo").innerHTML=`Distance: <b>${fmtDist(per)}</b> · ${n} points`;
 }
 function clearMeasure(){
   measurePts=[]; measureMarkers.forEach(m=>map.removeLayer(m)); measureMarkers=[];
@@ -1842,7 +1842,7 @@ $("measureBtn").onclick=()=>setMeasuring(!MEASURING);
 $("measureClear").onclick=clearMeasure;
 $("measureDone").onclick=()=>setMeasuring(false);
 
-/* ---------------- Zones OSM cliquables (surface affichée au clic) ---------------- */
+/* ---------------- Clickable OSM zones (area shown on click) ---------------- */
 let areaLayer=null;
 async function loadAreaPolygons(lat,lon){
   try{
@@ -1860,18 +1860,18 @@ async function loadAreaPolygons(lat,lon){
       const ring=el.geometry.map(g=>[g.lat,g.lon]);
       const t=el.tags||{}, a=polygonAreaM2(ring);
       const poly=L.polygon(ring,{color:"#22c55e",weight:1,fillOpacity:.10});
-      poly.bindPopup(`<b>${esc(t.name||"Zone (sans nom)")}</b><br>${esc(kindOf(t))}<br>`+
-        `Surface : <b>${fmtArea(a)}</b>`);
+      poly.bindPopup(`<b>${esc(t.name||"Zone (unnamed)")}</b><br>${esc(kindOf(t))}<br>`+
+        `Area: <b>${fmtArea(a)}</b>`);
       poly.on("mouseover",()=>poly.setStyle({fillOpacity:.28,weight:2}));
       poly.on("mouseout",()=>poly.setStyle({fillOpacity:.10,weight:1}));
-      poly.on("click",e=>L.DomEvent.stopPropagation(e));  // ne déplace pas le point
+      poly.on("click",e=>L.DomEvent.stopPropagation(e));  // does not move the point
       poly.addTo(areaLayer);
       if(++count>=150)break;
     }
-  }catch(e){/* couche optionnelle : on ignore les échecs */}
+  }catch(e){/* optional layer: ignore failures */}
 }
 
-/* ---------------- Imagerie datée — Esri Wayback ---------------- */
+/* ---------------- Dated imagery — Esri Wayback ---------------- */
 let WB_RELEASES=null, wbMap=null, wbLayer=null, wbMarker=null, wbIdx=0;
 async function loadWaybackConfig(){
   if(WB_RELEASES)return WB_RELEASES;
@@ -1883,7 +1883,7 @@ async function loadWaybackConfig(){
     rel.push({num:k,date:m[0],
       tpl:c.itemURL.replace(/\{level\}/i,"{z}").replace(/\{row\}/i,"{y}").replace(/\{col\}/i,"{x}")});
   }
-  rel.sort((a,b)=>a.date<b.date?-1:1);   // ancien -> récent
+  rel.sort((a,b)=>a.date<b.date?-1:1);   // old -> recent
   WB_RELEASES=rel; return rel;
 }
 async function initWayback(){
@@ -1893,12 +1893,12 @@ async function initWayback(){
     $("wbSlider").max=rel.length-1;
     if(wbIdx>rel.length-1||wbIdx<0){wbIdx=rel.length-1;}
     $("wbSlider").value=wbIdx;
-    $("wbCount").textContent=`${rel.length} clichés datés`;
+    $("wbCount").textContent=`${rel.length} dated snapshots`;
     if(!wbMap){
       wbMap=L.map("wbView",{zoomControl:true,attributionControl:false}).setView([LAT,LON],16);
       L.control.scale({imperial:false,metric:true}).addTo(wbMap);
       const N=L.Control.extend({options:{position:"topright"},
-        onAdd:function(){const d=L.DomUtil.create("div","north");d.innerHTML="↑<br><small>Nord</small>";return d;}});
+        onAdd:function(){const d=L.DomUtil.create("div","north");d.innerHTML="↑<br><small>North</small>";return d;}});
       wbMap.addControl(new N());
       wbMarker=L.circleMarker([LAT,LON],{radius:5,color:"#ef4444",weight:2,
         fillColor:"#ef4444",fillOpacity:.8}).addTo(wbMap);
@@ -1906,7 +1906,7 @@ async function initWayback(){
     }
     showWayback(wbIdx);
     badge("bWayback","ok");
-  }catch(e){badge("bWayback","err");$("wbDate").textContent="indisponible";}
+  }catch(e){badge("bWayback","err");$("wbDate").textContent="unavailable";}
 }
 function showWayback(i){
   if(!WB_RELEASES||!WB_RELEASES[i]||!wbMap)return;
@@ -1925,7 +1925,7 @@ $("wbDl").onclick=function(){
   composeDownload(r.tpl,18,LAT,LON,z,`wayback_${r.date}_z${z}.png`,this,qgrid());
 };
 
-/* ---------------- Imagerie Yandex (visionnage, projection EPSG:3395) ---------------- */
+/* ---------------- Yandex imagery (viewing, EPSG:3395 projection) ---------------- */
 let YX_READY=false;
 function yandexTileXY(lat,lon,z){
   const n=Math.pow(2,z), e=0.0818191908426, rad=lat*Math.PI/180, sn=Math.sin(rad);
@@ -1946,9 +1946,9 @@ function refreshYandex(){
   grid.innerHTML=html;
   YX_READY=true; badge("bYandex","ok");
 }
-// Téléchargement Yandex : les tuiles passent par un proxy CORS pour autoriser
-// l'export du canvas (sinon « tainted »). Nord + échelle incrustés + métadonnées.
-// Compose une mosaïque Yandex (via proxy CORS) centrée sur lat/lon → canvas.
+// Yandex download: the tiles go through a CORS proxy to allow canvas
+// export (otherwise "tainted"). North + scale overlaid + metadata.
+// Composes a Yandex mosaic (via CORS proxy) centered on lat/lon → canvas.
 async function composeYandexCanvas(lat,lon,z,grid){
   z=Math.max(1,Math.min(z,19)); grid=grid||qgrid();
   const out=(grid-1)*TS, half=(grid-1)/2;
@@ -1963,7 +1963,7 @@ async function composeYandexCanvas(lat,lon,z,grid){
     jobs.push(loadTile(url).then(img=>{if(img){ctx.drawImage(img,ox,oy);ok++;}}));
   }
   await Promise.all(jobs);
-  if(!ok)throw new Error("aucune tuile Yandex reçue (proxy indisponible)");
+  if(!ok)throw new Error("no Yandex tile received (proxy unavailable)");
   const px=(xf-x0+half)*TS,py=(yf-y0+half)*TS;
   const left=Math.max(0,Math.min(Math.round(px-out/2),grid*TS-out));
   const top =Math.max(0,Math.min(Math.round(py-out/2),grid*TS-out));
@@ -1980,29 +1980,29 @@ async function composeYandexDownload(z,btn){
     const {canvas}=await composeYandexCanvas(LAT,LON,z,qgrid());
     saveBlob(await canvasBlob(canvas),`yandex_z${z}_${LAT.toFixed(5)}_${LON.toFixed(5)}.${IMG_EXT}`);
   }catch(e){
-    alert("Téléchargement Yandex impossible : "+(e.message||e)+
-      "\n(Les tuiles Yandex transitent par un proxy CORS, parfois momentanément indisponible.)");
+    alert("Yandex download failed: "+(e.message||e)+
+      "\n(Yandex tiles pass through a CORS proxy, sometimes momentarily unavailable.)");
   }finally{if(btn){btn.textContent=prev;btn.disabled=false;}}
 }
 $("yxZoom").oninput=refreshYandex;
 $("yxDl").onclick=function(){composeYandexDownload(parseInt($("yxZoom").value)||17,this);};
 
-/* Synchronise les vues imagerie quand le point change. */
+/* Synchronizes the imagery views when the point changes. */
 function syncImagery(){
   if(wbMap){wbMap.setView([LAT,LON],wbMap.getZoom());if(wbMarker)wbMarker.setLatLng([LAT,LON]);}
   if(YX_READY)refreshYandex();
 }
 
-/* ---------------- Onglet « Annoter une image » ---------------- */
+/* ---------------- "Annotate an image" tab ---------------- */
 const annotItems=[];
-// Lit une échelle dans le nom de fichier : « 200m », « 1.5km », « 500_m »…
+// Reads a scale from the file name: "200m", "1.5km", "500_m"…
 function parseScaleFromName(name){
   const s=String(name).replace(/\.[a-z0-9]+$/i,"");
   const re=/(\d+(?:[.,]\d+)?)\s*[_\-]?\s*(km|m)\b/ig;
   let best=null,mt;
   while((mt=re.exec(s))){const v=parseFloat(mt[1].replace(",","."));
     best={meters:mt[2].toLowerCase()==="km"?v*1000:v};}
-  return best;   // dernier motif trouvé (souvent le suffixe d'échelle)
+  return best;   // last pattern found (often the scale suffix)
 }
 function isImageish(f){
   return (f.type&&f.type.startsWith("image/"))
@@ -2011,20 +2011,20 @@ function isImageish(f){
 function addAnnotImage(file){
   const reader=new FileReader();
   reader.onload=()=>{
-    // 1) échelle depuis les métadonnées PNG (tEXt « Scale_m » = largeur au sol, en m)
+    // 1) scale from the PNG metadata (tEXt "Scale_m" = ground width, in m)
     let meters=null, src="";
     const meta=pngReadText(reader.result);
-    if(meta.Scale_m&&isFinite(parseFloat(meta.Scale_m))){meters=parseFloat(meta.Scale_m);src="métadonnées PNG";}
-    // 2) sinon, depuis le nom de fichier
-    if(meters==null){const p=parseScaleFromName(file.name);if(p){meters=p.meters;src="nom de fichier";}}
-    const blob=new Blob([reader.result]);   // type vide toléré (ex. .crdownload)
+    if(meta.Scale_m&&isFinite(parseFloat(meta.Scale_m))){meters=parseFloat(meta.Scale_m);src="PNG metadata";}
+    // 2) otherwise, from the file name
+    if(meters==null){const p=parseScaleFromName(file.name);if(p){meters=p.meters;src="file name";}}
+    const blob=new Blob([reader.result]);   // empty type tolerated (e.g. .crdownload)
     const url=URL.createObjectURL(blob), img=new Image();
     img.onload=()=>{URL.revokeObjectURL(url);
       const item={name:file.name,img,meters,rotation:0,scaleSrc:src};
       annotItems.push(item); renderAnnotItem(item);
       $("dlAllAnnot").disabled=false; $("clearAnnot").disabled=false;};
     img.onerror=()=>{URL.revokeObjectURL(url);
-      $("status")&&($("status").textContent=`Image illisible : ${file.name}`);};
+      $("status")&&($("status").textContent=`Unreadable image: ${file.name}`);};
     img.src=url;
   };
   reader.onerror=()=>{};
@@ -2042,19 +2042,19 @@ function drawAnnot(item){
 function downloadAnnot(item){
   const base=item.name.replace(/(\.[a-z0-9]+)?$/i,"_annote");
   canvasBlob(item.canvas).then(b=>saveBlob(b,toImgExt(base)))
-    .catch(e=>alert("Export impossible : "+(e.message||e)));
+    .catch(e=>alert("Export failed: "+(e.message||e)));
 }
 function renderAnnotItem(item){
   const card=document.createElement("div"); card.className="annotcard";
   const cv=document.createElement("canvas"); item.canvas=cv;
   const nm=document.createElement("div"); nm.className="nm";
-  nm.textContent=item.name+(item.scaleSrc?`  · échelle : ${item.scaleSrc}`:"  · échelle : à saisir");
+  nm.textContent=item.name+(item.scaleSrc?`  · scale: ${item.scaleSrc}`:"  · scale: to be entered");
   const row=document.createElement("div"); row.className="row";
-  const l1=document.createElement("span"); l1.className="muted"; l1.textContent="Échelle (m) :";
+  const l1=document.createElement("span"); l1.className="muted"; l1.textContent="Scale (m):";
   const inp=document.createElement("input"); inp.className="num"; inp.type="number"; inp.placeholder="?";
   inp.value=item.meters!=null?Math.round(item.meters):"";
   inp.oninput=()=>{const v=parseFloat(inp.value); item.meters=isFinite(v)?v:null; drawAnnot(item);};
-  const l2=document.createElement("span"); l2.className="muted"; l2.textContent="Nord (°) :";
+  const l2=document.createElement("span"); l2.className="muted"; l2.textContent="North (°):";
   const rot=document.createElement("input"); rot.className="num"; rot.type="number"; rot.value=0;
   rot.oninput=()=>{item.rotation=parseFloat(rot.value)||0; drawAnnot(item);};
   const dl=document.createElement("button"); dl.className="ghost";
@@ -2082,12 +2082,12 @@ function renderAnnotItem(item){
 })();
 
 /* ============================================================
-   Mode « Lot » — liste de lieux -> un dossier par lieu
-   (satellite.webp + opentopomap.webp + donnees.json + fiche.pdf),
-   empaquetés dans un ZIP (ou écrits sur disque via l'API Fichiers).
+   "Batch" mode — list of places -> one folder per place
+   (satellite.webp + opentopomap.webp + data.json + report.pdf),
+   packaged in a ZIP (or written to disk via the File System API).
    ============================================================ */
 
-/* ---- ZIP « store » (sans compression), en pur JS. Réutilise crc32(). ---- */
+/* ---- ZIP "store" (no compression), in pure JS. Reuses crc32(). ---- */
 function zipStore(entries){
   const enc=new TextEncoder();
   const u16=n=>[n&255,(n>>8)&255], u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255];
@@ -2108,7 +2108,7 @@ function zipStore(entries){
   return new Blob([...parts,...central,end],{type:"application/zip"});
 }
 
-/* ---- Générateur PDF minimal : texte (Helvetica/WinAnsi) + une image JPEG. ---- */
+/* ---- Minimal PDF generator: text (Helvetica/WinAnsi) + one JPEG image. ---- */
 function dataURLtoBytes(durl){const bin=atob(durl.split(",")[1]);
   const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a;}
 function buildPDF(opt){
@@ -2158,10 +2158,10 @@ function buildPDF(opt){
   return pdf;
 }
 
-/* ---- Modèle & rendu du tableau de lot ---- */
+/* ---- Batch table model & rendering ---- */
 const BATCH=[];
 function sanitizeName(s){return (String(s||"").trim()
-  .replace(/[\/\\:*?"<>|]+/g," ").replace(/\s+/g," ").trim())||"lieu";}
+  .replace(/[\/\\:*?"<>|]+/g," ").replace(/\s+/g," ").trim())||"place";}
 function batchAddRow(name,query){BATCH.push({name:name||"",query:query||"",lat:null,lon:null,
   address:"",foundLabel:"",status:"—",statusKind:"wait"});renderBatch();}
 function renderBatch(){
@@ -2171,21 +2171,21 @@ function renderBatch(){
       +(r.address?` · ${esc(r.address.split(",").slice(0,3).join(","))}`:"");
     return `<tr>
       <td class="muted">${i+1}</td>
-      <td><input data-i="${i}" data-f="name" value="${esc(r.name)}" placeholder="ex. Maison Paris"/></td>
-      <td><input data-i="${i}" data-f="query" value="${esc(r.query)}" autocomplete="off" placeholder="adresse, 48.8584, 2.2945, ou MGRS 31U DQ 48251 11932"/></td>
+      <td><input data-i="${i}" data-f="name" value="${esc(r.name)}" placeholder="e.g. House Paris"/></td>
+      <td><input data-i="${i}" data-f="query" value="${esc(r.query)}" autocomplete="off" placeholder="address, 48.8584, 2.2945, or MGRS 31U DQ 48251 11932"/></td>
       <td class="st-${r.statusKind||'wait'}">${stTxt}</td>
-      <td><button class="rm" data-rm="${i}" title="Supprimer">✕</button></td>
+      <td><button class="rm" data-rm="${i}" title="Delete">✕</button></td>
     </tr>`;
   }).join("");
   tb.querySelectorAll("input").forEach(inp=>inp.oninput=()=>{
     const r=BATCH[+inp.dataset.i];if(!r)return;r[inp.dataset.f]=inp.value;
-    if(inp.dataset.f==="query"){r.lat=null;r.lon=null;r.status="modifié";r.statusKind="wait";}});
+    if(inp.dataset.f==="query"){r.lat=null;r.lon=null;r.status="modified";r.statusKind="wait";}});
   tb.querySelectorAll('input[data-f="query"]').forEach(inp=>{
     const r=BATCH[+inp.dataset.i];if(r)attachAutocomplete(inp,r);});
   tb.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{BATCH.splice(+b.dataset.rm,1);renderBatch();});
 }
-/* Autocomplétion d'adresses (Nominatim) sur le champ « Localisation » du lot.
-   Les saisies reconnues comme coordonnées ou MGRS ne déclenchent pas de suggestion. */
+/* Address autocomplete (Nominatim) on the batch "Location" field.
+   Inputs recognized as coordinates or MGRS do not trigger a suggestion. */
 let batchSugEl=null, batchSugTimer=null;
 function batchSug(){if(!batchSugEl){batchSugEl=document.createElement("div");batchSugEl.id="batchSug";
   document.body.appendChild(batchSugEl);}return batchSugEl;}
@@ -2194,7 +2194,7 @@ function attachAutocomplete(inp,r){
   inp.addEventListener("input",()=>{
     clearTimeout(batchSugTimer);
     const v=inp.value.trim();
-    if(v.length<3||parseCoordInput(v)){hideBatchSug();return;}   // coord/MGRS : pas de suggestion
+    if(v.length<3||parseCoordInput(v)){hideBatchSug();return;}   // coord/MGRS: no suggestion
     batchSugTimer=setTimeout(async()=>{
       const res=await searchPlaces(v);
       if(document.activeElement!==inp||!res.length){hideBatchSug();return;}
@@ -2205,7 +2205,7 @@ function attachAutocomplete(inp,r){
       box.querySelectorAll("div").forEach(d=>d.onmousedown=e=>{e.preventDefault();
         const x=res[+d.dataset.i];
         r.query=x.display_name;r.lat=+x.lat;r.lon=+x.lon;r.foundLabel=x.display_name;
-        r.address=x.display_name;r.status="vérifié";r.statusKind="ok";
+        r.address=x.display_name;r.status="verified";r.statusKind="ok";
         hideBatchSug();renderBatch();});
     },350);
   });
@@ -2216,64 +2216,64 @@ async function geocodeRow(r){
   if(c){r.lat=c.lat;r.lon=c.lon;}
   else{
     const res=await searchPlaces(r.query);
-    if(!res.length){r.status="introuvable";r.statusKind="err";return false;}
+    if(!res.length){r.status="not found";r.statusKind="err";return false;}
     r.lat=+res[0].lat;r.lon=+res[0].lon;r.foundLabel=res[0].display_name;
   }
-  try{const rv=await reverse(r.lat,r.lon);r.address=(rv.data&&rv.data["Adresse"])||r.foundLabel||"";}catch(e){}
-  r.status="vérifié";r.statusKind="ok";return true;
+  try{const rv=await reverse(r.lat,r.lon);r.address=(rv.data&&rv.data["Address"])||r.foundLabel||"";}catch(e){}
+  r.status="verified";r.statusKind="ok";return true;
 }
 function batchLines(r,zooms){
   return [
-    "Nom : "+(r.name||"—"),
-    "Localisation saisie : "+r.query,
-    r.address?("Adresse résolue : "+r.address):null,
-    `Coordonnées : ${r.lat.toFixed(6)}, ${r.lon.toFixed(6)}`,
-    "DMS : "+toDMS(r.lat,r.lon),
-    "UTM : "+(toUTM(r.lat,r.lon)||"—"),
-    "MGRS : "+(toMGRS(r.lat,r.lon)||"—"),
-    "Plus Code : "+olcEncode(r.lat,r.lon,11),
-    "Google Maps : https://www.google.com/maps/search/?api=1&query="+r.lat.toFixed(6)+","+r.lon.toFixed(6),
-    "OpenStreetMap : https://www.openstreetmap.org/?mlat="+r.lat.toFixed(6)+"&mlon="+r.lon.toFixed(6),
-    "Géoportail : https://www.geoportail.gouv.fr/carte?c="+r.lon.toFixed(6)+","+r.lat.toFixed(6)+"&z=17",
-    (zooms&&zooms.length)?("Images incluses : "+zooms.map(z=>`z${z.z} (${z.lbl})`).join(", ")):null,
+    "Name: "+(r.name||"—"),
+    "Location entered: "+r.query,
+    r.address?("Resolved address: "+r.address):null,
+    `Coordinates: ${r.lat.toFixed(6)}, ${r.lon.toFixed(6)}`,
+    "DMS: "+toDMS(r.lat,r.lon),
+    "UTM: "+(toUTM(r.lat,r.lon)||"—"),
+    "MGRS: "+(toMGRS(r.lat,r.lon)||"—"),
+    "Plus Code: "+olcEncode(r.lat,r.lon,11),
+    "Google Maps: https://www.google.com/maps/search/?api=1&query="+r.lat.toFixed(6)+","+r.lon.toFixed(6),
+    "OpenStreetMap: https://www.openstreetmap.org/?mlat="+r.lat.toFixed(6)+"&mlon="+r.lon.toFixed(6),
+    "Géoportail: https://www.geoportail.gouv.fr/carte?c="+r.lon.toFixed(6)+","+r.lat.toFixed(6)+"&z=17",
+    (zooms&&zooms.length)?("Images included: "+zooms.map(z=>`z${z.z} (${z.lbl})`).join(", ")):null,
     "",
-    "Généré le "+new Date().toLocaleString("fr-FR")+" · GEOSINT · données publiques.",
+    "Generated on "+new Date().toLocaleString("en-GB")+" · GEOSINT · public data.",
   ].filter(v=>v!=null);
 }
 function batchJSON(r){
   return JSON.stringify({
-    nom:r.name||null, localisation_saisie:r.query, adresse_resolue:r.address||null,
-    latitude:r.lat, longitude:r.lon, coordonnees:coordSet(r.lat,r.lon),
-    liens:{google_maps:`https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}`,
+    name:r.name||null, query_input:r.query, resolved_address:r.address||null,
+    latitude:r.lat, longitude:r.lon, coordinates:coordSet(r.lat,r.lon),
+    links:{google_maps:`https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}`,
       openstreetmap:`https://www.openstreetmap.org/?mlat=${r.lat}&mlon=${r.lon}`},
-    genere_le:new Date().toISOString(), source:"GEOSINT"
+    generated_at:new Date().toISOString(), source:"GEOSINT"
   },null,2);
 }
 function placeGeoJSON(r){
   return JSON.stringify({type:"FeatureCollection",features:[{type:"Feature",
     geometry:{type:"Point",coordinates:[r.lon,r.lat]},
-    properties:{nom:r.name||null,adresse:r.address||null,localisation_saisie:r.query,
+    properties:{name:r.name||null,address:r.address||null,query_input:r.query,
       dms:toDMS(r.lat,r.lon),plus_code:olcEncode(r.lat,r.lon,11),mgrs:toMGRS(r.lat,r.lon)||null}}]},null,2);
 }
 function placeCSV(r){
-  const rows=[["nom","localisation_saisie","adresse","latitude","longitude","dms","plus_code","mgrs"],
+  const rows=[["name","query_input","address","latitude","longitude","dms","plus_code","mgrs"],
     [r.name||"",r.query,r.address||"",r.lat.toFixed(6),r.lon.toFixed(6),
      toDMS(r.lat,r.lon),olcEncode(r.lat,r.lon,11),toMGRS(r.lat,r.lon)||""]];
   return rows.map(row=>row.map(c=>{const v=String(c==null?"":c);
     return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\r\n");
 }
 function placeHTML(r){
-  return `<!doctype html><meta charset=utf-8><title>${esc(r.name||"Lieu")}</title>`+
+  return `<!doctype html><meta charset=utf-8><title>${esc(r.name||"Place")}</title>`+
     `<body style="font-family:sans-serif;max-width:760px;margin:30px auto;color:#0f172a">`+
-    `<h1>${esc(r.name||"Lieu")}</h1>`+
-    `<p><b>Localisation saisie :</b> ${esc(r.query)}<br>`+
-    (r.address?`<b>Adresse :</b> ${esc(r.address)}<br>`:"")+
-    `<b>Coordonnées :</b> ${r.lat.toFixed(6)}, ${r.lon.toFixed(6)} · ${esc(toDMS(r.lat,r.lon))}<br>`+
-    `<b>Plus Code :</b> ${esc(olcEncode(r.lat,r.lon,11))} · <b>MGRS :</b> ${esc(toMGRS(r.lat,r.lon)||"—")}</p>`+
+    `<h1>${esc(r.name||"Place")}</h1>`+
+    `<p><b>Location entered:</b> ${esc(r.query)}<br>`+
+    (r.address?`<b>Address:</b> ${esc(r.address)}<br>`:"")+
+    `<b>Coordinates:</b> ${r.lat.toFixed(6)}, ${r.lon.toFixed(6)} · ${esc(toDMS(r.lat,r.lon))}<br>`+
+    `<b>Plus Code:</b> ${esc(olcEncode(r.lat,r.lon,11))} · <b>MGRS:</b> ${esc(toMGRS(r.lat,r.lon)||"—")}</p>`+
     `<p><a href="https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}">Google Maps</a> · `+
     `<a href="https://www.openstreetmap.org/?mlat=${r.lat}&mlon=${r.lon}">OpenStreetMap</a> · `+
     `<a href="https://www.geoportail.gouv.fr/carte?c=${r.lon},${r.lat}&z=17">Géoportail</a></p>`+
-    `<p style="color:#777;font-size:12px">Généré le ${new Date().toLocaleString("fr-FR")} · GEOSINT.</p></body>`;
+    `<p style="color:#777;font-size:12px">Generated on ${new Date().toLocaleString("en-GB")} · GEOSINT.</p></body>`;
 }
 function batchOptions(){const g=id=>{const e=$(id);return !!(e&&e.checked);};
   const v=id=>{const e=$(id);return e?e.value.trim():"";};
@@ -2290,36 +2290,36 @@ function batchBusy(on){["batchRun","batchVerify","batchAdd","batchDir"].forEach(
 
 async function batchVerifyAll(){
   const rows=BATCH.filter(r=>(r.query||"").trim());
-  if(!rows.length){alert("Ajoutez au moins un lieu.");return;}
+  if(!rows.length){alert("Add at least one place.");return;}
   batchBusy(true);let i=0;
-  for(const r of rows){setBatchProg((i+.5)/rows.length,`Vérification : ${r.name||r.query}`);
-    try{await geocodeRow(r);}catch(e){r.status="erreur";r.statusKind="err";}
+  for(const r of rows){setBatchProg((i+.5)/rows.length,`Verifying: ${r.name||r.query}`);
+    try{await geocodeRow(r);}catch(e){r.status="error";r.statusKind="err";}
     renderBatch();i++;}
-  setBatchProg(0,`${rows.length} lieu(x) vérifié(s).`);batchBusy(false);
+  setBatchProg(0,`${rows.length} place(s) verified.`);batchBusy(false);
 }
 async function batchProcess(useDir){
   const rows=BATCH.filter(r=>(r.query||"").trim());
-  if(!rows.length){alert("Ajoutez au moins un lieu.");return;}
+  if(!rows.length){alert("Add at least one place.");return;}
   batchBusy(true);
   const grid=parseInt($("batchGrid").value)||5;
   const opt=batchOptions();
   const anyImg=opt.esri||opt.topo||opt.osm||opt.yandex||opt.wayback;
   const anyData=opt.json||opt.geojson||opt.csv||opt.html||opt.pdf;
-  if(!anyImg&&!anyData){alert("Sélectionnez au moins une option dans ⚙ Paramètres.");batchBusy(false);return;}
+  if(!anyImg&&!anyData){alert("Select at least one option in ⚙ Settings.");batchBusy(false);return;}
   const zooms=selectedZooms();
-  if(anyImg&&!zooms.length){alert("Sélectionnez au moins un zoom (taille).");batchBusy(false);return;}
+  if(anyImg&&!zooms.length){alert("Select at least one zoom (size).");batchBusy(false);return;}
   const enc=s=>new TextEncoder().encode(s);
   const canvasBytes=async cv=>new Uint8Array(await (await canvasBlob(cv)).arrayBuffer());
-  // Imagerie datée : cliché le plus récent (chargé une seule fois).
+  // Dated imagery: most recent snapshot (loaded only once).
   let wbRel=null;
   if(opt.wayback){try{const rel=await loadWaybackConfig();wbRel=rel&&rel.length?rel[rel.length-1]:null;}catch(e){}}
   const perPlace=[], used={}; let i=0, okCount=0;
   for(const r of rows){
-    setBatchProg((i+.05)/rows.length,`Traitement : ${r.name||r.query}`);
+    setBatchProg((i+.05)/rows.length,`Processing: ${r.name||r.query}`);
     try{
       if(r.lat==null){await geocodeRow(r);renderBatch();}
-      if(r.lat==null){r.status="introuvable";r.statusKind="err";renderBatch();i++;continue;}
-      let folder=sanitizeName(r.name||(r.address||r.query).split(",")[0]||`lieu_${i+1}`);
+      if(r.lat==null){r.status="not found";r.statusKind="err";renderBatch();i++;continue;}
+      let folder=sanitizeName(r.name||(r.address||r.query).split(",")[0]||`place_${i+1}`);
       if(used[folder]){folder=`${folder}_${used[folder]++}`;}else used[folder]=1;
       const files=[];
       if(anyImg){let zi=0;
@@ -2339,12 +2339,12 @@ async function batchProcess(useDir){
           zi++;
         }
       }
-      if(opt.json)    files.push({name:"donnees.json",data:enc(batchJSON(r))});
-      if(opt.geojson) files.push({name:"donnees.geojson",data:enc(placeGeoJSON(r))});
-      if(opt.csv)     files.push({name:"donnees.csv",data:enc("﻿"+placeCSV(r))});
-      if(opt.html)    files.push({name:"fiche.html",data:enc(placeHTML(r))});
-      if(opt.pdf)     files.push({name:"fiche.pdf",data:buildPDF({title:`GEOSINT - ${r.name||folder}`,lines:batchLines(r,anyImg?zooms:null)})});
-      // Extraction OSM (comme l'outil) autour du point, dans un rayon donné.
+      if(opt.json)    files.push({name:"data.json",data:enc(batchJSON(r))});
+      if(opt.geojson) files.push({name:"data.geojson",data:enc(placeGeoJSON(r))});
+      if(opt.csv)     files.push({name:"data.csv",data:enc("﻿"+placeCSV(r))});
+      if(opt.html)    files.push({name:"report.html",data:enc(placeHTML(r))});
+      if(opt.pdf)     files.push({name:"report.pdf",data:buildPDF({title:`GEOSINT - ${r.name||folder}`,lines:batchLines(r,anyImg?zooms:null)})});
+      // OSM extraction (like the tool) around the point, within a given radius.
       if(opt.extract&&opt.exKey){
         try{
           setBatchProg((i+.9)/rows.length,`${r.name||r.query} · extraction ${opt.exKey}`);
@@ -2356,32 +2356,32 @@ async function batchProcess(useDir){
             files.push({name:base+".geojson",data:enc(exGeoJSON(res))});
             files.push({name:base+".csv",data:enc("﻿"+exCSV(res))});
           }
-        }catch(e){/* extraction optionnelle : on n'échoue pas le lieu */}
+        }catch(e){/* optional extraction: do not fail the place */}
       }
-      if(!files.length){r.status="rien à générer";r.statusKind="err";renderBatch();i++;continue;}
+      if(!files.length){r.status="nothing to generate";r.statusKind="err";renderBatch();i++;continue;}
       perPlace.push({folder,files});
-      r.status=`généré ✓ (${files.length} fichiers)`;r.statusKind="done";okCount++;
-    }catch(e){r.status="erreur : "+(e.message||e);r.statusKind="err";}
+      r.status=`generated ✓ (${files.length} files)`;r.statusKind="done";okCount++;
+    }catch(e){r.status="error: "+(e.message||e);r.statusKind="err";}
     renderBatch();i++;
   }
-  if(!perPlace.length){setBatchProg(0,"Aucun dossier généré.");batchBusy(false);return;}
-  setBatchProg(.98,"assemblage…");
+  if(!perPlace.length){setBatchProg(0,"No folder generated.");batchBusy(false);return;}
+  setBatchProg(.98,"assembling…");
   try{
     if(useDir&&window.showDirectoryPicker){
       const root=await window.showDirectoryPicker();
       for(const p of perPlace){const dir=await root.getDirectoryHandle(p.folder,{create:true});
         for(const f of p.files){const fh=await dir.getFileHandle(f.name,{create:true});
           const wr=await fh.createWritable();await wr.write(f.data);await wr.close();}}
-      setBatchProg(0,`${okCount} dossier(s) écrit(s) sur le disque.`);
+      setBatchProg(0,`${okCount} folder(s) written to disk.`);
     }else{
       const entries=[];for(const p of perPlace)for(const f of p.files)entries.push({name:`${p.folder}/${f.name}`,data:f.data});
       saveBlob(zipStore(entries),"geosint_lots.zip");
-      setBatchProg(0,`${okCount} dossier(s) dans geosint_lots.zip.`);
+      setBatchProg(0,`${okCount} folder(s) in geosint_lots.zip.`);
     }
-  }catch(e){setBatchProg(0,"Enregistrement annulé/impossible : "+(e.message||e));}
+  }catch(e){setBatchProg(0,"Save cancelled/failed: "+(e.message||e));}
   batchBusy(false);
 }
-/* Zooms proposés pour le lot (une image satellite par zoom coché ; topo ≤ 17). */
+/* Zooms offered for the batch (one satellite image per checked zoom; topo ≤ 17). */
 const BATCH_ZOOMS=[
   {z:13,lbl:"≈3 km"},{z:14,lbl:"≈2 km"},{z:15,lbl:"≈1 km"},{z:16,lbl:"≈500 m"},
   {z:17,lbl:"≈300 m"},{z:18,lbl:"≈200 m"},{z:19,lbl:"≈70 m"},
@@ -2413,28 +2413,28 @@ function buildZoomChecks(){
       if(m.length>=2)batchAddRow(m[0],m.slice(1).join(" "));else batchAddRow("",ln);}
     $("batchPasteText").value="";$("batchPaste").style.display="none";
   };
-  batchAddRow("","");   // une ligne vide au départ
+  batchAddRow("","");   // one empty row at the start
 })();
 
 /* init */
-if(location.protocol==="file:"){$("fileWarn").style.display="block";$("status").textContent="ouvrez via un serveur local";}
-// Thème : préférence mémorisée (défaut : sombre).
+if(location.protocol==="file:"){$("fileWarn").style.display="block";$("status").textContent="open via a local server";}
+// Theme: remembered preference (default: dark).
 try{ applyTheme(localStorage.getItem("geosint_theme")==="light"?"light":"dark"); }catch(e){ applyTheme("dark"); }
-// Mode de collecte : préférence mémorisée (défaut : complet).
+// Collection mode: remembered preference (default: full).
 try{ const saved=localStorage.getItem("geosint_mode"); if(saved&&MODES[saved]) currentMode=saved; }catch(e){}
 applyMode(currentMode);
 initMap();
-// Point initial : lien partagé (#zoom/lat/lon) sinon Tour Eiffel par défaut.
+// Initial point: shared link (#zoom/lat/lon) otherwise the default point.
 let started=false;
 const mh=(location.hash||"").match(/#?(\d+)\/(-?\d+\.?\d*)\/(-?\d+\.?\d*)/);
 if(mh){const z=+mh[1],la=+mh[2],lo=+mh[3];
   if(isFinite(la)&&isFinite(lo)){setPoint(la,lo,`${la.toFixed(5)}, ${lo.toFixed(5)}`);
     map.setView([la,lo],Math.min(Math.max(z,1),19));started=true;}}
-if(!started){setPoint(LAT,LON,"Jet d'eau, Genève");$("q").value="Jet d'eau, Genève";}
+if(!started){setPoint(LAT,LON,"Jet d'eau, Geneva");$("q").value="Jet d'eau, Geneva";}
 map.on("zoomend",updateHash);
 renderLinks();
 bindToggles();
-// Imagerie datée (Wayback) + visionnage Yandex disponibles dès le départ.
+// Dated imagery (Wayback) + Yandex viewing available from the start.
 initWayback();
 refreshYandex();
 </script>
