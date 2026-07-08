@@ -1,210 +1,204 @@
-# 🗺️ GEOSINT — Analyse géographique OSINT
+# 🗺️ GEOSINT — Geographic OSINT analysis
 
-**GEOSINT** est un outil **OSINT de renseignement géographique** entièrement
-client — une **page web autonome, en un seul fichier HTML**. À partir d'une
-**localisation** (adresse, lieu, code postal, coordonnées GPS ou **clic sur la
-carte**), il rassemble automatiquement les informations publiques disponibles et
-produit une **fiche OSINT** sourcée, cartographiée et exportable.
+**GEOSINT** is a fully client-side **geographic intelligence OSINT tool** — a
+**standalone web page in a single HTML file**. From a **location** (address, place,
+postal code, GPS coordinates or a **click on the map**), it automatically gathers the
+available public information and produces a sourced, mapped and exportable **OSINT
+report**.
 
-> Aucun serveur, aucune base de données, aucune authentification, aucune
-> installation : ouvrez `index.html` et tout tourne dans le navigateur.
+> No server, no database, no authentication, no installation: open `index.html` and
+> everything runs in the browser.
 
 ---
 
-## 🎚️ Modes de collecte
+## 🎚️ Collection modes
 
-Un sélecteur **Portée de la collecte** permet de choisir les sources interrogées
-lors de la génération (le choix est mémorisé dans le navigateur) :
+A **Collection scope** selector lets you choose which sources are queried during
+generation (the choice is stored in the browser):
 
-| Mode | Ce qui est collecté |
+| Mode | What is collected |
 |---|---|
-| 🛰️ **Satellite + carte** | Imagerie satellite (Esri, **Esri Wayback** datée, **Yandex**) **+** cartes (OpenTopoMap) et liens externes. Sans collecte OSM — rapide. |
-| 🌐 **Tout** | Complet : imagerie + cartes **+** données OpenStreetMap/Overpass (réseau routier & ferré, transports, POI, environnement, **accès** dérivé, relief, villes) **+** Wikipédia à proximité et **photos géolocalisées** (Wikimedia Commons). |
+| 🛰️ **Satellite + map** | Satellite imagery (Esri, dated **Esri Wayback**, **Yandex**) **+** maps (OpenTopoMap) and external links. No OSM collection — fast. |
+| 🌐 **Everything** | Full: imagery + maps **+** OpenStreetMap/Overpass data (road & rail network, transit, POIs, environment, derived **access**, relief, cities) **+** nearby Wikipedia and **geolocated photos** (Wikimedia Commons). |
 
-L'interface masque automatiquement les cartes non pertinentes selon le mode
-choisi.
+The interface automatically hides the maps that are not relevant to the chosen mode.
 
-## 📋 Mode « Lot » (liste de lieux)
+## 📋 "Batch" mode (list of places)
 
-Un onglet **Lot** permet de traiter une **liste de lieux** d'un coup :
+A **Batch** tab lets you process a **list of places** at once:
 
-- un **tableau** où chaque ligne a un **nom libre** (celui du dossier généré) et
-  une **localisation** (adresse, lieu, ou coordonnées « lat, lon ») ;
-- import rapide par **collage** d'une liste (`Nom | localisation`, une par ligne) ;
-- bouton **Vérifier** qui géocode et confirme chaque localisation (Nominatim) ;
-- un bouton **⚙ Paramètres** qui expose **toutes les sorties de la page principale**
-  à inclure par lieu :
-  - **images** (une par zoom coché, tailles multiples) : Satellite (Esri),
-    OpenTopoMap, OSM standard, Yandex satellite, imagerie datée (Wayback) ;
-  - **données & fiche** : `donnees.json`, GeoJSON, CSV, fiche HTML, fiche PDF (texte) ;
-- un choix des **zooms (tailles)** à générer (une image par zoom) ;
-- la génération télécharge **pour chaque lieu un dossier à son nom** contenant les
-  fichiers cochés.
+- a **table** where each row has a **free-form name** (the name of the generated folder)
+  and a **location** (address, place, or "lat, lon" coordinates);
+- quick import by **pasting** a list (`Name | location`, one per line);
+- a **Verify** button that geocodes and confirms each location (Nominatim);
+- a **⚙ Settings** button exposing **all outputs of the main page** to include per place:
+  - **images** (one per checked zoom, multiple sizes): Satellite (Esri), OpenTopoMap,
+    standard OSM, Yandex satellite, dated imagery (Wayback);
+  - **data & report**: `donnees.json`, GeoJSON, CSV, HTML report, PDF report (text);
+- a choice of **zooms (sizes)** to generate (one image per zoom);
+- generation downloads **for each place a folder named after it** containing the checked
+  files.
 
-Livraison au choix : un **ZIP** unique contenant un sous-dossier par lieu, ou
-écriture directe dans un **dossier du disque** (API File System Access, navigateurs
-compatibles). Le ZIP et le PDF sont générés **en pur JavaScript**, sans dépendance.
+Delivery of your choice: a single **ZIP** containing one subfolder per place, or direct
+writing into a **folder on disk** (File System Access API, compatible browsers). The ZIP
+and the PDF are generated in **pure JavaScript**, with no dependency.
 
-## 📐 Extraction d'objets OSM (surface, périmètre, coordonnées)
+## 📐 OSM object extraction (area, perimeter, coordinates)
 
-Un outil dédié interroge **Overpass** sur l'emprise visible de la carte à partir
-d'un simple **type** (clé/valeur OSM, ex. `landuse=residential`, `building`,
-`natural=water`). Requête générée :
+A dedicated tool queries **Overpass** over the map's visible extent from a simple **type**
+(OSM key/value, e.g. `landuse=residential`, `building`, `natural=water`). Generated query:
 
 ```overpassql
 [out:json][timeout:25];
-// géométrie complète (geom)
+// full geometry (geom)
 nwr["landuse"="residential"]({{bbox}});
 out geom;
 ```
 
-Pour chaque objet trouvé, l'outil calcule et affiche : **surface**, **périmètre**,
-**dimensions** (largeur × hauteur), nombre de sommets, et donne les **coordonnées
-du périmètre** (copie par objet ou globale). Exports **GeoJSON** et **CSV** ;
-les objets sont aussi tracés sur la carte.
+For each object found, the tool computes and shows: **area**, **perimeter**,
+**dimensions** (width × height), number of vertices, and gives the **perimeter
+coordinates** (copy per object or globally). **GeoJSON** and **CSV** exports; objects are
+also drawn on the map.
 
-## 🌾 Outil « layer Landuse » (`outil-landuse.html`)
+## 🌾 "Landuse layer" tool (`outil-landuse.html`)
 
-Page autonome dédiée à la **création d'un calque (layer) d'occupation du sol** sur une
-**zone précise**, avec fond **Positron** (© CARTO). C'est la première brique d'une carte
-paramétrable orientée recherche à un endroit donné (et non une vue « de base »).
+A standalone page dedicated to **creating a landuse (land cover) layer** over a **precise
+area**, with a **Positron** basemap (© CARTO). It is the first building block of a
+parametrable map oriented toward research at a given spot (not a "default" overview).
 
-- **Zone précise** : recherche de lieu (Nominatim), emprise `bbox` éditable, bouton
-  « Vue → bbox », ou **dessin** d'un rectangle en 2 clics.
-- **Types de landuse paramétrables** : groupe *Agriculture* (champs, vergers, vignes,
-  prairies, serres…) et *Autres* (forêt, résidentiel, industriel…), plus des paires
-  `clé=valeur` OSM supplémentaires.
-- **Génération du GeoJSON** via Overpass : pour chaque polygone (way + relation
-  multipolygone) l'outil calcule **surface**, **périmètre**, dimensions, nombre de
-  sommets, **toutes les coordonnées**, et lit les noms **FR / EN / IT / DE** + le
-  **nom original**. Une **classe de taille (1→5)** est attribuée selon des seuils
-  paramétrables. Export **GeoJSON** et **CSV**.
-- **Code couleur en 5 tailles** (palette séquentielle accessible ColorBrewer YlGn) :
-  les petits champs restent **masqués en vue large** et **apparaissent au zoom** (zoom
-  minimal d'apparition réglable par taille). Coloration alternative « par type ».
-- **Stations d'eau** : points fixes (~15 grosses stations), GeoJSON éditable + gabarit.
-- **Vos coordonnées** : ajout de calques **GeoJSON** personnalisés (points, lignes,
-  polygones), collés ou importés.
-- **Nettoyeur de GeoJSON** : uploadez un GeoJSON contenant *toutes les colonnes* ;
-  l'outil **supprime les colonnes inutiles**, ne conserve que le nécessaire (type,
-  noms multilingues, id) et **recalcule la surface et le périmètre** depuis la
-  géométrie (coordonnées conservées). Export du GeoJSON nettoyé + CSV.
+- **Precise area**: place search (Nominatim), editable `bbox` extent, "View → bbox"
+  button, or **drawing** a rectangle in 2 clicks.
+- **Parametrable landuse types**: an *Agriculture* group (fields, orchards, vineyards,
+  meadows, greenhouses…) and an *Other* group (forest, residential, industrial…), plus
+  extra OSM `key=value` pairs.
+- **GeoJSON generation** via Overpass: for each polygon (way + multipolygon relation) the
+  tool computes **area**, **perimeter**, dimensions, vertex count, **all coordinates**,
+  and reads the **EN / FR / IT / DE** names + the **original name**. A **size class
+  (1→5)** is assigned based on parametrable thresholds. **GeoJSON** and **CSV** export.
+- **5-size color code** (accessible sequential ColorBrewer YlGn palette): small fields
+  stay **hidden in the wide view** and **appear on zoom** (minimum appearance zoom
+  adjustable per size). Alternative "by type" coloring.
+- **Water stations**: fixed points (~15 large stations), editable GeoJSON + template.
+- **Your coordinates**: adding custom **GeoJSON** layers (points, lines, polygons), pasted
+  or imported.
+- **GeoJSON cleaner**: upload a GeoJSON containing *all columns*; the tool **removes the
+  unnecessary columns**, keeps only what's needed (type, multilingual names, id) and
+  **recomputes the area and the perimeter** from the geometry (coordinates preserved).
+  Export of the cleaned GeoJSON + CSV.
 
-Le layer produit est **indépendant et réutilisable** ailleurs (Maputnik, QGIS, autre
-style MapLibre).
+The produced layer is **independent and reusable** elsewhere (Maputnik, QGIS, another
+MapLibre style).
 
-## 🗺️ Carte Positron / Maputnik (`carte-landuse.html`)
+## 🗺️ Positron / Maputnik map (`carte-landuse.html`)
 
-Carte **MapLibre GL** paramétrable, éditable dans **Maputnik**, qui **consomme le layer**
-produit par `outil-landuse.html` (ou le récupère elle-même via Overpass). C'est la carte
-de recherche « à un endroit donné » basée sur le fond **Positron**.
+A parametrable **MapLibre GL** map, editable in **Maputnik**, that **consumes the layer**
+produced by `outil-landuse.html` (or fetches it itself via Overpass). It is the "research
+at a given spot" map based on the **Positron** basemap.
 
-- **Layer landuse** : chargez le GeoJSON de l'outil, ou récupérez le landuse sur la zone.
-  Rendu avec le **code couleur 5 tailles** piloté par le zoom (petits champs révélés en
-  zoomant), coloration par taille ou par type ; noms des champs au zoom élevé.
-- **Fond Positron personnalisé** :
-  - **noms de pays masqués** (frontières conservées) ;
-  - **frontières renforcées** (plus épaisses / plus contrastées) ;
-  - **petits villages / hameaux masqués**, **grandes villes privilégiées** ;
-  - **autoroute + route (secondaire ~80 km/h) renforcées**, routes mineures épurées ;
-  - **gros fleuves renforcés** ;
-  - **relief / topographie** en option (ombrage *hillshade* depuis une source DEM).
-- **Stations d'eau** (points fixes ~15) et **calques GeoJSON personnalisés**.
-- **Export du style** MapLibre (`.json`) pour l'ouvrir et l'éditer dans **Maputnik**.
+- **Landuse layer**: load the tool's GeoJSON, or fetch the landuse over the area. Rendered
+  with the **5-size color code** driven by zoom (small fields revealed on zoom), coloring
+  by size or by type; field names at high zoom.
+- **Customized Positron basemap**:
+  - **country names hidden** (borders kept);
+  - **reinforced borders** (thicker / higher contrast);
+  - **small villages / hamlets hidden**, **large cities prioritized**;
+  - **motorway + (secondary ~80 km/h) road reinforced**, minor roads decluttered;
+  - **large rivers reinforced**;
+  - **relief / topography** optional (*hillshade* from a DEM source).
+- **Water stations** (fixed points ~15) and **custom GeoJSON layers**.
+- **Style export** of the MapLibre style (`.json`) to open and edit it in **Maputnik**.
 
-## ✨ Fonctionnalités
+## ✨ Features
 
-- **Recherche multi-modes** : adresse / lieu / code postal (géocodage
-  Nominatim), coordonnées GPS directes, ou **clic sur la carte interactive**.
-- **Cartographie Leaflet** avec plusieurs fonds :
+- **Multi-mode search**: address / place / postal code (Nominatim geocoding), direct GPS
+  coordinates, or **a click on the interactive map**.
+- **Leaflet mapping** with several basemaps:
   - OpenStreetMap
   - OpenTopoMap (relief)
-  - Imagerie satellite **Esri World Imagery**
-  - Tuiles **Yandex** satellite
-- **Conversions de coordonnées** complètes : décimal, **DMS**, **UTM**,
-  **MGRS**, **Plus Code**, **GeoHash**.
-- **Environnement & accessibilité** via Overpass/OSM : distance à l'**autoroute**,
-  aux routes principales, à la **gare** et à l'**aéroport** les plus proches.
-- **Météo & climat** en temps réel (**Open-Meteo**).
-- **Liens externes OSINT** générés automatiquement vers les principaux outils de
-  vérification et d'imagerie : Google Maps / Earth, Bing, Apple Plans, Yandex,
-  Mapillary, KartaView, Wikimapia, what3words, SunCalc, Windy, Geoportail,
-  Géoportail Suisse (map.geo.admin.ch), FlightRadar24, MarineTraffic,
-  NASA Worldview, Sentinel Hub, Wikipédia/Wikimedia Commons…
-- **Exports** : fiche OSINT mise en forme, **GeoJSON** et données brutes.
-- **Images téléchargées au format WebP** (qualité 0,85) — plans satellite,
-  captures Wayback/Yandex et images annotées, nettement plus légers que le PNG.
-- **Interface 100 % en français**.
+  - **Esri World Imagery** satellite imagery
+  - **Yandex** satellite tiles
+- **Full coordinate conversions**: decimal, **DMS**, **UTM**, **MGRS**, **Plus Code**,
+  **GeoHash**.
+- **Environment & accessibility** via Overpass/OSM: distance to the nearest **motorway**,
+  main roads, **train station** and **airport**.
+- **Real-time weather & climate** (**Open-Meteo**).
+- **External OSINT links** automatically generated to the main verification and imagery
+  tools: Google Maps / Earth, Bing, Apple Maps, Yandex, Mapillary, KartaView, Wikimapia,
+  what3words, SunCalc, Windy, Geoportail, Geoportail Switzerland (map.geo.admin.ch),
+  FlightRadar24, MarineTraffic, NASA Worldview, Sentinel Hub, Wikipedia/Wikimedia Commons…
+- **Exports**: formatted OSINT report, **GeoJSON** and raw data.
+- **Images downloaded in WebP format** (quality 0.85) — satellite maps, Wayback/Yandex
+  captures and annotated images, noticeably lighter than PNG.
+- **Interface in English**.
 
-## 🚀 Utilisation
+## 🚀 Usage
 
-### En local
+### Locally
 
-Aucune dépendance à installer — la page ne charge que la bibliothèque **Leaflet**
-depuis un CDN.
+No dependency to install — the page only loads the **Leaflet** library from a CDN.
 
 ```bash
-# Option 1 : ouvrir directement le fichier
+# Option 1: open the file directly
 open index.html          # macOS
 
-# Option 2 (recommandée) : servir en local pour éviter certains blocages CORS
+# Option 2 (recommended): serve locally to avoid some CORS blocks
 python3 -m http.server 8000
-# puis ouvrir http://localhost:8000
+# then open http://localhost:8000
 ```
 
-> ⚠️ La page appelle des APIs publiques (Nominatim, Overpass, Open-Meteo) et
-> charge des tuiles distantes. Servez-la de préférence en **HTTPS** en
-> production pour éviter les blocages *mixed-content* / CORS.
+> ⚠️ The page calls public APIs (Nominatim, Overpass, Open-Meteo) and loads remote tiles.
+> Prefer serving it over **HTTPS** in production to avoid *mixed-content* / CORS blocks.
 
-### Déploiement
+### Deployment
 
-C'est un site **statique** : déployable tel quel sur GitHub Pages, Netlify,
-Vercel, Cloudflare Pages ou tout hébergement statique. Il suffit de servir
-`index.html`.
+It is a **static** site: deployable as-is on GitHub Pages, Netlify, Vercel, Cloudflare
+Pages or any static hosting. Just serve `index.html`.
 
-## 🔌 Sources de données & services utilisés
+## 🔌 Data sources & services used
 
-| Service | Rôle |
+| Service | Role |
 |---|---|
-| **Nominatim** (OpenStreetMap) | Géocodage / géocodage inverse |
-| **Overpass API** | Objets OSM à proximité (routes, gares, aéroports, POI) |
-| **Open-Meteo** | Météo & climat |
-| **Esri World Imagery** | Imagerie satellite |
-| **OpenTopoMap** | Fond topographique / relief |
-| **Yandex** | Tuiles satellite complémentaires |
-| **Leaflet** (CDN unpkg) | Moteur de carte interactive |
+| **Nominatim** (OpenStreetMap) | Geocoding / reverse geocoding |
+| **Overpass API** | Nearby OSM objects (roads, stations, airports, POIs) |
+| **Open-Meteo** | Weather & climate |
+| **Esri World Imagery** | Satellite imagery |
+| **OpenTopoMap** | Topographic / relief basemap |
+| **Yandex** | Complementary satellite tiles |
+| **CARTO Positron** | Light basemap for the landuse tools |
+| **Leaflet / MapLibre GL** (CDN) | Interactive map engines |
 
-## 📜 Attributions & licences des données
+## 📜 Attributions & data licenses
 
 - OpenStreetMap / Nominatim / Overpass — **ODbL 1.0**, © OpenStreetMap contributors.
 - OpenTopoMap — **CC-BY-SA**.
-- Esri World Imagery — © Esri, Maxar, Earthstar Geographics (attribution requise).
+- Esri World Imagery — © Esri, Maxar, Earthstar Geographics (attribution required).
 - Open-Meteo — **CC BY 4.0**.
+- CARTO Positron — © CARTO, © OpenStreetMap contributors.
 
-Merci de respecter les **politiques d'usage** (fréquence d'appel) de Nominatim et
-d'Overpass. GEOSINT n'agrège que des informations **publiques** et affiche pour
-chaque bloc sa source : une donnée sans source n'est jamais présentée comme un
-fait.
+Please respect the **usage policies** (call frequency) of Nominatim and Overpass. GEOSINT
+only aggregates **public** information and shows its source for each block: a datum with no
+source is never presented as a fact.
 
-## ⚖️ Cadre d'usage
+## ⚖️ Scope of use
 
-Outil destiné à des usages **légitimes** : recherche ouverte (OSINT),
-vérification journalistique, analyse cartographique, éducation. L'utilisateur est
-responsable du respect des lois applicables et des conditions d'utilisation des
-services tiers interrogés.
+A tool intended for **legitimate** uses: open-source research (OSINT), journalistic
+verification, cartographic analysis, education. The user is responsible for complying with
+the applicable laws and the terms of use of the third-party services queried.
 
 ## 📁 Structure
 
 ```
-index.html      Application complète (HTML + CSS + JS, un seul fichier autonome)
-README.md       Ce document
-LICENSE         Licence MIT
+index.html          Full application (HTML + CSS + JS, a single standalone file)
+outil-landuse.html  Landuse layer tool (GeoJSON generation + cleaner, Leaflet + Positron)
+carte-landuse.html  Positron / Maputnik map (MapLibre GL) consuming the layer
+README.md           This document
+LICENSE             MIT license
 ```
 
-## 👤 Auteur
+## 👤 Author
 
 **safisaf5**
 
-## 📄 Licence
+## 📄 License
 
-Distribué sous licence **MIT** — © 2026 safisaf5. Voir [LICENSE](LICENSE).
+Distributed under the **MIT** license — © 2026 safisaf5. See [LICENSE](LICENSE).
